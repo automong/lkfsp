@@ -190,6 +190,11 @@ html[dir="rtl"] #fb-send{right:auto;left:16px}
 html[dir="rtl"] #fb-panel{right:auto;left:16px}
 html.force-m body{background:#e9efec}
 html.force-m #app{max-width:430px;margin:0 auto;height:100dvh;transform:translateZ(0);box-shadow:0 0 0 1px #d9e3df,0 10px 40px rgba(0,0,0,.12)}
+
+/* 모바일: 의견 보내기는 동그란 아이콘만 두어 그림 도구를 가리지 않게 (2026-09-14) */
+@media (max-width:760px){#fb-send{font-size:0!important;width:48px;height:48px;padding:0!important;border-radius:50%!important;display:flex;align-items:center;justify-content:center}#fb-send::before{content:"💬";font-size:22px;line-height:1}}
+html.force-m #fb-send{font-size:0!important;width:48px;height:48px;padding:0!important;border-radius:50%!important;display:flex;align-items:center;justify-content:center}
+html.force-m #fb-send::before{content:"💬";font-size:22px;line-height:1}
 </style>
 <script>/**
  * @license
