@@ -210,6 +210,51 @@ html[lang="th"] body{word-break:normal;line-break:auto}
 #ob-p .pgroup:first-child{margin-top:0}
 
 #onb .profile-actions{box-shadow:0 -8px 12px -10px rgba(0,0,0,.22),0 30px 0 0 #fff}
+
+/* ═══ 모바일 가독성·한 화면 최적화 (2026-09-14) ═══ */
+button,select,label{color:inherit}
+.m-only{display:none!important}
+html.mob .m-only{display:block!important}
+html.mob #m-back{display:inline-flex!important;margin:0 0 6px}
+html.mob #app{grid-template-columns:minmax(0,1fr)!important}
+html.mob aside,html.mob main,html.mob .screen{min-width:0!important;max-width:100%}
+html.mob aside{max-height:none!important;padding:8px 12px 6px!important;overflow:visible!important}
+html.mob aside h1{font-size:19px!important}
+html.mob aside .sub{margin:0 0 6px!important;font-size:11px!important;line-height:1.3}
+html.mob aside .sub br,html.mob #t-sub,html.mob #qlist,html.mob #t-kbd{display:none!important}
+html.mob .tabs{margin:0 -12px!important;padding:0 12px 2px!important;gap:6px!important}
+html.mob .tabs button{min-height:36px!important;padding:6px 12px!important;font-size:13px!important;border-radius:18px!important}
+html.mob #player-status{margin:6px 12px 0!important;padding:5px 8px 5px 12px!important;display:flex!important;align-items:center;gap:10px;border-radius:12px!important;box-shadow:none!important}
+html.mob #ps-top{display:contents}
+html.mob #ps-level{font-size:13px!important;white-space:nowrap}
+html.mob #ps-track{flex:1 1 auto;margin:0!important;height:6px!important;order:2}
+html.mob #music-toggle{order:3;min-height:32px!important;min-width:34px!important;padding:2px 6px!important;font-size:14px!important}
+html.mob #ps-growth{display:none!important}
+html.mob .screen{padding:10px 12px 14px!important}
+html.mob #s-q .qhead{gap:8px}
+html.mob #s-q .qtitle{font-size:18px!important;line-height:1.35!important}
+html.mob #s-q .qsub{font-size:13px!important}
+html.mob #s-q .qhead .big{min-height:36px!important;padding:6px 11px!important}
+html.mob #s-q .hint{font-size:13px!important;line-height:1.5!important;padding:8px 10px!important;margin:6px 0!important}
+html.mob #s-q .work{grid-template-columns:minmax(0,1fr)!important}
+html.mob #s-q .canvaswrap,html.mob #s-q .side,html.mob #s-q .tools{min-width:0!important;max-width:100%}
+html.mob #s-q .canvaswrap{padding:8px!important}
+html.mob #s-q .cwrap{margin:0 auto}
+html.mob #s-q .tools{flex-wrap:nowrap!important;overflow-x:auto;gap:6px!important;padding-bottom:4px;scrollbar-width:none}
+html.mob #s-q .tools::-webkit-scrollbar{display:none}
+html.mob #s-q .tools>*{flex:0 0 auto}
+html.mob #s-q #sws{display:inline-flex;gap:6px}
+html.mob #s-q .tools button,html.mob #s-q .tools label{min-height:36px!important;padding:4px 10px!important;font-size:12.5px!important}
+html.mob #m-next{margin:8px 0 0!important;min-height:46px!important}
+html.mob.short #s-q .hint,html.mob.short #s-q .qsub{display:none!important}
+html.mob.short #m-next{min-height:40px!important}
+html.mob #s-q:not(.m2) .side,html.mob #s-q:not(.m2) #prompts{display:none!important}
+html.mob #s-q.m2 .canvaswrap,html.mob #s-q.m2 .hint{display:none!important}
+html.mob #townhud{z-index:6}
+html.mob #townbtns{z-index:6;top:calc(56px + env(safe-area-inset-top))!important;left:8px!important;right:8px!important;max-width:none!important;flex-wrap:nowrap!important;overflow-x:auto;justify-content:flex-start!important;scrollbar-width:none;padding-bottom:2px}
+html.mob #townbtns::-webkit-scrollbar{display:none}
+html.mob #townbtns>*{flex:0 0 auto}
+html.mob #townbtns button,html.mob #townbtns label{min-height:34px!important;padding:6px 10px!important;font-size:12px!important}
 </style>
 <script>/**
  * @license
@@ -234,10 +279,10 @@ html[lang="th"] body{word-break:normal;line-break:auto}
   <div class="hint"><b id="t-easy">🟢 쉽게 그리려면</b> <span id="easy"></span><br><b id="t-free">🎨 더 그리고 싶으면</b> <span id="free"></span></div>
   <div class="work">
    <div class="canvaswrap"><div class="cwrap"><canvas class="draw" id="draw" width="960" height="720"></canvas><canvas class="ghost" id="ghost" width="960" height="720"></canvas></div>
-    <div class="tools"><span id="sws"></span><button data-w="3">얇게</button><button data-w="8">보통</button><button data-w="18">굵게</button><button id="eraser">지우개</button><button id="clear">전부 지우기</button><label>사진 올리기<input type="file" id="photo" accept="image/*" hidden></label><button id="stampO">○</button><button id="stampBox">□</button><button id="stampArrow">→</button></div>
+    <div class="tools"><span id="sws"></span><button data-w="3">얇게</button><button data-w="8">보통</button><button data-w="18">굵게</button><button id="eraser">지우개</button><button id="clear">전부 지우기</button><label>사진 올리기<input type="file" id="photo" accept="image/*" hidden></label><button id="stampO">○</button><button id="stampBox">□</button><button id="stampArrow">→</button></div><button class="big m-only" id="m-next" type="button">✍️ 한 줄·마음 적기 →</button>
    </div>
    <div class="side">
-    <label class="t" id="t-text">📝 한 줄로 적어도 됩니다 (비워도 괜찮아요)</label><div class="minis"><button class="mini" id="btn-sample">예시 문장 보기</button><button class="mini" id="btn-ghost">예시 그림 보기</button><button class="mini" id="btn-prof">내 상황 바꾸기</button></div><textarea id="text" placeholder="한 줄이면 충분합니다"></textarea><div class="sample" id="sample" title="클릭하면 글 칸에 넣습니다"></div>
+    <button class="mini m-only" id="m-back" type="button">← 그림으로</button><label class="t" id="t-text">📝 한 줄로 적어도 됩니다 (비워도 괜찮아요)</label><div class="minis"><button class="mini" id="btn-sample">예시 문장 보기</button><button class="mini" id="btn-ghost">예시 그림 보기</button><button class="mini" id="btn-prof">내 상황 바꾸기</button></div><textarea id="text" placeholder="한 줄이면 충분합니다"></textarea><div class="sample" id="sample" title="클릭하면 글 칸에 넣습니다"></div>
     <label class="t" id="t-emo">💛 이 그림에 가장 가까운 마음은</label><div class="emos" id="emos"></div>
     <label class="t" id="t-want">🙏 그 마음이 바라는 것 한 가지</label><textarea id="want" style="min-height:60px" placeholder="예: 좀 쉬고 싶다 · 누가 알아봐 주면 좋겠다"></textarea>
     <label style="display:block;font-size:13px;margin:8px 0"><input type="checkbox" id="share"> 이 방을 마당에 공개 (기본은 나만 보기)</label><div class="side-actions"><button class="big" id="save">🏠 내 마을에 이 방 짓기</button>
@@ -1606,7 +1651,7 @@ window.Town=(function(){
 
  const VILL_NICKS_KO=['시고르','몽실','단추','후추','모카','보송','구름','콩떡','달콩','누룽지','탱고','마루','두부','호두','봉봉','라온','소담','여울','다롱','쪼꼬','은하','별찌','오월','까망','살구','토리','우주','하루','나나','미로','로로','초롱','뭉치','자두','코코','밤비','버터','감자','복실','무지개'];
  const VILL_NICKS_EN=['Sigoreu','Mongsi','Button','Pepper','Mocha','Fluffy','Cloud','Bean','Dalkong','Toast','Tango','Maru','Tofu','Walnut','Bonbon','Raon','Sodam','Ripple','Darong','Choco','Galaxy','Starbit','May','Kkamang','Apricot','Tori','Cosmo','Haru','Nana','Miro','Lolo','Chorong','Mungchi','Plum','Coco','Bambi','Butter','Potato','Bokshil','Rainbow'];
- function spawnVillagers(){villagers.forEach(v=>removeRoot(v.s));villagers=[];const chosen=[],add=v=>{if(v&&!chosen.includes(v))chosen.push(v);};VILL.slice(25,31).forEach(add);['🐭','🐮','🐯','🐰','🐲','🐍','🐴','🐑','🐵','🐔','🐕','🐷'].forEach(e=>add(VILL.find(v=>v[0]===e)));VILL.slice(31).filter((v,i)=>EXTRA[i]&&EXTRA[i][2]==='bug').slice(0,7).forEach(add);const pool=VILL.slice(31).filter((v,i)=>EXTRA[i]&&EXTRA[i][2]!=='plant'),seed=new Date().getDate();for(let i=0;chosen.length<40&&i<pool.length;i++)add(pool[(seed*13+i*17)%pool.length]);chosen.forEach((v,i)=>{const index=VILL.indexOf(v),s=makeVillager(v,index),a=i/chosen.length*Math.PI*2,rr=11.5+(i%5)*3.7,x=Math.cos(a)*rr,z=Math.sin(a)*rr,nick=(window.MV_LANG_EN?VILL_NICKS_EN:VILL_NICKS_KO)[i%40];Object.assign(s.userData,{name:nick,line:v[2],emoji:v[0],petIndex:index>=25&&index<31?index-25:null,target:new THREE.Vector3(x,0,z),moveUntil:0,stateOffset:i*11.3,homeY:0});s.position.set(x,0,z);const tag=label(nick,0,(s.userData.labelY||1.62)/s.scale.y+.24,0,true);tag.scale.set(1.25,.32,1);s.add(tag);const zzz=label('Zzz',0,(s.userData.labelY||1.62)/s.scale.y+.68,.15,true);zzz.scale.set(.72,.24,1);zzz.visible=false;s.add(zzz);s.userData.sleepSprite=zzz;scene.add(s);villagers.push({s});});}
+ function spawnVillagers(){villagers.forEach(v=>removeRoot(v.s));villagers=[];const chosen=[],add=v=>{if(v&&!chosen.includes(v))chosen.push(v);};VILL.slice(25,31).forEach(add);['🐕','🐭','🐮','🐯','🐰','🐍','🐴','🐑','🐵','🐔','🐷'].forEach(e=>add(VILL.find(v=>v[0]===e)));VILL.slice(31).filter((v,i)=>EXTRA[i]&&EXTRA[i][2]==='bug').slice(0,7).forEach(add);const pool=VILL.slice(31).filter((v,i)=>EXTRA[i]&&EXTRA[i][2]!=='plant'&&!['🐲','🦖','🦕','🐊'].includes(v[0])),seed=new Date().getDate();for(let i=0;chosen.length<40&&i<pool.length;i++)add(pool[(seed*13+i*17)%pool.length]);{const pets=chosen.splice(0,6);chosen.splice(Math.min(8,chosen.length),0,...pets);}chosen.forEach((v,i)=>{const index=VILL.indexOf(v),s=makeVillager(v,index),a=i/chosen.length*Math.PI*2,rr=11.5+(i%5)*3.7,x=Math.cos(a)*rr,z=Math.sin(a)*rr,nick=(window.MV_LANG_EN?VILL_NICKS_EN:VILL_NICKS_KO)[i%40];Object.assign(s.userData,{name:nick,line:v[2],emoji:v[0],petIndex:index>=25&&index<31?index-25:null,target:new THREE.Vector3(x,0,z),moveUntil:0,stateOffset:i*11.3,homeY:0});s.position.set(x,0,z);const tag=label(nick,0,(s.userData.labelY||1.62)/s.scale.y+.24,0,true);tag.scale.set(1.25,.32,1);s.add(tag);const zzz=label('Zzz',0,(s.userData.labelY||1.62)/s.scale.y+.68,.15,true);zzz.scale.set(.72,.24,1);zzz.visible=false;s.add(zzz);s.userData.sleepSprite=zzz;scene.add(s);villagers.push({s});});}
  function nearVillager(){let b=null,bd=4;villagers.forEach(v=>{const d=Math.hypot(v.s.position.x-player.x,v.s.position.z-player.z);if(d<bd){bd=d;b=v.s.userData;}});return b;}
  function buildPlaces(names){if(!started)init();placeObjs.forEach(removeRoot);placeObjs=[];placeCount=0;const list=names||[],cnt=[0,0,0,0],slots=[[],[],[],[]],idx=[0,0,0,0];list.forEach(n=>cnt[EL[n]??3]++);
   cnt.forEach((count,e)=>{let remaining=count,row=0;while(remaining>0){const r=34+row*12,capacity=Math.max(1,Math.floor((Math.PI/2-.24)*r/10)),n=Math.min(remaining,capacity);for(let i=0;i<n;i++){const a=e*Math.PI/2+.12+(i+.5)/n*(Math.PI/2-.24);slots[e].push([Math.cos(a)*r,Math.sin(a)*r]);}remaining-=n;row++;}});
@@ -1720,7 +1765,7 @@ window.Town=(function(){
  $('snap').onclick=()=>download('마음의마을.png',dataURLtoBlob(Town.snapshot()));
  $('export').onclick=()=>download('마음의마을_'+new Date().toISOString().slice(0,10)+'.json',new Blob([JSON.stringify({answers,blocks:Town.getBlocks()})],{type:'application/json'}));
  $('import').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{const d=JSON.parse(t);answers=d.answers||[];persist();Town.loadBlocks(d.blocks||[]);Town.buildRooms(answers);renderList();renderGallery();show(0);Town.toast('불러왔습니다');});};
- $('gif').onclick=()=>{const cv=document.querySelector('#three canvas');if(!cv||!cv.captureStream){Town.toast('이 브라우저는 영상 저장을 지원하지 않습니다');return;}const st=cv.captureStream(30);const rec=new MediaRecorder(st,{mimeType:'video/webm'});const chunks=[];rec.ondataavailable=e=>chunks.push(e.data);rec.onstop=()=>download('마음의마을_한바퀴.webm',new Blob(chunks,{type:'video/webm'}));rec.start();addXP(10,'한 바퀴 영상');Town.toast('한 바퀴 도는 중… 4초');Town.gifTour(()=>{});setTimeout(()=>rec.stop(),4200);};
+ $('gif').onclick=()=>{const cv=document.querySelector('#three canvas');if(!cv||!cv.captureStream){Town.toast(LANG==='ko'?'이 브라우저는 영상 저장을 지원하지 않아 한 바퀴 둘러보기만 보여 드립니다':'Video saving is not supported here, so you will see the tour only');Town.gifTour(()=>{});return;}let rec=null,mt='';try{const MR=window.MediaRecorder;mt=MR&&MR.isTypeSupported?(['video/webm;codecs=vp9','video/webm','video/mp4'].find(t=>MR.isTypeSupported(t))||''):'';if(mt){const st=cv.captureStream(30);rec=new MR(st,{mimeType:mt});}}catch(e){rec=null;}if(!rec){Town.toast(LANG==='ko'?'이 브라우저는 영상 저장을 지원하지 않아 한 바퀴 둘러보기만 보여 드립니다':'Video saving is not supported here, so you will see the tour only');Town.gifTour(()=>{});return;}const chunks=[],ext=mt.indexOf('mp4')>=0?'mp4':'webm';rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};rec.onstop=()=>{try{download('마음의마을_한바퀴.'+ext,new Blob(chunks,{type:mt.split(';')[0]}));}catch(e){}};rec.start();addXP(10,'한 바퀴 영상');Town.toast('한 바퀴 도는 중… 4초');Town.gifTour(()=>{});setTimeout(()=>rec.stop(),4200);};
  $('galhtml').onclick=()=>{addXP(15,'그림 보여 주기');const cards=answers.map((a,i)=>a?`<figure><img src="${a.img||''}"><figcaption><b>${String(i+1).padStart(2,'0')} ${a.room}</b> ${a.emotion?'· '+a.emotion:''}<br>${a.text||''}</figcaption></figure>`:'').join('');const html=`<!doctype html><meta charset="utf-8"><title>내 전시</title><style>body{font-family:sans-serif;background:#f6f1ea;color:#1e3a3a;padding:30px}h1{font-size:28px}h1 span{color:#ff6a3d}.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}figure{margin:0;background:#fff;border-radius:14px;padding:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)}img{width:100%;border-radius:8px}figcaption{font-size:13px;line-height:1.4;margin-top:6px}</style><h1>마음의 <span>마을</span> · 내 전시</h1><p>${new Date().toLocaleDateString()}</p><div class="g">${cards}</div>`;download('내전시.html',new Blob([html],{type:'text/html'}));};
  window.addEventListener('resize',()=>{if($('s-town').classList.contains('on'))Town.resize();});
  function applyLang(){try{$('lang').value=LANG;const g=$('langsel-g');if(g)g.value=LANG;}catch(e){}if(LANG==='ko'){const s=$('t-obsub');if(s)s.textContent=X.obsubFixKo;return;}const set=(id,html)=>{const e=$(id);if(e&&html!=null)e.innerHTML=html;};
@@ -1952,4 +1997,5 @@ document.getElementById('fb-mail').onclick=function(){if(!document.getElementByI
  if(window.ResizeObserver){var ro=new ResizeObserver(later);ro.observe(s);var q=s.querySelector('.qhead');if(q)ro.observe(q);var hn=s.querySelector('.hint');if(hn)ro.observe(hn);}
  bg();later();setTimeout(later,600);
 })();
-</script></body></html>
+</script><script>/* 모바일 최적화 (2026-09-14) */
+(function(){var root=document.documentElement,s=document.getElementById("s-q");if(!s)return;var NEXT={"ko": "✍️ 한 줄·마음 적기 →", "en": "✍️ Add a line & feeling →", "ja": "✍️ ひとことと気持ちへ →", "zh-CN": "✍️ 写一句话、选心情 →", "zh-TW": "✍️ 寫一句話、選心情 →", "vi": "✍️ Viết một dòng & cảm xúc →", "es": "✍️ Una línea y un sentimiento →", "ar": "✍️ سطر وشعور ←", "fr": "✍️ Une phrase et une émotion →", "de": "✍️ Ein Satz & ein Gefühl →", "pt": "✍️ Uma frase e um sentimento →", "ru": "✍️ Строчка и чувство →", "it": "✍️ Una frase e un’emozione →", "id": "✍️ Satu kalimat & perasaan →", "th": "✍️ เขียนหนึ่งบรรทัดและเลือกความรู้สึก →", "hi": "✍️ एक पंक्ति और भावना →", "tr": "✍️ Bir satır ve bir duygu →"},BACK={"ko": "← 그림으로", "en": "← Back to drawing", "ja": "← 絵にもどる", "zh-CN": "← 回到画画", "zh-TW": "← 回到畫畫", "vi": "← Quay lại bức vẽ", "es": "← Volver al dibujo", "ar": "→ العودة إلى الرسم", "fr": "← Retour au dessin", "de": "← Zurück zur Zeichnung", "pt": "← Voltar ao desenho", "ru": "← К рисунку", "it": "← Torna al disegno", "id": "← Kembali ke gambar", "th": "← กลับไปวาดรูป", "hi": "← चित्र पर वापस", "tr": "← Çizime dön"};var lg=root.lang||"ko",nb=document.getElementById("m-next"),bb=document.getElementById("m-back");nb.textContent=NEXT[lg]||NEXT.en;bb.textContent=BACK[lg]||BACK.en;var cw=s.querySelector(".cwrap");function isMob(){return innerWidth<=820||root.classList.contains("force-m");}function fit(){if(!root.classList.contains("mob")||!s.classList.contains("on")||s.classList.contains("m2")){cw.style.width="";return;}var pr=cw.parentElement,cs=getComputedStyle(pr),pw=pr.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);cw.style.width=pw+"px";for(var i=0;i<5;i++){var over=s.scrollHeight-s.clientHeight;if(over<=0)break;var hh=cw.getBoundingClientRect().height-over-6;cw.style.width=Math.max(160,Math.min(pw,hh*4/3))+"px";}}function upd(){var m=isMob();root.classList.toggle("short",innerHeight<620);if(root.classList.contains("mob")!==m)root.classList.toggle("mob",m);fit();}var t;function later(){clearTimeout(t);t=setTimeout(fit,60);}nb.addEventListener("click",function(){s.classList.add("m2");s.scrollTop=0;fit();});bb.addEventListener("click",function(){s.classList.remove("m2");s.scrollTop=0;later();});var qt=document.getElementById("qtitle");if(qt)new MutationObserver(function(){s.classList.remove("m2");later();}).observe(qt,{childList:true,characterData:true,subtree:true});new MutationObserver(later).observe(s,{attributes:true,attributeFilter:["class"]});new MutationObserver(upd).observe(root,{attributes:true,attributeFilter:["class"]});addEventListener("resize",function(){upd();later();});addEventListener("orientationchange",function(){setTimeout(upd,200);});if(window.ResizeObserver)new ResizeObserver(later).observe(s);upd();setTimeout(later,400);setTimeout(later,1200);})();</script></body></html>
