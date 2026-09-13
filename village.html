@@ -176,7 +176,7 @@ body.big{font-size:18px}body.big .qlist button{font-size:17px}body.big .qtitle{f
  #s-q .hint{margin:8px 0;padding:8px 12px}
  #s-q .work{align-items:start;grid-template-columns:minmax(0,1fr) minmax(280px,340px)!important}
  #s-q .canvaswrap{display:flex;flex-direction:column;align-items:center;min-width:0}
- #s-q .cwrap{width:min(100%,calc((100dvh - 330px)*4/3));aspect-ratio:4/3;height:auto}
+ #s-q .cwrap{width:min(100%,max(300px,calc((100dvh - 330px - var(--qcut,0px))*4/3)));aspect-ratio:4/3;height:auto}
  #s-q .draw{width:100%;height:100%}
  #s-q .side{min-width:0}
  #s-q .side textarea#text{min-height:64px}
@@ -195,6 +195,14 @@ html.force-m #app{max-width:430px;margin:0 auto;height:100dvh;transform:translat
 @media (max-width:760px){#fb-send{font-size:0!important;width:48px;height:48px;padding:0!important;border-radius:50%!important;display:flex;align-items:center;justify-content:center}#fb-send::before{content:"💬";font-size:22px;line-height:1}}
 html.force-m #fb-send{font-size:0!important;width:48px;height:48px;padding:0!important;border-radius:50%!important;display:flex;align-items:center;justify-content:center}
 html.force-m #fb-send::before{content:"💬";font-size:22px;line-height:1}
+
+/* PC 한 화면 맞춤 보강 (2026-09-14): 답 칸은 그림 칸 높이에 맞추고 넘치면 그 칸만 스크롤, 짓기·다음 버튼은 늘 보이게 */
+@media (min-width:901px) and (min-height:560px){
+ html:not(.force-m) #s-q .work{align-items:stretch}
+ html:not(.force-m) #s-q .side{contain:size;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:6px}
+ html:not(.force-m) #s-q .side-actions{position:sticky;bottom:0;z-index:2;display:grid;gap:8px;padding-top:12px;margin-top:4px;background:linear-gradient(to bottom,var(--qbg0,rgba(255,255,255,0)),var(--qbg,#f3f7f5) 12px)}
+ html:not(.force-m) #s-q .side-actions .big{margin:0}
+}
 </style>
 <script>/**
  * @license
@@ -225,8 +233,8 @@ html.force-m #fb-send::before{content:"💬";font-size:22px;line-height:1}
     <label class="t" id="t-text">📝 한 줄로 적어도 됩니다 (비워도 괜찮아요)</label><div class="minis"><button class="mini" id="btn-sample">예시 문장 보기</button><button class="mini" id="btn-ghost">예시 그림 보기</button><button class="mini" id="btn-prof">내 상황 바꾸기</button></div><textarea id="text" placeholder="한 줄이면 충분합니다"></textarea><div class="sample" id="sample" title="클릭하면 글 칸에 넣습니다"></div>
     <label class="t" id="t-emo">💛 이 그림에 가장 가까운 마음은</label><div class="emos" id="emos"></div>
     <label class="t" id="t-want">🙏 그 마음이 바라는 것 한 가지</label><textarea id="want" style="min-height:60px" placeholder="예: 좀 쉬고 싶다 · 누가 알아봐 주면 좋겠다"></textarea>
-    <label style="display:block;font-size:13px;margin:8px 0"><input type="checkbox" id="share"> 이 방을 마당에 공개 (기본은 나만 보기)</label><button class="big" id="save">🏠 내 마을에 이 방 짓기</button>
-    <button class="big ghost" id="skip">다음 질문으로 →</button>
+    <label style="display:block;font-size:13px;margin:8px 0"><input type="checkbox" id="share"> 이 방을 마당에 공개 (기본은 나만 보기)</label><div class="side-actions"><button class="big" id="save">🏠 내 마을에 이 방 짓기</button>
+    <button class="big ghost" id="skip">다음 질문으로 →</button></div>
    </div>
   </div>
   <details class="prompts" id="prompts"><summary id="t-ph">🤖 AI와 놀아보기 — 복사해서 그림과 함께 붙여 넣으세요</summary></details>
@@ -1906,5 +1914,23 @@ document.getElementById('fb-mail').onclick=function(){if(!document.getElementByI
  }
  document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.viewseg button');if(!b)return;cur=b.dataset.view;try{localStorage.setItem(KEY,cur)}catch(err){}apply();});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
+})();
+</script><script>/* PC 한 화면 맞춤 보정 (2026-09-14) */
+(function(){
+ var s=document.getElementById('s-q'),root=document.documentElement;if(!s)return;
+ var mq=matchMedia('(min-width:901px) and (min-height:560px)');
+ function bg(){try{var c=getComputedStyle(s).backgroundColor;if(!c||c==='rgba(0, 0, 0, 0)'||c==='transparent')c=getComputedStyle(document.body).backgroundColor;root.style.setProperty('--qbg',c);var m=c.match(/[\d.]+/g);if(m)root.style.setProperty('--qbg0','rgba('+m[0]+','+m[1]+','+m[2]+',0)');}catch(e){}}
+ function fit(){
+  if(!mq.matches||root.classList.contains('force-m')||!s.classList.contains('on'))return;
+  root.style.setProperty('--qcut','0px');
+  var cut=0;
+  for(var i=0;i<4;i++){var over=s.scrollHeight-s.clientHeight;if(over<=1)break;cut=Math.min(cut+over+2,480);root.style.setProperty('--qcut',cut+'px');}
+ }
+ var t;function later(){clearTimeout(t);t=setTimeout(fit,80);}
+ addEventListener('resize',later);
+ new MutationObserver(later).observe(s,{attributes:true,attributeFilter:['class']});
+ ['.qhead','.hint'].forEach(function(q){var e=s.querySelector(q);if(e)new MutationObserver(later).observe(e,{childList:true,subtree:true,characterData:true});});
+ if(window.ResizeObserver){var ro=new ResizeObserver(later);ro.observe(s);var q=s.querySelector('.qhead');if(q)ro.observe(q);var hn=s.querySelector('.hint');if(hn)ro.observe(hn);}
+ bg();later();setTimeout(later,600);
 })();
 </script></body></html>
