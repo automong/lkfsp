@@ -310,6 +310,32 @@ html.mob #townhud #town-help[open]{max-height:44vh;overflow:auto}
 html.mob #townbtns{top:calc(92px + env(safe-area-inset-top))!important}
 
 @media (max-height:700px){html.mob .m-note{display:none!important}}
+
+/* 나의 성장·같이하기 읽기 쉽게 (2026-09-14) */
+#s-me,#s-tg{--r-h2:22px;--r-h3:16px;--r-body:14.5px;--r-small:13px}
+#s-me>h2,#s-tg>h2{font-size:var(--r-h2)!important;line-height:1.35;margin:0 0 6px!important;letter-spacing:-.02em}
+#s-me>.sub,#s-tg>.sub{font-size:var(--r-body)!important;line-height:1.65;color:#4d5b70;max-width:62ch;margin:0 0 18px!important}
+#s-me .simrow,#s-tg .simrow{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start}
+#s-me .box,#s-tg .box{padding:20px 22px!important;border-radius:16px;margin:0}
+#s-tg>.box{margin-top:16px!important}
+#s-me h3,#s-tg h3{font-size:var(--r-h3)!important;line-height:1.4;margin:22px 0 10px!important;font-weight:800;color:#26344a}
+#s-me .box>h3:first-child,#s-tg .box>h3:first-child,#s-tg .simrow>div>h3:first-child{margin-top:0!important}
+#s-me p,#s-me li,#s-tg p{font-size:var(--r-body)!important;line-height:1.65!important}
+#s-me .ml{margin:0;padding-left:1.2em;display:grid;gap:4px}
+#s-me .streak,#s-tg .streak{font-size:var(--r-small)!important;line-height:1.6}
+#s-tg .sub,#s-tg .sub2,#s-me .sub2{font-size:var(--r-small)!important;line-height:1.6!important;color:#5d6b80}
+#s-me .gm-row,#s-tg .gm-row,#s-tg .emos{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+#s-me .gm-row button,#s-tg .gm-row button,#s-tg .emos button{font-size:14px!important;line-height:1.3;padding:9px 14px!important;min-height:40px;border-radius:12px;margin:0!important}
+#s-me .gm-row label{font-size:14px;display:flex;gap:8px;align-items:center}
+#s-me .big,#s-tg .big{margin-top:16px!important;min-height:46px}
+#s-tg .tg-other{display:block;width:100%;margin-top:10px;padding:10px 12px;border:1px solid #cfdaeb;border-radius:12px;font:inherit;font-size:14px;background:#fff}
+#s-tg .tg-other[hidden]{display:none}
+#s-tg textarea.tgin{font-size:14px;line-height:1.6;padding:10px 12px;border-radius:12px}
+#s-tg #yard-list>.streak{padding:16px 18px!important}
+#s-tg #yard-list p{margin:8px 0!important}
+#s-tg .yard-reply{margin-top:8px;padding:9px 14px;border-radius:12px;font-size:14px;min-height:40px}
+@media(max-width:680px){#s-me .simrow,#s-tg .simrow{grid-template-columns:minmax(0,1fr)}#s-me .box,#s-tg .box{padding:16px!important}#s-me>h2,#s-tg>h2{font-size:20px!important}}
+body.big #s-me,body.big #s-tg{--r-h2:25px;--r-h3:18px;--r-body:16.5px;--r-small:15px}
 </style>
 <script>/**
  * @license
@@ -380,9 +406,9 @@ html.mob #townbtns{top:calc(92px + env(safe-area-inset-top))!important}
  </div>
 </section>
 <section class="screen" id="s-tg">
- <h2 style="margin:0 0 4px">🤝 같이하기 · 너와 나, 도란도란</h2><div class="sub" style="margin-bottom:14px">소중한 사람과 같은 화면을 보며 이야기를 나눠요. <b>서로의 이야기에 귀 기울이는 10분</b>, 말하고 싶지 않은 질문은 쉬어 가도 괜찮아요. 만든 방에는 두 사람의 색이 함께 남아요.<br>엄마나 아빠 한 분과도, 할머니·할아버지나 나를 돌봐 준 사람과도 좋아요. 한부모 가족, 조손 가족, 입양·재혼 가족, 서로를 가족으로 여기는 사이까지. 함께 사는지, 어떤 이름의 가족인지는 중요하지 않아요. 지금 함께할 사람과 가장 편한 항목을 골라 주세요.</div>
+ <h2 style="margin:0 0 4px">🤝 같이하기 · 너와 나, 도란도란</h2><div class="sub" style="margin-bottom:14px">소중한 사람과 한 화면을 보며 <b>10분</b> 동안 이야기를 나눠요. 말하고 싶지 않은 질문은 쉬어 가도 괜찮아요.</div>
  <div class="simrow">
-  <div class="box"><h3>오늘은 누구와 이야기할까요?</h3><div class="emos" id="tg-rel"></div><h3 style="margin-top:12px">어디서 만날까</h3><div class="emos" id="tg-place"></div><h3 style="margin-top:12px">글씨 크기</h3><div class="gm-row"><button id="tg-big">눈이 편하도록, 큰 글씨 켜기/끄기</button></div><button class="big" id="tg-start" style="margin-top:14px">도란도란 10분 시작</button></div>
+  <div class="box"><h3>오늘은 누구와 이야기할까요?</h3><div class="emos" id="tg-rel"></div><input class="tg-other" id="tg-who" maxlength="30" placeholder="함께하는 사람을 적어 볼까요? (예: 룸메이트, 선생님)" hidden><h3 style="margin-top:12px">어디서 만날까</h3><div class="emos" id="tg-place"></div><h3 style="margin-top:12px">글씨 크기</h3><div class="gm-row"><button id="tg-big">눈이 편하도록, 큰 글씨 켜기/끄기</button></div><button class="big" id="tg-start" style="margin-top:14px">도란도란 10분 시작</button></div>
   <div class="box" id="tg-room"><h3>오늘의 카드</h3><p class="sub" id="tg-hint">누구와 만날지 고르면 카드가 나옵니다.</p><div id="tg-card"></div></div>
  </div>
  <div class="box" style="margin-top:14px"><h3>함께 만든 방</h3><div id="tg-list" class="gallery"></div></div>
@@ -390,8 +416,8 @@ html.mob #townbtns{top:calc(92px + env(safe-area-inset-top))!important}
   <h3>🏡 다른 관점의 마당</h3>
   <p class="sub">나와 생각하는 방식이나 살아온 관계가 다른 이웃에게 고민을 묻고, 나도 다른 사람에게 내 관점으로 답할 수 있어요. 정답을 고치기보다 “내 경우에는 이랬어요”라고 이야기합니다.</p>
   <div class="simrow" style="margin-top:12px">
-   <div><h3>어떤 관점으로 참여할까요?</h3><div class="emos" id="view-types"></div><h3 style="margin-top:12px">내 삶에서 가까운 관계</h3><div class="emos" id="life-rel"></div></div>
-   <div><h3>고민 남기기</h3><textarea class="tgin" id="yard-worry" maxlength="500" placeholder="요즘 다른 사람의 관점이 궁금한 일을 적어 주세요."></textarea><button class="big" id="yard-post" style="margin-top:8px">이웃들에게 물어보기</button><p class="sub2">이름과 성별은 공개되지 않습니다. 답하기 싫은 내용은 지나가도 괜찮아요.</p></div>
+   <div><h3>나는 고민을 들으면 주로 어떤 편인가요?</h3><div class="emos" id="view-types"></div><input class="tg-other" id="view-other" maxlength="30" placeholder="나다운 말로 적어 볼까요?" hidden><h3 style="margin-top:12px">요즘 가장 가까이 지내는 사람</h3><div class="emos" id="life-rel"></div><input class="tg-other" id="life-other" maxlength="30" placeholder="가까운 사람을 적어 볼까요?" hidden></div>
+   <div><h3>고민 남기기</h3><textarea class="tgin" id="yard-worry" maxlength="500" placeholder="요즘 다른 사람의 생각이 궁금한 일을 적어 볼까요?"></textarea><button class="big" id="yard-post" style="margin-top:8px">이웃들에게 물어보기</button><p class="sub2">이름과 성별은 공개되지 않습니다. 답하기 싫은 내용은 지나가도 괜찮아요.</p></div>
   </div>
   <h3 style="margin-top:18px">서로의 고민과 답</h3><div id="yard-list"></div>
  </div>
@@ -1916,7 +1942,7 @@ window.Town=(function(){
  window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(dn==='auto')applyDN();});
  setTimeout(applyDN,300);
  // ---------- 같이하기 ----------
- const REL={'🌱 아이와 나':{places:['☕ 조용한 카페','🖥️ PC방','🛋️ 거실 소파','🌳 동네 공원','🎡 놀이공원'],q:['요즘 나를 웃게 하는 건 뭘까','함께해서 좋았던 순간 하나','서로 새롭게 알게 된 모습 하나','요즘 가장 듣고 싶은 말','같이 가 보고 싶은 곳 하나']},
+ const REL0={'🌱 아이와 나':{places:['☕ 조용한 카페','🖥️ PC방','🛋️ 거실 소파','🌳 동네 공원','🎡 놀이공원'],q:['요즘 나를 웃게 하는 건 뭘까','함께해서 좋았던 순간 하나','서로 새롭게 알게 된 모습 하나','요즘 가장 듣고 싶은 말','같이 가 보고 싶은 곳 하나']},
   '💛 사랑하는 사람과':{places:['🫖 둘만의 찻집','🏮 포장마차','🌸 벚꽃길','🏨 호텔','🌉 한강공원','🏕️ 캠핑장'],q:['처음 만났을 때 나를 어떻게 봤나','요즘 서로에게 고마운 일 하나','편하게 나누고 싶은 마음 하나','올해 같이 하고 싶은 것','상대가 힘들 때 내가 해 줄 수 있는 것']},
   '🌼 엄마와, 아빠와':{places:['🏠 부모님 방','☕ 조용한 카페','🚶 산책로','🛋️ 거실 소파'],q:['요즘 하루 중 가장 좋아하는 시간','최근에 나를 웃게 한 일','함께 먹고 싶은 음식','서로에게 고마웠던 순간','다음에 같이 해 보고 싶은 것']},
   '🧡 할머니와, 할아버지와':{places:['🧖 찜질방','🏯 한옥마을','🚶 산책로','♨️ 온천','🧺 시장'],q:['요즘 푹 빠져 있는 것은 뭔가요','어릴 때 즐겨 하던 놀이','함께 먹고 싶은 음식과 그 이유','최근에 기분 좋았던 순간 하나','다음에 우리 같이 무엇을 할까요']},
@@ -1925,14 +1951,18 @@ window.Town=(function(){
   '🍀 가족처럼 가까운 사람과':{places:['☕ 조용한 카페','🚶 산책로','🌳 동네 공원'],q:['가까워졌다고 느낀 순간','서로에게 배우고 싶은 점','함께할 때 편안한 이유','요즘 나누고 싶은 작은 기쁨','다음에 만나서 하고 싶은 것']},
   '🤝 이웃·동료와':{places:['☕ 조용한 카페','🚶 산책로','🧺 시장'],q:['요즘 발견한 작은 즐거움','쉬는 날 좋아하는 일','서로 몰랐던 취향 하나','최근 도움받아 고마웠던 순간','같이 해 보면 좋을 일']},
   '🧑‍🤝‍🧑 친구':{places:['🎤 노래방','📸 네컷 사진관','🍜 야시장','⚽ 축구장','🎉 페스티벌'],q:['요즘 나를 웃게 한 것','요즘 나를 지치게 한 것','네가 나에게 해 준 것 중 기억나는 것','우리 10년 뒤 모습','지금 서로에게 필요한 한마디']}};
+ const REL=LANG!=='ko'?REL0:{'🌱 아이와':REL0['🌱 아이와 나'],'👪 가족과':{places:['🛋️ 거실 소파','☕ 조용한 카페','🚶 산책로','🧺 시장','♨️ 온천'],q:['요즘 하루 중 가장 좋아하는 시간','어릴 때 즐겨 하던 놀이','함께 먹고 싶은 음식과 그 이유','서로에게 고마웠던 순간','다음에 우리 같이 무엇을 할까요']},'💛 사랑하는 사람과':REL0['💛 사랑하는 사람과'],'🧑‍🤝‍🧑 친구와':REL0['🧑‍🤝‍🧑 친구'],'🤝 이웃·동료와':REL0['🤝 이웃·동료와'],'✏️ 직접 입력':{places:['☕ 조용한 카페','🚶 산책로','🛋️ 거실 소파','🌳 동네 공원'],q:REL0['🍀 가족처럼 가까운 사람과'].q}};
+ const tgWho=()=>{const v=(($('tg-who')||{}).value||'').trim();return tg.rel==='✏️ 직접 입력'&&v?'✏️ '+v:tg.rel;};
  let tg={rel:null,place:null,i:0,turn:0,timer:null,left:600,log:[]};
- function tgRender(){const r=$('tg-rel');r.innerHTML='';Object.keys(REL).forEach(k=>{const b=document.createElement('button');b.textContent=k;b.className=tg.rel===k?'on':'';b.onclick=()=>{tg.rel=k;tg.place=REL[k].places[0];tgRender();};r.appendChild(b);});const p=$('tg-place');p.innerHTML='';if(tg.rel){REL[tg.rel].places.forEach(k=>{const b=document.createElement('button');b.textContent=k;b.className=tg.place===k?'on':'';b.onclick=()=>{tg.place=k;tgRender();};p.appendChild(b);});$('tg-hint').textContent=`${tg.place}에서 만납니다. 「10분 시작」을 누르면 카드가 하나씩 나옵니다. 한 사람이 답하는 동안 다른 사람은 듣기만 합니다.`;}}
- function tgCard(){const q=REL[tg.rel].q;if(tg.i>=q.length){clearInterval(tg.timer);$('tg-card').innerHTML=`<div class="tgq">끝났습니다. 함께 만든 방이 아래에 남았습니다.</div>`;const rec={rel:tg.rel,place:tg.place,at:new Date().toLocaleDateString(),log:tg.log};let h=[];try{h=JSON.parse(localStorage.getItem('mv_tg')||'[]');}catch(e){}h.push(rec);try{localStorage.setItem('mv_tg',JSON.stringify(h));}catch(e){}addXP(15,'같이하기');tgList();return;}const who=tg.turn===0?'첫 번째 사람':'두 번째 사람';const col=tg.turn===0?'#ff6a3d':'#6a8cc7';$('tg-card').innerHTML=`<div class="tgtimer" id="tg-t">${Math.floor(tg.left/60)}:${String(tg.left%60).padStart(2,'0')}</div><span class="tgturn" style="background:${col}">${who} 차례</span><div class="tgq">${tg.i+1}. ${q[tg.i]}</div><textarea class="tgin" id="tg-in" placeholder="말로 해도 되고, 한 줄만 적어도 됩니다"></textarea><div class="gm-row" style="margin-top:8px"><button id="tg-next">다음 사람 →</button></div>`;$('tg-next').onclick=()=>{tg.log.push({q:q[tg.i],who:tg.turn,a:$('tg-in').value.trim()});if(tg.turn===0)tg.turn=1;else{tg.turn=0;tg.i++;}tgCard();};}
- $('tg-start').onclick=()=>{if(!tg.rel){Town.toast('누구와 만날지 먼저 고르세요');return;}tg.i=0;tg.turn=0;tg.left=600;tg.log=[];clearInterval(tg.timer);tg.timer=setInterval(()=>{tg.left--;const t=$('tg-t');if(t)t.textContent=`${Math.floor(tg.left/60)}:${String(tg.left%60).padStart(2,'0')}`;if(tg.left<=0){clearInterval(tg.timer);Town.toast('10분이 지났습니다. 여기까지도 충분합니다');}},1000);tgCard();};
+ function tgRender(){const wi=$('tg-who');if(wi)wi.hidden=tg.rel!=='✏️ 직접 입력';const r=$('tg-rel');r.innerHTML='';Object.keys(REL).forEach(k=>{const b=document.createElement('button');b.textContent=k;b.className=tg.rel===k?'on':'';b.onclick=()=>{tg.rel=k;tg.place=REL[k].places[0];tgRender();};r.appendChild(b);});const p=$('tg-place');p.innerHTML='';if(tg.rel){REL[tg.rel].places.forEach(k=>{const b=document.createElement('button');b.textContent=k;b.className=tg.place===k?'on':'';b.onclick=()=>{tg.place=k;tgRender();};p.appendChild(b);});$('tg-hint').textContent=`${tg.place}에서 만납니다. 「10분 시작」을 누르면 카드가 하나씩 나옵니다. 한 사람이 답하는 동안 다른 사람은 듣기만 합니다.`;}}
+ function tgCard(){const q=REL[tg.rel].q;if(tg.i>=q.length){clearInterval(tg.timer);$('tg-card').innerHTML=`<div class="tgq">끝났습니다. 함께 만든 방이 아래에 남았습니다.</div>`;const rec={rel:tgWho(),place:tg.place,at:new Date().toLocaleDateString(),log:tg.log};let h=[];try{h=JSON.parse(localStorage.getItem('mv_tg')||'[]');}catch(e){}h.push(rec);try{localStorage.setItem('mv_tg',JSON.stringify(h));}catch(e){}addXP(15,'같이하기');tgList();return;}const who=tg.turn===0?'첫 번째 사람':'두 번째 사람';const col=tg.turn===0?'#ff6a3d':'#6a8cc7';$('tg-card').innerHTML=`<div class="tgtimer" id="tg-t">${Math.floor(tg.left/60)}:${String(tg.left%60).padStart(2,'0')}</div><span class="tgturn" style="background:${col}">${who} 차례</span><div class="tgq">${tg.i+1}. ${q[tg.i]}</div><textarea class="tgin" id="tg-in" placeholder="말로 해도 되고, 한 줄만 적어도 됩니다"></textarea><div class="gm-row" style="margin-top:8px"><button id="tg-next">다음 사람 →</button></div>`;$('tg-next').onclick=()=>{tg.log.push({q:q[tg.i],who:tg.turn,a:$('tg-in').value.trim()});if(tg.turn===0)tg.turn=1;else{tg.turn=0;tg.i++;}tgCard();};}
+ $('tg-start').onclick=()=>{if(!tg.rel){Town.toast('누구와 함께할지 먼저 골라 볼까요?');return;}tg.i=0;tg.turn=0;tg.left=600;tg.log=[];clearInterval(tg.timer);tg.timer=setInterval(()=>{tg.left--;const t=$('tg-t');if(t)t.textContent=`${Math.floor(tg.left/60)}:${String(tg.left%60).padStart(2,'0')}`;if(tg.left<=0){clearInterval(tg.timer);Town.toast('10분이 지났습니다. 여기까지도 충분합니다');}},1000);tgCard();};
  function tgList(){let h=[];try{h=JSON.parse(localStorage.getItem('mv_tg')||'[]');}catch(e){}$('tg-list').innerHTML=h.length?h.slice().reverse().map(r=>`<div class="g"><small><b>${r.rel}</b> · ${r.place} · ${r.at}</small>${r.log.slice(0,4).map(l=>`<small style="color:${l.who?'#6a8cc7':'#ff6a3d'}">${l.q.slice(0,14)}… ${l.a?'— '+l.a.slice(0,30):''}</small>`).join('')}</div>`).join(''):'<small style="color:#888">아직 없습니다.</small>';}
  // ---------- 다른 관점의 마당 ----------
- const VIEW_TYPES=['🧭 차근차근 현실형','💡 새로운 길 탐색형','🫶 마음 먼저 공감형','🔭 멀리 보는 큰그림형','🧩 원인을 찾는 분석형','🌿 천천히 기다리는형','🎈 유쾌하게 전환형','🛠️ 바로 해보는 실천형'];
- const LIFE_REL=['혼자 지내는 사람','친구·동료','연인·부부','엄마 또는 아빠','아들과 딸','한부모 가족','조부모와 손주','형제·자매','입양·재혼 가족','돌봄을 주고받는 사이','가족처럼 가까운 사이'];
+ const VIEW_TYPES0=['🧭 차근차근 현실형','💡 새로운 길 탐색형','🫶 마음 먼저 공감형','🔭 멀리 보는 큰그림형','🧩 원인을 찾는 분석형','🌿 천천히 기다리는형','🎈 유쾌하게 전환형','🛠️ 바로 해보는 실천형'];
+ const LIFE_REL0=['혼자 지내는 사람','친구·동료','연인·부부','엄마 또는 아빠','아들과 딸','한부모 가족','조부모와 손주','형제·자매','입양·재혼 가족','돌봄을 주고받는 사이','가족처럼 가까운 사이'];
+ const VIEW_TYPES=LANG!=='ko'?VIEW_TYPES0:['🫶 마음을 먼저 들어 주는 편','🧭 차근차근 정리하는 편','💡 새로운 방법을 찾아보는 편','🛠️ 일단 해 보는 편','🌿 천천히 기다리는 편','✏️ 직접 입력'];
+ const LIFE_REL=LANG!=='ko'?LIFE_REL0:['👪 가족','💛 연인·배우자','🧑‍🤝‍🧑 친구','🤝 이웃·동료','🙂 밝히지 않을래요','✏️ 직접 입력'];
  const VIEW_LINES={
   '🧭 차근차근 현실형':'한꺼번에 결론 내리지 않고, 지금 바꿀 수 있는 가장 작은 일부터 적어 보면 어떨까요?',
   '💡 새로운 길 탐색형':'늘 하던 선택 말고도 세 번째 방법이 있을지 함께 상상해 보고 싶어요.',
@@ -1941,16 +1971,23 @@ window.Town=(function(){
   '🧩 원인을 찾는 분석형':'반복해서 힘들어지는 순간과 덜 힘든 순간의 차이를 하나씩 살펴보면 실마리가 생길 수 있어요.',
   '🌿 천천히 기다리는형':'지금 바로 답을 정하지 않아도 괜찮아요. 마음이 편해지는 쪽을 며칠 지켜봐도 좋겠어요.',
   '🎈 유쾌하게 전환형':'부담을 절반으로 줄인 아주 작은 시험판을 만들어 보면 의외로 답이 보일지도 몰라요.',
-  '🛠️ 바로 해보는 실천형':'오늘 10분 안에 해 볼 수 있는 행동 하나를 고르고, 해 본 뒤 느낌을 다시 확인해 볼 것 같아요.'};
+  '🛠️ 바로 해보는 실천형':'오늘 10분 안에 해 볼 수 있는 행동 하나를 고르고, 해 본 뒤 느낌을 다시 확인해 볼 것 같아요.',
+  '🫶 마음을 먼저 들어 주는 편':'무엇을 해야 할지보다, 그동안 어떤 마음이 가장 힘들었는지 먼저 듣고 싶어요.',
+  '🧭 차근차근 정리하는 편':'한꺼번에 결론 내리지 않고, 지금 바꿀 수 있는 가장 작은 일부터 적어 보면 어떨까요?',
+  '💡 새로운 방법을 찾아보는 편':'늘 하던 선택 말고도 세 번째 방법이 있을지 함께 상상해 보고 싶어요.',
+  '🛠️ 일단 해 보는 편':'오늘 10분 안에 해 볼 수 있는 행동 하나를 고르고, 해 본 뒤 느낌을 다시 확인해 볼 것 같아요.',
+  '🌿 천천히 기다리는 편':'지금 바로 답을 정하지 않아도 괜찮아요. 마음이 편해지는 쪽을 며칠 지켜봐도 좋겠어요.'};
  let yard={view:VIEW_TYPES[2],rel:LIFE_REL[0],posts:[]};
  try{yard=Object.assign(yard,JSON.parse(localStorage.getItem('mv_yard')||'{}'));}catch(e){}
+ if(!VIEW_TYPES.includes(yard.view))yard.view=VIEW_TYPES[0];if(!LIFE_REL.includes(yard.rel))yard.rel=LANG==='ko'?LIFE_REL[4]:LIFE_REL[0];
+ const yardMe=k=>{const v=yard[k],o=yard[k+'Other'];return v==='✏️ 직접 입력'&&o?'✏️ '+o:v;};
  const yardEsc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function yardSave(){try{localStorage.setItem('mv_yard',JSON.stringify(yard));}catch(e){}}
- function yardChips(){[['view-types',VIEW_TYPES,'view'],['life-rel',LIFE_REL,'rel']].forEach(([id,list,key])=>{const e=$(id);if(!e)return;e.innerHTML='';list.forEach(x=>{const b=document.createElement('button');b.textContent=x;b.className=yard[key]===x?'on':'';b.onclick=()=>{yard[key]=x;yardSave();yardChips();};e.appendChild(b);});});}
- function yardRender(){const e=$('yard-list');if(!e)return;const demo=(LANG!=='ko'&&X.demo)?X.demo:[{id:'d1',view:'🧭 차근차근 현실형',rel:'친구·동료',worry:'가까운 사람에게 서운한 마음을 어떻게 꺼내야 할까요?',answers:[{view:'🫶 마음 먼저 공감형',rel:'가족처럼 가까운 사이',text:'저라면 해결책보다 “우리 사이가 소중해서 조심스럽다”는 말부터 꺼낼 것 같아요.'}]},{id:'d2',view:'🌿 천천히 기다리는형',rel:'엄마 또는 아빠',worry:'자녀가 속마음을 잘 꺼내지 않을 때 어떻게 기다려 주면 좋을까요?',answers:[{view:'💡 새로운 길 탐색형',rel:'아들과 딸',text:'마주 앉아 묻기보다 같이 걷거나 무언가 만들 때 제 이야기를 먼저 조금 꺼내면 편했어요.'}]}],posts=[...yard.posts].reverse().concat(demo);e.innerHTML=posts.map(p=>`<div class="streak" style="margin:10px 0;padding:14px;background:#fff;border:1px solid #e8e0d5;border-radius:14px"><small><b>${yardEsc(MVT(p.view))}</b> · ${yardEsc(MVT(p.rel))}</small><p style="font-size:16px;line-height:1.55;margin:8px 0"><b>${yardEsc(MVT(p.worry))}</b></p><div>${(p.answers||[]).map(a=>`<p style="margin:7px 0;padding:9px;background:#f5f7f2;border-radius:10px"><small>${yardEsc(MVT(a.view))} · ${yardEsc(MVT(a.rel))}</small><br>${yardEsc(MVT(a.text))}</p>`).join('')}</div><div class="gm-row" style="margin-top:8px"><button class="yard-view" data-id="${yardEsc(p.id)}">다른 관점 한 번 듣기</button></div><textarea class="tgin yard-answer" data-id="${yardEsc(p.id)}" maxlength="400" placeholder="내 경험과 관점으로 다정하게 답해 주세요."></textarea><button class="yard-reply" data-id="${yardEsc(p.id)}">내 관점으로 답하기</button></div>`).join('');
-  e.querySelectorAll('.yard-view').forEach(b=>b.onclick=()=>{const p=yard.posts.find(x=>x.id===b.dataset.id);if(!p){Town.toast('예시 고민에는 아래 칸에서 직접 답해 볼 수 있어요');return;}const choices=VIEW_TYPES.filter(x=>x!==p.view),v=choices[(p.answers.length+p.worry.length)%choices.length];p.answers.push({view:v,rel:LIFE_REL[(p.answers.length*3+p.worry.length)%LIFE_REL.length],text:VIEW_LINES[v]});yardSave();yardRender();});
-  e.querySelectorAll('.yard-reply').forEach(b=>b.onclick=()=>{const input=e.querySelector(`.yard-answer[data-id="${b.dataset.id}"]`),text=input&&input.value.trim();if(!text){Town.toast('한 줄만 적어도 괜찮아요');return;}let p=yard.posts.find(x=>x.id===b.dataset.id);if(!p){const d=demo.find(x=>x.id===b.dataset.id);p={id:'shared-'+Date.now(),view:d.view,rel:d.rel,worry:d.worry,answers:[...d.answers]};yard.posts.push(p);}p.answers.push({view:yard.view,rel:yard.rel,text});yardSave();addXP(8,'다른 관점으로 답하기');yardRender();});}
- $('yard-post').onclick=()=>{const text=$('yard-worry').value.trim();if(!text){Town.toast('궁금한 일을 먼저 적어 주세요');return;}yard.posts.push({id:'p'+Date.now(),view:yard.view,rel:yard.rel,worry:text,answers:[]});$('yard-worry').value='';yardSave();yardRender();Town.toast('이웃들에게 고민을 남겼습니다');};
+ function yardChips(){[['view-types',VIEW_TYPES,'view'],['life-rel',LIFE_REL,'rel']].forEach(([id,list,key])=>{const e=$(id);if(!e)return;e.innerHTML='';list.forEach(x=>{const b=document.createElement('button');b.textContent=x;b.className=yard[key]===x?'on':'';b.onclick=()=>{yard[key]=x;yardSave();yardChips();};e.appendChild(b);});});[['view-other','view'],['life-other','rel']].forEach(([id,key])=>{const i=$(id);if(!i)return;i.hidden=yard[key]!=='✏️ 직접 입력';i.value=yard[key+'Other']||'';i.oninput=()=>{yard[key+'Other']=i.value.trim();yardSave();};});}
+ function yardRender(){const e=$('yard-list');if(!e)return;const demo=(LANG!=='ko'&&X.demo)?X.demo:[{id:'d1',view:'🧭 차근차근 정리하는 편',rel:'🧑‍🤝‍🧑 친구',worry:'가까운 사람에게 서운한 마음을 어떻게 꺼내야 할까요?',answers:[{view:'🫶 마음을 먼저 들어 주는 편',rel:'👪 가족',text:'저라면 해결책보다 “우리 사이가 소중해서 조심스럽다”는 말부터 꺼낼 것 같아요.'}]},{id:'d2',view:'🌿 천천히 기다리는 편',rel:'👪 가족',worry:'가까운 사람이 속마음을 잘 꺼내지 않을 때 어떻게 기다려 주면 좋을까요?',answers:[{view:'💡 새로운 방법을 찾아보는 편',rel:'🙂 밝히지 않을래요',text:'마주 앉아 묻기보다 같이 걷거나 무언가 만들 때 제 이야기를 먼저 조금 꺼내면 편했어요.'}]}],posts=[...yard.posts].reverse().concat(demo);e.innerHTML=posts.map(p=>`<div class="streak" style="margin:10px 0;padding:14px;background:#fff;border:1px solid #e8e0d5;border-radius:14px"><small><b>${yardEsc(MVT(p.view))}</b> · ${yardEsc(MVT(p.rel))}</small><p style="font-size:16px;line-height:1.55;margin:8px 0"><b>${yardEsc(MVT(p.worry))}</b></p><div>${(p.answers||[]).map(a=>`<p style="margin:7px 0;padding:9px;background:#f5f7f2;border-radius:10px"><small>${yardEsc(MVT(a.view))} · ${yardEsc(MVT(a.rel))}</small><br>${yardEsc(MVT(a.text))}</p>`).join('')}</div><div class="gm-row" style="margin-top:8px"><button class="yard-view" data-id="${yardEsc(p.id)}">다른 관점 한 번 듣기</button></div><textarea class="tgin yard-answer" data-id="${yardEsc(p.id)}" maxlength="400" placeholder="내 경험을 나누듯 다정하게 적어 볼까요?"></textarea><button class="yard-reply" data-id="${yardEsc(p.id)}">내 관점으로 답하기</button></div>`).join('');
+  e.querySelectorAll('.yard-view').forEach(b=>b.onclick=()=>{const p=yard.posts.find(x=>x.id===b.dataset.id);if(!p){Town.toast('예시 고민에는 아래 칸에서 직접 답해 볼 수 있어요');return;}const choices=VIEW_TYPES.filter(x=>x!==p.view&&VIEW_LINES[x]),v=choices[(p.answers.length+p.worry.length)%choices.length],rels=LIFE_REL.filter(x=>x!=='✏️ 직접 입력');p.answers.push({view:v,rel:rels[(p.answers.length*3+p.worry.length)%rels.length],text:VIEW_LINES[v]});yardSave();yardRender();});
+  e.querySelectorAll('.yard-reply').forEach(b=>b.onclick=()=>{const input=e.querySelector(`.yard-answer[data-id="${b.dataset.id}"]`),text=input&&input.value.trim();if(!text){Town.toast('한 줄만 적어도 괜찮아요');return;}let p=yard.posts.find(x=>x.id===b.dataset.id);if(!p){const d=demo.find(x=>x.id===b.dataset.id);p={id:'shared-'+Date.now(),view:d.view,rel:d.rel,worry:d.worry,answers:[...d.answers]};yard.posts.push(p);}p.answers.push({view:yardMe('view'),rel:yardMe('rel'),text});yardSave();addXP(8,'다른 관점으로 답하기');yardRender();});}
+ $('yard-post').onclick=()=>{const text=$('yard-worry').value.trim();if(!text){Town.toast('궁금한 일을 한 줄 먼저 적어 볼까요?');return;}yard.posts.push({id:'p'+Date.now(),view:yardMe('view'),rel:yardMe('rel'),worry:text,answers:[]});$('yard-worry').value='';yardSave();yardRender();Town.toast('이웃들에게 고민을 남겼습니다');};
  $('tg-big').onclick=()=>{document.body.classList.toggle('big');try{localStorage.setItem('mv_big',document.body.classList.contains('big')?'1':'');}catch(e){}};
  try{if(localStorage.getItem('mv_big'))document.body.classList.add('big');}catch(e){}
  tgRender();tgList();yardChips();yardRender();
