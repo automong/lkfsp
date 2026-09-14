@@ -273,7 +273,8 @@ html.mob #townhud:not(.open) #dex,html.mob #townhud:not(.open) #tok{display:none
 #guide .gopt{justify-content:center!important;gap:10px!important}
 .vsw-row{display:flex;justify-content:flex-end;margin:6px 0 8px}
 #v-switch{border:0;background:none;padding:2px 4px;font:inherit;font-size:12px;color:#5c6e6b;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:0!important}
-html.mob .vsw-row{margin:4px 0 0}
+html.mob aside{position:relative}
+html.mob .vsw-row{position:absolute;right:12px;top:46px;margin:0}
 </style>
 <script>/**
  * @license
@@ -1797,7 +1798,7 @@ window.Town=(function(){
   set('t-easy',EN.ui.easy);set('t-free',EN.ui.free);set('t-text',EN.ui.textLabel);$('btn-sample').textContent=EN.ui.btnSample;$('btn-ghost').textContent=EN.ui.btnGhost;$('btn-prof').textContent=EN.ui.btnProf;set('t-emo',EN.ui.emoLabel);set('t-want',EN.ui.wantLabel);$('want').placeholder=EN.ui.wantPh;$('text').placeholder=X.onelinePh;$('save').textContent=EN.ui.save;$('skip').textContent=EN.ui.skip;set('t-ph',EN.ui.promptsH);
   $('townname').innerHTML='🏘️ 마음의 마을<br><span class="gb-en">Room to Breathe</span>';set('t-keys',EN.ui.townKeys);set('t-legend',EN.ui.legend);$('snap').textContent=EN.ui.snap;$('gif').textContent=EN.ui.gif;$('export').textContent=EN.ui.export;$('import').parentElement.firstChild.textContent=EN.ui.import;set('t-builder',EN.ui.builder);
   set('t-galh',EN.ui.galH);set('t-galsub',EN.ui.galSub);$('galhtml').textContent=EN.ui.galBtn;set('t-simh',EN.ui.simH);set('t-simsub',EN.ui.simSub);set('t-sim1h',EN.ui.sim1H);set('t-sim1p',EN.ui.sim1P);$('sim-town').textContent=EN.ui.sim1B;$('sim-person').textContent=EN.ui.simPerson;$('sim-back').textContent=EN.ui.simBack;set('t-sim2h',EN.ui.sim2H);set('t-sim2p',EN.ui.sim2P);$('sim-people').textContent=EN.ui.sim2B;
-  set('t-gbrand','마음의 마을<br><span class="gb-en">Room to Breathe</span>');set('t-view','🖥️ '+X.viewLabel);$('v-m').textContent=X.viewMobile;$('v-p').textContent=X.viewPC;set('t-gh',EN.ui.guideH);set('t-gp1',EN.ui.guideP1);set('t-g1',EN.ui.g1);set('t-g2',EN.ui.g2);set('t-g3',EN.ui.g3);set('t-gafter',EN.ui.guideAfter);set('t-gnote',EN.ui.guideNote);$('guide-go').textContent=EN.ui.guideGo;
+  set('t-gbrand','마음의 마을<br><span class="gb-en">Room to Breathe</span>');set('t-gh',EN.ui.guideH);set('t-gp1',EN.ui.guideP1);set('t-g1',EN.ui.g1);set('t-g2',EN.ui.g2);set('t-g3',EN.ui.g3);set('t-gafter',EN.ui.guideAfter);set('t-gnote',EN.ui.guideNote);$('guide-go').textContent=EN.ui.guideGo;
   set('t-obtag',EN.ui.obTag);set('t-obh',EN.ui.obH);set('t-obsub',X.obsubFix);set('t-obg',EN.ui.obG);set('t-oba',EN.ui.obA);set('t-obk',EN.ui.obK);set('t-obp',EN.ui.obP);set('t-obpsub',EN.ui.obPsub);$('ob-go').textContent=EN.ui.obGo;$('ob-skip').textContent=EN.ui.obSkip;
   $('asktext').placeholder=EN.ui.askPh;$('askcopy').textContent=EN.ui.askCopy;$('askclose').textContent=EN.ui.askClose;set('t-asknote',EN.ui.askNote);set('t-kbd',EN.ui.kbd);}
  const pickLang=v=>{try{localStorage.setItem('mv_lang',v);}catch(e){}location.reload();};$('lang').onchange=e=>pickLang(e.target.value);{const g=$('langsel-g');if(g)g.onchange=e=>pickLang(e.target.value);}
@@ -1989,18 +1990,21 @@ document.getElementById('fb-mail').onclick=function(){if(!document.getElementByI
    [].forEach.call(rules,function(r){if(r.type!==4)return;var mt=r.media.mediaText;var mm=mt.match(/max-width:\s*(\d+)px/);if(!mm||+mm[1]<600||/min-width/.test(mt))return;
     [].forEach.call(r.cssRules,function(cr){if(!cr.selectorText)return;var sel=cr.selectorText.split(',').map(function(s){s=s.trim();if(/^html\b/.test(s))return 'html.force-m'+s.slice(4);if(/^body\b/.test(s))return 'html.force-m body'+s.slice(4);if(/^:root\b/.test(s))return 'html.force-m';return 'html.force-m '+s}).join(',');out.push(sel+'{'+cr.style.cssText+'}')})})});
   var st=document.createElement('style');st.id='force-m-css';st.textContent=out.join('\n');document.head.appendChild(st);}
+ function tabletMid(){try{if(localStorage.getItem('mv_view_manual'))return false;var coarse=matchMedia('(pointer:coarse)').matches;var w=screen.width,hh=screen.height,land=matchMedia('(orientation:landscape)').matches,dw=land?Math.max(w,hh):Math.min(w,hh);return coarse&&dw>=821&&dw<=1100;}catch(e){return false}}
+ addEventListener('orientationchange',function(){setTimeout(apply,250)});
  function apply(){
   var html=document.documentElement,vp=document.querySelector('meta[name=viewport]');
   html.classList.remove('force-m');
   if(cur==='mobile'&&!narrow){forceMobileRules();html.classList.add('force-m');}
-  if(vp){vp.setAttribute('content',(cur==='pc'&&narrow)?'width=1280':'width=device-width,initial-scale=1,viewport-fit=cover');}
+  if(vp){var vc='width=device-width,initial-scale=1,viewport-fit=cover';if(cur==='pc'&&narrow)vc='width=1280';else if(tabletMid())vc='width=820,viewport-fit=cover';vp.setAttribute('content',vc);}
   mark();try{window.Town&&Town.resize&&setTimeout(function(){Town.resize()},60)}catch(e){}
  }
  document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.viewseg button');if(!b)return;cur=b.dataset.view;try{localStorage.setItem(KEY,cur);localStorage.setItem('mv_view_manual','1')}catch(err){}apply();});
  var PCL={"ko": "💻 PC 화면으로", "en": "💻 PC view", "ja": "💻 PC表示", "zh-CN": "💻 电脑版", "zh-TW": "💻 電腦版", "vi": "💻 Giao diện PC", "es": "💻 Vista PC", "ar": "💻 عرض الحاسوب", "fr": "💻 Vue ordinateur", "de": "💻 PC-Ansicht", "pt": "💻 Versão PC", "ru": "💻 Версия для ПК", "it": "💻 Vista PC", "id": "💻 Tampilan PC", "th": "💻 มุมมอง PC", "hi": "💻 PC व्यू", "tr": "💻 PC görünümü"},MBL={"ko": "📱 모바일 화면으로", "en": "📱 Mobile view", "ja": "📱 モバイル表示", "zh-CN": "📱 手机版", "zh-TW": "📱 手機版", "vi": "📱 Giao diện di động", "es": "📱 Vista móvil", "ar": "📱 عرض الهاتف", "fr": "📱 Vue mobile", "de": "📱 Mobilansicht", "pt": "📱 Versão móvel", "ru": "📱 Мобильная версия", "it": "📱 Vista mobile", "id": "📱 Tampilan seluler", "th": "📱 มุมมองมือถือ", "hi": "📱 मोबाइल व्यू", "tr": "📱 Mobil görünüm"};
- function swLabel(){var s=document.getElementById('v-switch');if(!s)return;var L=document.documentElement.lang||'ko';s.textContent=cur==='mobile'?(PCL[L]||PCL.en):(MBL[L]||MBL.en);}
- document.addEventListener('click',function(e){var s=e.target.closest&&e.target.closest('#v-switch');if(!s)return;cur=cur==='mobile'?'pc':'mobile';try{localStorage.setItem(KEY,cur);localStorage.setItem('mv_view_manual','1')}catch(err){}apply();swLabel();});
- document.addEventListener('DOMContentLoaded',swLabel);setTimeout(swLabel,300);
+ function isMobLayout(){var H=document.documentElement;return H.classList.contains('mob')||H.classList.contains('force-m');}
+ function swLabel(){var s=document.getElementById('v-switch');if(!s)return;var L=document.documentElement.lang||'ko';s.textContent=isMobLayout()?(PCL[L]||PCL.en):(MBL[L]||MBL.en);}
+ document.addEventListener('click',function(e){var s=e.target.closest&&e.target.closest('#v-switch');if(!s)return;cur=isMobLayout()?'pc':'mobile';try{localStorage.setItem(KEY,cur);localStorage.setItem('mv_view_manual','1')}catch(err){}apply();setTimeout(swLabel,120);});
+ document.addEventListener('DOMContentLoaded',swLabel);setTimeout(swLabel,300);setTimeout(swLabel,1200);addEventListener('resize',function(){setTimeout(swLabel,100)});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
 })();
 </script><script>/* PC 한 화면 맞춤 보정 (2026-09-14) */
