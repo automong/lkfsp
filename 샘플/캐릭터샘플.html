@@ -1,0 +1,253 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>마음의 마을 · 캐릭터 샘플 비교</title>
+<style>
+ :root{--bg:#f6f7fb;--card:#fff;--ink:#22303f;--sub:#6b7a8d;--line:#e4e9f0;--pick:#2f6df6}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Apple SD Gothic Neo",sans-serif}
+ header{padding:22px 16px 6px;text-align:center}
+ h1{font-size:20px;margin:0 0 6px}
+ header p{margin:0;color:var(--sub);font-size:14px}
+ .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;padding:18px 16px 40px;max-width:1180px;margin:0 auto}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;width:340px;max-width:100%}
+ .card h2{font-size:16px;margin:2px 0 4px}
+ .card .tag{font-size:12px;color:var(--sub);margin-bottom:10px}
+ canvas{width:100%;height:240px;border-radius:12px;background:#dfeccf;display:block}
+ ul{margin:10px 0 0;padding-left:18px;font-size:13px;color:var(--sub);line-height:1.7}
+ .good{color:#1f7a44}.bad{color:#b1442f}
+ .prompt{margin-top:10px;font-size:12px;background:#f2f5fa;border-radius:10px;padding:10px;white-space:pre-wrap;line-height:1.6}
+ button{margin-top:8px;width:100%;padding:9px;border:0;border-radius:10px;background:var(--pick);color:#fff;font-size:14px;cursor:pointer}
+</style></head><body>
+<header><h1>마음의 마을 · 캐릭터 샘플 비교</h1>
+<p>같은 여우를 세 가지 방식으로 만들어 걷게 했습니다. 가까이에서 보려면 화면을 드래그하세요.</p></header>
+<div class="wrap">
+ <div class="card"><h2>지금 방식 · 이모지 납작 그림</h2><div class="tag">현재 게임에 들어가 있는 모습</div>
+  <canvas id="c0"></canvas>
+  <ul><li class="bad">종이 인형처럼 납작합니다.</li><li class="bad">방향을 바꿀 때 좌우로 뒤집혀 툭 끊깁니다.</li><li class="bad">다리가 없어 미끄러지듯 이동합니다.</li></ul></div>
+
+ <div class="card"><h2>안 A · 그림 스프라이트</h2><div class="tag">ChatGPT로 그림을 뽑아 넣는 방식</div>
+  <canvas id="c1"></canvas>
+  <ul><li class="good">그림체를 마음대로 정합니다. 굿즈·인스타툰에 그대로 씁니다.</li><li class="good">몸통과 다리가 그림 안에 있어 통통합니다.</li><li class="bad">동물 한 종마다 그림 4장(앞·뒤·옆·앉기)이 필요합니다.</li></ul>
+  <div class="prompt" id="p1"></div><button onclick="cp('p1',this)">프롬프트 복사</button></div>
+
+ <div class="card"><h2>안 B · 코드로 만든 3D 동물</h2><div class="tag">그림 파일 없이 도형을 쌓는 방식</div>
+  <canvas id="c2"></canvas>
+  <ul><li class="good">어느 방향에서 봐도 입체이고 다리가 실제로 움직입니다.</li><li class="good">색과 크기를 코드로 바꿔 25종을 바로 만듭니다.</li><li class="bad">그림체는 단순한 둥근 도형입니다.</li></ul></div>
+<div class="card"><h2>안 C · 이모지 얼굴 + 3D 몸통</h2><div class="tag">지금 얼굴을 그대로 두고 몸만 만드는 방식</div>
+  <canvas id="c3"></canvas>
+  <ul><li class="good">지금 이모지 얼굴을 그대로 씁니다. 25종을 바로 만듭니다.</li><li class="good">몸통과 네 다리가 있어 통통하고, 걸을 때 다리가 움직입니다.</li><li class="bad">얼굴만 이모지라 몸과 그림체가 조금 다릅니다.</li></ul></div>
+</div>
+<header style="padding-top:6px"><h1>두 발로 걷는 동물 · 4종</h1>
+<p>사람처럼 서서 걷습니다. 귀·주둥이·꼬리 모양으로 무슨 동물인지 알아보게 만들었습니다.</p></header>
+<div class="wrap">
+ <div class="card"><h2>🦊 여우</h2><div class="tag">뾰족한 귀, 흰 끝 꼬리</div><canvas id="d1"></canvas></div>
+ <div class="card"><h2>🐰 토끼</h2><div class="tag">긴 귀, 동그란 꼬리</div><canvas id="d2"></canvas></div>
+ <div class="card"><h2>🐻 곰</h2><div class="tag">둥근 귀, 큰 몸</div><canvas id="d3"></canvas></div>
+ <div class="card"><h2>🐢 거북</h2><div class="tag">등껍질, 짧은 팔다리</div><canvas id="d4"></canvas></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const PROMPT=`귀여운 여우 캐릭터 한 마리. 옆모습 전신, 걷는 자세.
+2D 플랫 일러스트, 굵은 외곽선 없음, 파스텔 주황, 부드러운 둥근 몸.
+정면을 향한 작은 눈 두 개와 점 코, 표정은 편안함.
+배경 완전 투명(PNG), 캐릭터만, 그림자 없음, 정사각형 1024px.
+같은 화풍으로 앞모습·뒷모습·앉은 모습도 각각 1장씩.`;
+document.getElementById('p1').textContent=PROMPT;
+function cp(id,b){navigator.clipboard.writeText(document.getElementById(id).textContent);b.textContent='복사했어요';setTimeout(()=>b.textContent='프롬프트 복사',1200);}
+
+function stage(cv){const r=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});r.setPixelRatio(Math.min(2,devicePixelRatio));
+ const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(42,1,.1,100);cam.position.set(0,1.5,5.2);cam.lookAt(0,.75,0);
+ sc.add(new THREE.HemisphereLight(0xffffff,0x9fb98a,1.05));const d=new THREE.DirectionalLight(0xfff3dd,.65);d.position.set(3,6,4);sc.add(d);
+ const g=new THREE.Mesh(new THREE.CircleGeometry(9,32),new THREE.MeshStandardMaterial({color:0xcfe3b4}));g.rotation.x=-Math.PI/2;sc.add(g);
+ function size(){const w=cv.clientWidth,h=cv.clientHeight;r.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+ size();addEventListener('resize',size);return {sc,cam,r,size};}
+
+/* 지금 방식: 이모지 납작 스프라이트 */
+function emojiSprite(e){const cv=document.createElement('canvas');cv.width=cv.height=256;const c=cv.getContext('2d');
+ c.font='200px "Apple Color Emoji",sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(e,128,136);
+ const t=new THREE.CanvasTexture(cv);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true}));s.scale.set(1.6,1.6,1);s.center.set(.5,.06);return s;}
+
+/* 안 A: 손그림풍 스프라이트(그림 파일 자리) */
+function drawnFox(){const cv=document.createElement('canvas');cv.width=cv.height=512;const c=cv.getContext('2d');
+ const O='#e8894a',L='#f4ad79',W='#fdf3e7',D='#46352f';
+ const el=(x,y,rx,ry,fill,rot)=>{c.save();c.translate(x,y);c.rotate(rot||0);c.beginPath();c.ellipse(0,0,rx,ry,0,0,7);c.fillStyle=fill;c.fill();c.restore();};
+ // 꼬리: 몸 뒤에서 위로 말린 곡선
+ c.save();c.beginPath();c.moveTo(150,330);c.quadraticCurveTo(58,318,72,232);c.quadraticCurveTo(112,268,168,292);c.closePath();c.fillStyle=O;c.fill();c.restore();
+ el(84,244,26,24,W);
+ // 뒷다리 두 개
+ el(178,386,26,17,L,-.06); el(232,392,25,16,L,-.03);
+ // 몸통
+ el(252,332,104,70,O);
+ el(262,362,78,38,W);
+ // 앞다리 두 개
+ el(310,392,25,16,L,.03); el(352,386,24,16,L,.06);
+ // 머리
+ el(372,242,66,60,O);
+ // 귀
+ c.beginPath();c.moveTo(322,208);c.lineTo(344,158);c.lineTo(364,200);c.closePath();c.fillStyle=O;c.fill();
+ c.beginPath();c.moveTo(398,196);c.lineTo(420,154);c.lineTo(430,206);c.closePath();c.fillStyle=O;c.fill();
+ c.beginPath();c.moveTo(332,200);c.lineTo(345,173);c.lineTo(358,197);c.closePath();c.fillStyle='#f6c3a4';c.fill();
+ c.beginPath();c.moveTo(404,196);c.lineTo(418,170);c.lineTo(424,200);c.closePath();c.fillStyle='#f6c3a4';c.fill();
+ // 주둥이와 볼
+ el(400,272,40,28,W);
+ el(342,270,13,9,'#f6b9a2'); 
+ // 눈·코
+ el(352,240,8,9,D); el(396,240,8,9,D);
+ el(356,236,3,3,'#fff'); el(400,236,3,3,'#fff');
+ el(418,266,9,7,D);
+ c.strokeStyle=D;c.lineWidth=3;c.beginPath();c.moveTo(418,272);c.lineTo(418,282);c.moveTo(418,282);c.quadraticCurveTo(410,290,402,282);c.moveTo(418,282);c.quadraticCurveTo(426,290,434,282);c.stroke();
+ const t=new THREE.CanvasTexture(cv);t.minFilter=THREE.LinearFilter;
+ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true}));s.scale.set(2.2,2.2,1);s.center.set(.5,.10);return s;}
+
+/* 안 B: 도형으로 쌓은 3D 동물 */
+function builtFox(){
+ const O=0xe8894a,L=0xf3ae7d,W=0xfdf1e4,D=0x4a3a33;
+ const M=c=>new THREE.MeshStandardMaterial({color:c,roughness:.85});
+ const ball=new THREE.SphereGeometry(1,20,14),root=new THREE.Group(),pose=new THREE.Group(),body=new THREE.Group();
+ root.add(pose);pose.add(body);
+ const put=(p,g,m,x,y,z,sx,sy,sz)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);p.add(o);return o;};
+ put(body,ball,M(O),0,.62,0,.52,.40,.62);            // 몸통
+ put(body,ball,M(W),0,.50,.06,.40,.28,.50);          // 배
+ const head=new THREE.Group();head.position.set(0,.98,.44);body.add(head);
+ put(head,ball,M(O),0,0,0,.34,.32,.32);
+ put(head,ball,M(W),0,-.07,.24,.20,.15,.16);
+ put(head,ball,M(D),.13,.04,.26,.045,.055,.04);
+ put(head,ball,M(D),-.13,.04,.26,.045,.055,.04);
+ put(head,ball,M(D),0,-.06,.39,.05,.04,.04);
+ const ear=new THREE.ConeGeometry(.13,.26,12);
+ [-1,1].forEach(s=>{const e=new THREE.Mesh(ear,M(O));e.position.set(s*.19,.29,-.02);e.rotation.z=s*-.22;head.add(e);});
+ const tail=new THREE.Group();tail.position.set(0,.66,-.56);body.add(tail);
+ put(tail,ball,M(O),0,.04,-.16,.19,.19,.30);put(tail,ball,M(W),0,.10,-.38,.14,.14,.16);
+ const legs=[];[[-.26,.40],[.26,.40],[-.26,-.34],[.26,-.34]].forEach(([x,z])=>{
+  const h=new THREE.Group();h.position.set(x,.44,z);pose.add(h);
+  put(h,ball,M(L),0,-.16,0,.11,.20,.12);legs.push(h);});
+ root.userData={pose,body,tail,head,legs};root.scale.setScalar(1.25);return root;}
+
+
+/* 안 C: 이모지 얼굴 + 코드 몸통 */
+function emojiBody(e,color){
+ const M=c=>new THREE.MeshStandardMaterial({color:c,roughness:.9});
+ const ball=new THREE.SphereGeometry(1,20,14),root=new THREE.Group(),pose=new THREE.Group(),body=new THREE.Group();
+ root.add(pose);pose.add(body);
+ const put=(p,m,x,y,z,sx,sy,sz)=>{const o=new THREE.Mesh(ball,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);p.add(o);return o;};
+ const mat=M(color),light=M(new THREE.Color(color).lerp(new THREE.Color(0xffffff),.35).getHex());
+ put(body,mat,0,.60,0,.46,.38,.54);
+ put(body,light,0,.50,.10,.34,.26,.42);
+ const legs=[];[[-.22,.32],[.22,.32],[-.22,-.28],[.22,-.28]].forEach(([x,z])=>{
+  const h=new THREE.Group();h.position.set(x,.42,z);pose.add(h);put(h,light,0,-.16,0,.10,.19,.11);legs.push(h);});
+ const tail=new THREE.Group();tail.position.set(0,.64,-.50);body.add(tail);put(tail,light,0,.06,-.14,.14,.14,.22);
+ const cv=document.createElement('canvas');cv.width=cv.height=256;const c=cv.getContext('2d');
+ c.font='200px "Apple Color Emoji",sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(e,128,136);
+ const tx=new THREE.CanvasTexture(cv);
+ const head=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthWrite:false}));
+ head.scale.set(.95,.95,1);head.position.set(0,1.02,.16);body.add(head);
+ root.userData={pose,body,tail,head,legs};root.scale.setScalar(1.3);return root;}
+
+
+/* 두 발로 걷는 동물: 종마다 귀·주둥이·꼬리·등껍질을 바꿔 알아보게 만든다 */
+const SPECIES={
+ fox   :{body:0xe8894a, belly:0xfdf1e4, ear:'point', earC:0xe8894a, earIn:0x46352f, tail:'bushy', muzzle:.95, size:1.00},
+ rabbit:{body:0xf0f0f4, belly:0xffffff, ear:'long',  earC:0xf0f0f4, earIn:0xf6bcc6, tail:'puff',  muzzle:.85, size:.94},
+ bear  :{body:0x9c6a45, belly:0xd9b48c, ear:'round', earC:0x9c6a45, earIn:0xc79a76, tail:'none',  muzzle:1.05,size:1.12},
+ turtle:{body:0x74b06a, belly:0xd8e8a8, ear:'none',  earC:0x74b06a, earIn:0x74b06a, tail:'short', muzzle:.90, size:.98, shell:0x6d5136}
+};
+function biped(key){
+ const S=SPECIES[key], M=c=>new THREE.MeshStandardMaterial({color:c,roughness:.85});
+ const ball=new THREE.SphereGeometry(1,22,16);
+ const root=new THREE.Group(), pose=new THREE.Group(), torso=new THREE.Group();
+ root.add(pose); pose.add(torso);
+ const put=(p,m,x,y,z,sx,sy,sz)=>{const o=new THREE.Mesh(ball,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);p.add(o);return o;};
+ const body=M(S.body), belly=M(S.belly), dark=M(0x3f3229), white=M(0xffffff);
+
+ /* 몸통: 아래가 통통한 물방울 */
+ put(torso,body ,0,.80,0,.32,.30,.28);
+ put(torso,belly,0,.76,.13,.22,.22,.19);
+
+ /* 다리 두 개 */
+ const legs=[];[-1,1].forEach(sd=>{
+  const hip=new THREE.Group();hip.position.set(sd*.14,.52,0);pose.add(hip);
+  put(hip,body ,0,-.13,0,.11,.14,.11);
+  put(hip,belly,0,-.26,.06,.13,.08,.17);
+  legs.push(hip);});
+
+ /* 팔 두 개 */
+ const arms=[];[-1,1].forEach(sd=>{
+  const sh=new THREE.Group();sh.position.set(sd*.30,.92,0);torso.add(sh);
+  put(sh,body,0,-.12,0,.09,.13,.09);
+  arms.push(sh);});
+
+ /* 머리 */
+ const head=new THREE.Group();head.position.set(0,1.34,0);torso.add(head);
+ put(head,body,0,0,0,.50,.46,.46);
+ put(head,belly,0,-.13,.36,.22*S.muzzle,.16*S.muzzle,.18*S.muzzle);
+ put(head,dark ,0,-.12,.52,.06,.05,.05);
+ [[-.19],[.19]].forEach(([x])=>{put(head,white,x,.08,.40,.095,.105,.06);put(head,dark,x,.08,.44,.062,.072,.045);put(head,white,x+.025,.115,.47,.026,.028,.02);});
+ [[-.33],[.33]].forEach(([x])=>{const b=put(head,M(0xf6a9a0),x,-.04,.30,.075,.05,.04);b.material.transparent=true;b.material.opacity=.55;});
+
+ /* 귀 */
+ if(S.ear==='point'){[-1,1].forEach(sd=>{
+   const e=new THREE.Mesh(new THREE.ConeGeometry(.14,.30,14),M(S.earC));e.position.set(sd*.26,.46,-.04);e.rotation.z=sd*-.18;head.add(e);
+   const i=new THREE.Mesh(new THREE.ConeGeometry(.08,.18,12),M(S.earIn));i.position.set(sd*.26,.45,.04);i.rotation.z=sd*-.18;head.add(i);});}
+ if(S.ear==='long'){[-1,1].forEach(sd=>{
+   const e=put(head,M(S.earC),sd*.17,.70,-.03,.10,.34,.09);e.rotation.z=sd*-.12;
+   const i=put(head,M(S.earIn),sd*.17,.70,.05,.06,.25,.05);i.rotation.z=sd*-.12;});}
+ if(S.ear==='round'){[-1,1].forEach(sd=>{
+   put(head,M(S.earC),sd*.38,.34,-.03,.15,.15,.10);
+   put(head,M(S.earIn),sd*.38,.34,.05,.09,.09,.06);});}
+
+ /* 등껍질 (거북) */
+ if(S.shell){const sh=put(torso,M(S.shell),0,.88,-.20,.36,.36,.24);
+  put(torso,M(0x8e6a46),0,.88,-.24,.26,.26,.20);}
+
+ /* 꼬리 */
+ const tail=new THREE.Group();tail.position.set(0,.74,-.28);torso.add(tail);
+ if(S.tail==='bushy'){put(tail,M(S.body),0,-.02,-.16,.15,.15,.24);put(tail,M(S.belly),0,-.05,-.34,.10,.10,.10);}
+ if(S.tail==='puff'){put(tail,M(0xffffff),0,0,-.10,.10,.10,.10);}
+ if(S.tail==='short'){put(tail,M(S.body),0,-.02,-.10,.06,.06,.09);}
+
+ root.userData={pose,torso,head,legs,arms,tail};
+ root.scale.setScalar(1.30*S.size);
+ return root;}
+
+function runBiped(id,key){const cv=document.getElementById(id);if(!cv)return;const S=stage(cv),o=biped(key);S.sc.add(o);
+ let t=0,drag=false,lx=0,yaw=.35;
+ cv.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX});
+ addEventListener('pointerup',()=>drag=false);
+ addEventListener('pointermove',e=>{if(drag){yaw+=(e.clientX-lx)*.01;lx=e.clientX}});
+ (function loop(){requestAnimationFrame(loop);t+=.016;
+  const u=o.userData,sway=Math.sin(t*.45);
+  o.position.set(sway*.55,0,0);o.rotation.y=sway*.6;
+  const step=t*4.6;
+  u.legs.forEach((l,i)=>l.rotation.x=Math.sin(step+(i?Math.PI:0))*.55);
+  u.arms.forEach((a,i)=>a.rotation.x=Math.sin(step+(i?0:Math.PI))*.45);
+  u.pose.position.y=Math.abs(Math.sin(step))*.05;
+  u.torso.rotation.z=Math.sin(step)*.05;
+  u.head.rotation.y=Math.sin(t*1.2)*.22;u.head.rotation.z=Math.sin(step)*-.04;
+  u.tail.rotation.y=Math.sin(step*.5)*.25;
+  S.cam.position.set(Math.sin(yaw)*5.6,1.75,Math.cos(yaw)*5.6);S.cam.lookAt(0,1.30,0);
+  S.r.render(S.sc,S.cam);})();}
+
+function run(id,make,mode){const cv=document.getElementById(id),S=stage(cv),o=make();S.sc.add(o);
+ let t=0,drag=false,lx=0,yaw=0;
+ cv.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX});
+ addEventListener('pointerup',()=>drag=false);
+ addEventListener('pointermove',e=>{if(drag){yaw+=(e.clientX-lx)*.01;lx=e.clientX}});
+ (function loop(){requestAnimationFrame(loop);t+=.016;
+  const path=t*.5,R=1.35,x=Math.cos(path)*R,z=Math.sin(path)*R;
+  if(mode==='flat'){o.position.set(x,0,z);o.material.rotation=Math.sin(t*4)*.05;
+   o.scale.x=Math.cos(path)>0?Math.abs(o.scale.x):-Math.abs(o.scale.x);}
+  else if(mode==='drawn'){o.position.set(x,Math.abs(Math.sin(t*4.4))*.05,z);
+   o.material.rotation=Math.sin(t*4.4)*.045;o.scale.x=Math.cos(path)>0?Math.abs(o.scale.x):-Math.abs(o.scale.x);}
+  else{o.position.set(x,0,z);o.rotation.y=-path+Math.PI/2;
+   const u=o.userData;u.body.position.y=Math.abs(Math.sin(t*5))*.045;
+   u.legs.forEach((l,i)=>l.rotation.x=Math.sin(t*5+(i%2?Math.PI:0)+(i>1?.4:0))*.5);
+   u.tail.rotation.y=Math.sin(t*2.4)*.30;if(u.head.isSprite)u.head.position.y=1.02+Math.sin(t*5)*.02;else u.head.rotation.y=Math.sin(t*1.1)*.18;}
+  S.cam.position.set(Math.sin(yaw)*5.2,1.6,Math.cos(yaw)*5.2);S.cam.lookAt(0,.7,0);
+  S.r.render(S.sc,S.cam);})();}
+
+run('c0',()=>emojiSprite('🦊'),'flat');
+run('c1',drawnFox,'drawn');
+run('c2',builtFox,'built');
+run('c3',()=>emojiBody('🦊',0xe8894a),'built');
+runBiped('d1','fox');runBiped('d2','rabbit');runBiped('d3','bear');runBiped('d4','turtle');
+</script></body></html>
