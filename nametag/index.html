@@ -393,13 +393,16 @@ const DB_NAME='nametag', DB_STORE='kv';
 function idbOpen(){ return new Promise((res,rej)=>{ if(!window.indexedDB) return rej(new Error('IndexedDB 없음')); const r=indexedDB.open(DB_NAME,1); r.onupgradeneeded=()=>{ r.result.createObjectStore(DB_STORE); }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error||new Error('open 실패')); r.onblocked=()=>rej(new Error('blocked')); }); }
 function idbGet(keys){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(DB_STORE,'readonly'); const st=tx.objectStore(DB_STORE); const out={}; keys.forEach(k=>{ const q=st.get(k); q.onsuccess=()=>{ out[k]=q.result; }; }); tx.oncomplete=()=>{ db.close(); res(out); }; tx.onerror=()=>{ db.close(); rej(tx.error); }; })); }
 function idbSet(obj){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(DB_STORE,'readwrite'); const st=tx.objectStore(DB_STORE); Object.keys(obj).forEach(k=>{ if(obj[k]===undefined||obj[k]===null) st.delete(k); else st.put(obj[k],k); }); tx.oncomplete=()=>{ db.close(); res(); }; tx.onerror=()=>{ db.close(); rej(tx.error||new Error('tx 실패')); }; tx.onabort=()=>{ db.close(); rej(tx.error||new Error('tx 중단')); }; })); }
-let loadDone=false, bootDone=false, userTouched=false;
+let loadDone=false, bootDone=false, userTouched=false, holdUntilCommit=false;
+/* 직원이 새 내용을 확정했을 때(명단 읽기 성공, 백업 불러오기, 틀 저장 등) 저장을 다시 연다 */
+function commitUser(){ if(holdUntilCommit){ holdUntilCommit=false; loadDone=true; saveFailed=false; updateSaveBadge(); } }
 async function load(){
-  let got=null; try{ got=await idbGet(['main','photo']); }catch(e){ got=null; }
+  let got=null; try{ got=await idbGet(['main','photo','draft']); }catch(e){ got=null; }
+  if(got && typeof got.draft==='string' && got.draft.trim() && !$('pasteBox').value.trim()) $('pasteBox').value=got.draft;
   if(bootDone && ($('pasteBox').value.trim() || document.activeElement===$('pasteBox'))) userTouched=true;
   if(bootDone && userTouched){ // 시간 초과 뒤 직원이 이미 입력한 경우: 물어본 뒤에만 적용
     if(got && got.main && confirm('저장돼 있던 명단·틀을 읽어 왔습니다. 지금 화면 내용을 버리고 저장본을 불러올까요?')){ applyLoaded(got); loadDone=true; fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); toast('저장본을 불러왔습니다'); }
-    else { loadDone=true; persist(); }
+    else { loadDone=false; holdUntilCommit=true; saveFailed=true; updateSaveBadge(); toast('기존 저장본은 그대로 두고, 지금 내용은 명단을 읽거나 틀을 저장하면 그때부터 저장됩니다', 5000); }
     return 'late';
   }
   applyLoaded(got); loadDone=true;
@@ -474,9 +477,9 @@ function renderTplGrid(){
   });
   $('tplCur').textContent='현재: '+state.current;
 }
-function saveTemplate(){ state.templates[state.current]=clone(state.tpl); renderTplGrid(); persist(); toast('「'+state.current+'」 틀에 저장했습니다'); }
+function saveTemplate(){ commitUser(); state.templates[state.current]=clone(state.tpl); renderTplGrid(); persist(); toast('「'+state.current+'」 틀에 저장했습니다'); }
 function okName(n){ n=String(n||'').trim().slice(0,60); if(!n||['__proto__','constructor','prototype'].includes(n)) return null; return n; }
-function saveTemplateAs(){ let n=okName(prompt('새 틀 이름', state.current+' (복사)')); if(!n) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=clone(state.tpl); state.current=n; renderTplGrid(); persist(); }
+function saveTemplateAs(){ commitUser(); let n=okName(prompt('새 틀 이름', state.current+' (복사)')); if(!n) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=clone(state.tpl); state.current=n; renderTplGrid(); persist(); }
 function renameTemplate(){ const n=okName(prompt('바꿀 이름', state.current)); if(!n||n===state.current) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=state.templates[state.current]; delete state.templates[state.current]; state.current=n; renderTplGrid(); persist(); }
 function deleteTemplate(){ if(Object.keys(state.templates).length<=1) return alert('틀은 하나 이상 있어야 합니다.'); if(!confirm('「'+state.current+'」 틀을 지울까요?')) return; delete state.templates[state.current]; state.current=Object.keys(state.templates)[0]; state.tpl=clone(state.templates[state.current]); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }
 function exportTemplate(){ const blob=new Blob([JSON.stringify({name:state.current, template:state.tpl},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='명찰틀_'+state.current.replace(/[\\/:*?"<>|]/g,'_')+'.json'; a.click(); }
@@ -526,7 +529,7 @@ function parseBackup(text){
 }
 function importAll(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let b; try{ b=parseBackup(r.result); }catch(e){ alert('백업을 불러오지 못했습니다: '+e.message+'\n기존 명단과 틀은 그대로 둡니다.'); return; }
   if(!confirm('지금 화면의 명단·틀을 백업 파일 내용으로 바꿉니다.\n백업 내용: '+b.rows.length+'명, 틀 '+Object.keys(b.tpls).length+'개'+(b.photo?', 겹쳐 보기 사진 포함':'')+'\n계속할까요?')) return;
-  state.templates=b.tpls; state.current=b.current; state.tpl=b.tpl; state.data={cols:b.cols, rows:b.rows}; state.map=b.map; state.globals=b.globals; state.headerIndex=b.headerIndex; rawRows=b.raw; state.photo=b.photo; state.headerConfirmed=false;
+  commitUser(); state.templates=b.tpls; state.current=b.current; state.tpl=b.tpl; state.data={cols:b.cols, rows:b.rows}; state.map=b.map; state.globals=b.globals; state.headerIndex=b.headerIndex; rawRows=b.raw; state.photo=b.photo; state.headerConfirmed=false;
   fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); persist(); toast('백업을 불러왔습니다 ('+b.rows.length+'명, 틀 '+Object.keys(b.tpls).length+'개)'); }; r.readAsText(f); $('allFile').value=''; }
 /* 틀 자료형 검증: 외부 파일·옛 저장분을 안전한 값으로 보정한다 */
 function sanitizeTemplate(t){
@@ -594,10 +597,10 @@ function setRows(rows, headerIndex){
   state.headerIndex=hi;
   const built=buildRows(rows, hi);
   state.data=built; state.map=built.rows.length? guessMap(built.cols,built.rows) : {}; state.headerConfirmed=false;
-  afterData(); return true;
+  commitUser(); afterData(); return true;
 }
 function afterData(){ renderMap(); renderLines(); renderTplGrid(); render(); persist(); if(state.data.rows.length) toast(state.data.rows.length+'명을 읽었습니다'); }
-function parsePaste(){ const t=$('pasteBox').value; if(setRows(parseDelimited(t))) { state.rawText=t; persist(); } }
+function parsePaste(){ const t=$('pasteBox').value; if(setRows(parseDelimited(t))) { state.rawText=t; persist(); idbSet({draft:null}).catch(()=>{}); } }
 function clearData(){ state.data={cols:[],rows:[]}; state.map={}; state.rawText=''; rawRows=[]; state.headerIndex=-1; state.headerConfirmed=false; $('pasteBox').value=''; $('sheetRow').style.display='none'; workbook=null; afterData(); clearTimeout(saveTimer); persistNow(); }
 function renderMap(){
   const box=$('mapCard'); const d=state.data; if(!d.rows.length){ box.innerHTML=''; return; }
@@ -616,7 +619,8 @@ function renderMap(){
 }
 function setMap(f,c){ if(c) state.map[f]=c; else delete state.map[f]; renderMap(); renderLines(); render(); persist(); }
 
-$('pasteBox').addEventListener('input',()=>{ userTouched=true; });
+let draftTimer=null;
+$('pasteBox').addEventListener('input',()=>{ userTouched=true; clearTimeout(draftTimer); draftTimer=setTimeout(()=>{ idbSet({draft:$('pasteBox').value||null}).catch(()=>{}); },500); });
 const drop=$('drop');
 drop.onclick=()=>$('xlsFile').click();
 drop.ondragover=e=>{e.preventDefault(); drop.classList.add('over');};
@@ -662,15 +666,18 @@ function readXls(f){
     try{
       if(['csv','tsv','txt'].includes(ext)){ if(setRows(parseDelimited(decodeText(r.result)))){ workbook=null; $('sheetRow').style.display='none'; toast(f.name+' 을(를) 읽었습니다'); } return; }
       if(typeof XLSX==='undefined') return alert('엑셀 읽기 도구를 불러오지 못했습니다. 인터넷 연결을 확인하거나, CSV로 저장해서 넣거나, 명단을 복사해 붙여 넣어 주세요.');
-      workbook=XLSX.read(new Uint8Array(r.result),{type:'array'});
-      const sel=$('sheetSelect'); sel.innerHTML=''; workbook.SheetNames.forEach(n=>{const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o);});
-      const first=workbook.SheetNames.find(n=>XLSX.utils.sheet_to_json(workbook.Sheets[n],{header:1}).length>0)||workbook.SheetNames[0];
-      sel.value=first; if(useSheet(first)) $('sheetRow').style.display= workbook.SheetNames.length>1?'grid':'none';
+      const wb=XLSX.read(new Uint8Array(r.result),{type:'array'});
+      const first=wb.SheetNames.find(n=>XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1}).length>0)||wb.SheetNames[0];
+      if(!setRows(XLSX.utils.sheet_to_json(wb.Sheets[first],{header:1,raw:false,defval:''}))) return; // 취소: 기존 파일·시트 그대로
+      workbook=wb; currentSheet=first;
+      const sel=$('sheetSelect'); sel.innerHTML=''; wb.SheetNames.forEach(n=>{const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o);}); sel.value=first;
+      $('sheetRow').style.display= wb.SheetNames.length>1?'grid':'none'; toast(f.name+' 을(를) 읽었습니다');
     }catch(e){ alert('파일을 읽지 못했습니다. 엑셀에서 「다른 이름으로 저장 → CSV」로 저장해서 다시 넣어 보세요.'); }
   };
   r.readAsArrayBuffer(f);
 }
-$('sheetSelect').onchange=e=>useSheet(e.target.value);
+let currentSheet=null;
+$('sheetSelect').onchange=e=>{ if(useSheet(e.target.value)) currentSheet=e.target.value; else e.target.value=currentSheet; };
 function useSheet(n){ return setRows(XLSX.utils.sheet_to_json(workbook.Sheets[n],{header:1,raw:false,defval:''})); }
 ['기수','행사명'].forEach(k=>{ $('g'+k).oninput=e=>{ state.globals[k]=e.target.value; renderLines(); render(); persist(); }; });
 
@@ -754,7 +761,7 @@ function fillSettingsUI(){
   seg('orientSeg',[['auto','자동'],['portrait','세로'],['landscape','가로']],()=>s.orient,v=>s.orient=v);
   seg('cutSeg',[['full','끝까지 이어진 선'],['mark','모서리 표시만'],['none','없음']],()=>c.style,v=>c.style=v);
   $('g기수').value=state.globals['기수']||''; $('g행사명').value=state.globals['행사명']||'';
-  $('pasteBox').value=state.rawText||'';
+  if(!$('pasteBox').value.trim()) $('pasteBox').value=state.rawText||'';
 }
 function bind(id, path, type){
   $(id).addEventListener(type||'input', e=>{
@@ -1300,6 +1307,7 @@ function setText(i,v){ result.lines[i].text=v; }
 
 /* ---------- 틀로 만들기 ---------- */
 function apply(){
+  commitUser();
   const r=result; const t=baseTemplate(); const mm=r.mm;
   t.size={preset:mm.preset, w:mm.w, h:mm.h, shrink:state.tpl.size.shrink, gap:state.tpl.size.gap, margin:state.tpl.size.margin, orient:'auto'};
   t.design.bg=r.bg; const dark=lum(r.bg)<0.5; t.design.text= r.lines[0]? r.lines[0].color : (dark?'#ffffff':'#111111');
