@@ -1,0 +1,12 @@
+/* 자체 호스팅 글꼴 (구글 폰트·Pretendard 원본, 전체 글리프) */
+@font-face{font-family:'Black Han Sans';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/BlackHanSans-400.woff2) format('woff2');}
+@font-face{font-family:'Do Hyeon';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/DoHyeon-400.woff2) format('woff2');}
+@font-face{font-family:'Gowun Dodum';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/GowunDodum-400.woff2) format('woff2');}
+@font-face{font-family:'Nanum Gothic';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/NanumGothic-400.woff2) format('woff2');}
+@font-face{font-family:'Nanum Gothic';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/NanumGothic-700.woff2) format('woff2');}
+@font-face{font-family:'Nanum Myeongjo';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/NanumMyeongjo-400.woff2) format('woff2');}
+@font-face{font-family:'Nanum Myeongjo';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/NanumMyeongjo-700.woff2) format('woff2');}
+@font-face{font-family:'Noto Sans KR';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/NotoSansKR-400.woff2) format('woff2');}
+@font-face{font-family:'Noto Sans KR';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/NotoSansKR-700.woff2) format('woff2');}
+@font-face{font-family:'Pretendard';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/Pretendard-Regular.woff2) format('woff2');}
+@font-face{font-family:'Pretendard';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/Pretendard-Bold.woff2) format('woff2');}
