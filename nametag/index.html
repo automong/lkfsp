@@ -219,6 +219,8 @@
 
 이름만 한 줄에 하나씩 넣어도 됩니다."></textarea>
       <div class="ctl" style="margin-top:8px"><button class="btn" onclick="parsePaste()">붙여 넣은 명단 읽기</button><button class="btn ghost danger" onclick="clearData()">명단 지우기</button></div>
+      <div class="ctl" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span class="muted">백업</span><button class="btn sm" onclick="exportAll()">⬇ 전체 백업 파일로 저장</button><button class="btn sm" onclick="document.getElementById('allFile').click()">⬆ 백업 불러오기</button><input type="file" id="allFile" accept=".json" style="display:none" onchange="importAll(this.files[0])"></div>
+      <p class="muted" style="margin:6px 0 0">명단·틀·설정을 파일 하나로 저장합니다. 다른 컴퓨터로 옮기거나 저장 공간 경고가 떴을 때 쓰세요.</p>
     </div>
     <div id="mapCard"></div>
     <div class="card">
@@ -385,11 +387,20 @@ let workbook=null, curPage=0, pageCount=0;
 const clone = o => JSON.parse(JSON.stringify(o));
 const $ = id => document.getElementById(id);
 
-function load(){
-  try{ const s=JSON.parse(localStorage.getItem('nametag.v2')||'null'); if(s) state=Object.assign(state,s); }catch(e){}
-  try{ const ph=localStorage.getItem('nametag.photo'); const oldPhoto=state.photo; // 옛 저장본(본체 안의 사진)은 그대로 이어받음
-    if(ph){ const i=ph.indexOf('|'); const ver=ph.slice(0,i), data=ph.slice(i+1); state.photo = (i>0 && ver===state.saveVer)? data : null; }
-    else state.photo = (typeof oldPhoto==='string')? oldPhoto : null; }catch(e){ state.photo=null; }
+/* ---------- 저장소: IndexedDB (본체와 사진을 한 트랜잭션으로) ---------- */
+const DB_NAME='nametag', DB_STORE='kv';
+function idbOpen(){ return new Promise((res,rej)=>{ if(!window.indexedDB) return rej(new Error('IndexedDB 없음')); const r=indexedDB.open(DB_NAME,1); r.onupgradeneeded=()=>{ r.result.createObjectStore(DB_STORE); }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error||new Error('open 실패')); r.onblocked=()=>rej(new Error('blocked')); }); }
+function idbGet(keys){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(DB_STORE,'readonly'); const st=tx.objectStore(DB_STORE); const out={}; keys.forEach(k=>{ const q=st.get(k); q.onsuccess=()=>{ out[k]=q.result; }; }); tx.oncomplete=()=>{ db.close(); res(out); }; tx.onerror=()=>{ db.close(); rej(tx.error); }; })); }
+function idbSet(obj){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(DB_STORE,'readwrite'); const st=tx.objectStore(DB_STORE); Object.keys(obj).forEach(k=>{ if(obj[k]===undefined||obj[k]===null) st.delete(k); else st.put(obj[k],k); }); tx.oncomplete=()=>{ db.close(); res(); }; tx.onerror=()=>{ db.close(); rej(tx.error||new Error('tx 실패')); }; tx.onabort=()=>{ db.close(); rej(tx.error||new Error('tx 중단')); }; })); }
+async function load(){
+  let got=null; try{ got=await idbGet(['main','photo']); }catch(e){ got=null; }
+  if(got && got.main){ state=Object.assign(state, got.main); state.photo=(typeof got.photo==='string')? got.photo : null; }
+  else { // 옛 저장본(localStorage) 이어받기: 한 번만
+    try{ const s=JSON.parse(localStorage.getItem('nametag.v2')||'null'); if(s) state=Object.assign(state,s); }catch(e){}
+    try{ const ph=localStorage.getItem('nametag.photo'); const oldPhoto=state.photo;
+      if(ph){ const i=ph.indexOf('|'); const ver=ph.slice(0,i), data=ph.slice(i+1); state.photo = (i>0 && ver===state.saveVer)? data : null; }
+      else state.photo = (typeof oldPhoto==='string')? oldPhoto : null; }catch(e){ state.photo=null; }
+  }
   if(!state.templates || !Object.keys(state.templates).length) state.templates=presets();
   if(!state.current || !state.templates[state.current]) state.current=Object.keys(state.templates)[0];
   if(!state.tpl) state.tpl=clone(state.templates[state.current]);
@@ -403,24 +414,15 @@ function load(){
 }
 let saveTimer=null;
 let persistWarned=false;
-let saveFailed=false;
+let saveFailed=false, persistChain=Promise.resolve();
 function persistNow(){
-  // 명단·틀(작은 것)과 사진(큰 것)을 따로 저장하되, 같은 버전 번호를 붙여 서로 다른 시점의 것이 섞이지 않게 한다
-  const ver=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-  const main=Object.assign({},state,{photo:undefined, saveVer:ver});
-  let mainOK=false;
-  try{ localStorage.setItem('nametag.v2', JSON.stringify(main)); mainOK=true; }
-  catch(e){
-    // 로고 그림을 빼고 다시 시도
-    try{ const lite=JSON.parse(JSON.stringify(main)); Object.values(lite.templates).forEach(t=>{ if(t.design) t.design.logo=null; }); if(lite.tpl&&lite.tpl.design) lite.tpl.design.logo=null; localStorage.setItem('nametag.v2', JSON.stringify(lite)); mainOK=true; if(!persistWarned){ persistWarned=true; alert('브라우저 저장 공간이 부족해 로고 그림은 저장하지 못했습니다. 틀은 「틀 파일 내보내기」로 보관해 주세요.'); } }
-    catch(e2){ if(!persistWarned){ persistWarned=true; alert('브라우저 저장 공간이 부족해 명단과 틀이 다음에 남지 않을 수 있습니다. 「틀 파일 내보내기」로 틀을 보관해 주세요.'); } }
-  }
-  let photoOK=true;
-  try{ if(state.photo) localStorage.setItem('nametag.photo', ver+'|'+state.photo); else localStorage.removeItem('nametag.photo'); }
-  catch(e){ photoOK=false; try{ localStorage.removeItem('nametag.photo'); }catch(e3){} if(!photoWarned){ photoWarned=true; toast('저장 공간이 부족해 겹쳐 보기 사진은 다음에 남지 않습니다'); } }
-  saveFailed=!mainOK; updateSaveBadge();
+  // 본체와 사진을 한 트랜잭션으로 저장한다. 실패하면 이전 저장본이 그대로 남고, 화면에 「저장 안 됨」을 표시한다
+  const main=JSON.parse(JSON.stringify(Object.assign({},state,{photo:undefined})));
+  const photo=state.photo||null;
+  persistChain=persistChain.then(()=>idbSet({main, photo})).then(()=>{ saveFailed=false; updateSaveBadge(); try{ localStorage.removeItem('nametag.v2'); localStorage.removeItem('nametag.photo'); }catch(e){} })
+    .catch(e=>{ saveFailed=true; updateSaveBadge(); if(!persistWarned){ persistWarned=true; alert('브라우저 저장 공간이 부족하거나 저장이 막혀 있어 지금 내용이 다음에 남지 않을 수 있습니다. 「전체 백업 파일로 저장」으로 보관해 주세요.'); } });
+  return persistChain;
 }
-let photoWarned=false;
 function updateSaveBadge(){ const el=$('saveBadge'); if(el) el.style.display=saveFailed?'inline':'none'; }
 function persist(){ clearTimeout(saveTimer); saveTimer=setTimeout(persistNow,300); }
 
@@ -456,6 +458,19 @@ function exportTemplate(){ const blob=new Blob([JSON.stringify({name:state.curre
 function importTemplate(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let t,n; try{ const j=JSON.parse(r.result); t=sanitizeTemplate(j.template||j); n=okName(j.name||f.name.replace(/\.json$/,''))||'가져온 틀'; }catch(e){ alert('틀 파일을 읽지 못했습니다. 이 페이지에서 내보낸 틀 파일만 가져올 수 있습니다.'); return; }
   if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return;
   state.templates[n]=t; state.current=n; state.tpl=clone(t); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }; r.readAsText(f); $('tplFile').value=''; }
+/* 전체 백업: 명단·틀·공통 값·열 연결을 파일 하나로 */
+function exportAll(){ const b={kind:'nametag-backup', version:1, saved:new Date().toISOString(), templates:state.templates, current:state.current, tpl:state.tpl, data:state.data, map:state.map, globals:state.globals, headerIndex:state.headerIndex, rawRows};
+  const blob=new Blob([JSON.stringify(b)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='명찰메이커_백업_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
+function importAll(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let b; try{ b=JSON.parse(r.result); if(!b||b.kind!=='nametag-backup') throw 0; }catch(e){ alert('백업 파일이 아닙니다. 이 페이지에서 「전체 백업 파일로 저장」으로 만든 파일만 불러올 수 있습니다.'); return; }
+  if(!confirm('지금 화면의 명단·틀을 백업 파일 내용으로 바꿉니다. 계속할까요?')) return;
+  const str=(v,max)=>typeof v==='string'? v.slice(0,max||200) : '';
+  const tpls={}; Object.keys(b.templates||{}).forEach(n=>{ const nn=okName(n); if(!nn) return; try{ tpls[nn]=sanitizeTemplate(b.templates[n]); }catch(e){} }); if(!Object.keys(tpls).length) Object.assign(tpls,presets());
+  state.templates=tpls; state.current=Object.hasOwn(tpls,b.current)?b.current:Object.keys(tpls)[0]; try{ state.tpl=sanitizeTemplate(b.tpl); }catch(e){ state.tpl=clone(tpls[state.current]); }
+  const cols=Array.isArray(b.data&&b.data.cols)? b.data.cols.filter(c=>typeof c==='string').map(c=>str(c,60)).slice(0,60) : [];
+  const rows=Array.isArray(b.data&&b.data.rows)? b.data.rows.slice(0,5000).map(r=>{ const o={}; cols.forEach(c=>o[c]=str(r&&r[c],200)); return o; }) : [];
+  state.data={cols, rows}; state.map={}; Object.keys(b.map||{}).forEach(k=>{ if(FIELDS.includes(k)&&cols.includes(b.map[k])) state.map[k]=b.map[k]; });
+  state.globals={'기수':str(b.globals&&b.globals['기수'],40),'행사명':str(b.globals&&b.globals['행사명'],80)}; state.headerIndex=Number.isInteger(b.headerIndex)?b.headerIndex:-1; rawRows=Array.isArray(b.rawRows)? b.rawRows.slice(0,5000).map(r=>Array.isArray(r)?r.map(v=>str(v,200)):[]) : [];
+  state.photo=null; fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); persist(); toast('백업을 불러왔습니다 ('+rows.length+'명, 틀 '+Object.keys(tpls).length+'개)'); }; r.readAsText(f); $('allFile').value=''; }
 /* 틀 자료형 검증: 외부 파일·옛 저장분을 안전한 값으로 보정한다 */
 function sanitizeTemplate(t){
   if(!t||typeof t!=='object'||!Array.isArray(t.lines)) throw new Error('bad template');
@@ -476,11 +491,11 @@ function sanitizeTemplate(t){
 function resetPresets(){ Object.assign(state.templates, presets()); renderTplGrid(); persist(); toast('기본 틀 3개를 되살렸습니다'); }
 
 /* ---------- 명단 ---------- */
-const HEADER_WORDS=/^(이름|성명|name|직책|직위|직급|직함|직위명|기수|회사|회사명|소속|행사명|행사|번호|no\.?|연락처|전화|이메일|메모|비고|구분)$/i;
+const HEADER_WORDS=/^(이름|성명|성함|name|수강생|수강생명|참가자|참가자명|직책|직위|직급|직함|직위명|기수|차수|참가차수|회차|회사|회사명|소속|소속명|부서|팀|행사명|행사|과정|과정명|번호|no\.?|순번|연락처|전화|휴대폰|이메일|메모|비고|구분)$/i;
 function guessMap(cols, rows){
   const m={}; const used=new Set();
   const take=(f,c)=>{ if(c&&!used.has(c)){ m[f]=c; used.add(c);} };
-  const EXACT={'이름':['이름','성명','name','NAME','Name'],'직책':['직책','직위','직급','역할','구분'],'직함':['직함','직위명','호칭'],'기수':['기수','기'],'회사':['회사','회사명','소속','업체','단체','기관'],'행사명':['행사명','행사','대회','과정']};
+  const EXACT={'이름':['이름','성명','성함','name','NAME','Name','수강생','수강생명','참가자','참가자명'],'직책':['직책','직위','직급','역할','구분'],'직함':['직함','직위명','호칭'],'기수':['기수','기','차수','참가차수','회차'],'회사':['회사','회사명','소속','소속명','업체','단체','기관','부서','팀'],'행사명':['행사명','행사','대회','과정','과정명']};
   const SKIP=/전화|연락|휴대|핸드폰|폰|메일|mail|주소|비고|메모|번호|no\.?|순번|생년|주민|성별|나이/i;
   // 1) 정확히 같은 열 이름 먼저
   cols.forEach(c=>{ const k=c.replace(/\s/g,''); for(const f of Object.keys(EXACT)){ if(EXACT[f].includes(k)){ take(f,c); break; } } });
@@ -786,7 +801,11 @@ function buildPage(wrap){
 function showPage(){ document.querySelectorAll('.pageWrap').forEach((w,i)=>{ const on=i===curPage; w.classList.toggle('show',on); if(on) buildPage(w); }); $('pageLabel').textContent=pageCount? `${curPage+1} / ${pageCount}장`:'–'; }
 function buildAllPages(){ document.querySelectorAll('.pageWrap').forEach(w=>buildPage(w)); }
 function movePage(d){ if(!pageCount) return; curPage=(curPage+d+pageCount)%pageCount; showPage(); }
-function doPrint(){ if(!state.data.rows.length){ goStep(1); toast('먼저 명단을 넣어 주세요'); return; } if(!pageCount){ goStep(2); alert('명찰이 종이보다 커서 배치할 수 없습니다. 크기나 종이 여백을 줄여 주세요.'); return; }
+function looksLikeHeaderRow(r){ // 첫 줄에 이름·기수·영문 이름이 아닌 5자 이상 글자가 있으면 제목이나 머리글일 가능성
+  return r.some(v=>v && v.length>=5 && !/^[가-힣]{2,4}$/.test(v) && !/^\d{1,3}\s*기?$/.test(v) && !/^[A-Za-z .'-]{2,}$/.test(v)); }
+function doPrint(){ if(!state.data.rows.length){ goStep(1); toast('먼저 명단을 넣어 주세요'); return; }
+  if(state.headerIndex<0 && rawRows.length && looksLikeHeaderRow(rawRows[0])){ const first=rawRows[0].filter(Boolean).join(' · ').slice(0,60); if(!confirm('첫 줄 「'+first+'」도 사람 한 명으로 인쇄됩니다. 머리글(제목 줄)이라면 「취소」를 누르고 명단 단계에서 「머리글 줄」을 고르세요.\n\n이대로 인쇄할까요?')){ goStep(1); return; } }
+  if(!pageCount){ goStep(2); alert('명찰이 종이보다 커서 배치할 수 없습니다. 크기나 종이 여백을 줄여 주세요.'); return; }
   const wraps=[...document.querySelectorAll('.pageWrap')].filter(w=>!w.dataset.built);
   if(wraps.length<=8){ buildAllPages(); window.print(); return; }
   // 장수가 많으면 5장씩 나눠 만들어 화면이 멈추지 않게 하고, 다 만든 뒤 인쇄 창을 연다
@@ -802,7 +821,7 @@ let resizeTimer=null; window.addEventListener('resize',()=>{ clearTimeout(resize
 window.addEventListener('beforeprint',()=>{ buildAllPages(); document.querySelectorAll('.pageWrap').forEach(w=>{ w.style.zoom=1; }); });
 window.addEventListener('afterprint',()=>render());
 
-load(); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1);
+load().then(()=>{ fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1); });
 </script>
 <script>
 /* ===== 사진으로 틀 만들기 (기기 안에서만 처리, 외부 전송 없음) ===== */
@@ -1087,7 +1106,7 @@ async function analyze(){
   const minInk=Math.max(3, W*0.006); let lines=[]; let cur=null;
   for(let y=y0;y<y1;y++){ if(rows[y]>minInk){ if(!cur) cur={y0:y,y1:y}; cur.y1=y; } else if(cur){ lines.push(cur); cur=null; } } if(cur) lines.push(cur);
   // 너무 얇은 것 제거, 가까운 줄 합치기
-  lines=lines.filter(l=>l.y1-l.y0>=H*0.03);
+  lines=lines.filter(l=>l.y1-l.y0>=Math.max(5,H*0.015));
   const merged=[]; lines.forEach(l=>{ const p=merged[merged.length-1]; if(p && l.y0-p.y1 < Math.min(l.y1-l.y0,p.y1-p.y0)*0.25) p.y1=l.y1; else merged.push({...l}); }); lines=merged;
   // 각 줄의 가로 범위·글자 상자
   lines.forEach(L=>{ const cols=new Int32Array(W); for(let x=x0;x<x1;x++){ let s=0; for(let y=L.y0;y<=L.y1;y++) s+=ink[y*W+x]; cols[x]=s; }
@@ -1209,7 +1228,7 @@ function apply(){
     switch(L.role){ case 'name': parts=[part('이름')]; break; case 'title_gisu': parts=[part('직책'),part('기수',{suffix:'기'})]; break; case 'gisu': parts=[part('기수',{suffix:'기'})]; break; case 'title': parts=[part('직책')]; break; case 'event': parts=[part('행사명')]; break; case 'company': parts=[part('회사')]; break; case 'position': parts=[part('직함')]; break; default: parts=[part('fixed',{text:L.text||''})]; }
     return line(parts,{join:L.role==='title_gisu'?'paren':'space', size:Math.round(pt), bold:L.bold, color:L.color, spacing:L.role==='name'?+Math.min(1,L.spacing).toFixed(2):+Math.min(0.5,L.spacing).toFixed(2), align:L.align, maxChars:L.role==='name'?4:0}); });
   // 세로 위치·여백·줄 간격
-  if(lines.length){ const top=lines[0].y0/PX_PER_MM, bottom=(r.H-lines[lines.length-1].y1)/PX_PER_MM; const bandTop=r.band&&r.band.side==='top'?r.band.h:0, bandBot=r.band&&r.band.side==='bottom'?r.band.h:0;
+  if(lines.length){ const top=lines[0].y0/PX_PER_MM, bottom=(r.H-lines[lines.length-1].y1)/PX_PER_MM; const bandTop=r.band&&r.band.side==='top'?r.band.h+(r.band.inset||0):0, bandBot=r.band&&r.band.side==='bottom'?r.band.h+(r.band.inset||0):0;
     const inner=mm.h-bandTop-bandBot; const blockTop=top-bandTop, blockBot=bottom-bandBot;
     if(Math.abs(blockTop-blockBot)<inner*0.12){ t.design.valign='center'; t.design.pad=Math.max(1,Math.min(blockTop,blockBot)*0.6); }
     else if(blockTop<blockBot){ t.design.valign='flex-start'; t.design.pad=Math.max(1,blockTop); } else { t.design.valign='flex-end'; t.design.pad=Math.max(1,blockBot); }
