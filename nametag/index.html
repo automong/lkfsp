@@ -165,7 +165,7 @@
 
   @media print{
     body{display:block;height:auto;overflow:visible;background:#fff;min-width:0;width:auto}
-    .top,.side,.oneWrap,.stageHead,.emptyMsg,#ovBar,#photoModal,.toast{display:none !important}
+    .top,.side,.oneWrap,.stageHead,.emptyMsg,#ovBar,#photoModal,.toast,#bootShade{display:none !important}
     .stage{padding:0;overflow:visible}
     .pageWrap{display:block !important;margin:0;box-shadow:none;zoom:1 !important;page-break-after:always;break-after:page}
     .pageWrap:last-child{page-break-after:auto;break-after:auto}
@@ -463,7 +463,7 @@ function importTemplate(f){ if(!f) return; const r=new FileReader(); r.onload=()
 function exportAll(){ const b={kind:'nametag-backup', version:1, saved:new Date().toISOString(), templates:state.templates, current:state.current, tpl:state.tpl, data:state.data, map:state.map, globals:state.globals, headerIndex:state.headerIndex, rawRows, photo:state.photo||null};
   const blob=new Blob([JSON.stringify(b)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='명찰메이커_백업_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
 const MAX_ROWS=20000;
-function headerIndexOf(b){ return Number.isInteger(b.headerIndex)&&b.headerIndex>=-1? b.headerIndex : -1; }
+function headerIndexOf(b){ if(!Number.isInteger(b.headerIndex)||b.headerIndex<-1) throw new Error('머리글 줄 번호가 올바르지 않습니다 (파일이 손상됨)'); return b.headerIndex; }
 /* 백업 파일을 임시 객체로 전부 검증한다. 하나라도 틀리면 예외 → 기존 상태는 손대지 않는다 */
 function parseBackup(text){
   const b=JSON.parse(text);
@@ -476,23 +476,23 @@ function parseBackup(text){
   const current=b.current;
   let tpl; try{ tpl=sanitizeTemplate(b.tpl); }catch(e){ throw new Error('편집 중이던 틀 정보가 손상됐습니다'); }
   if(b.data.rows.length>MAX_ROWS) throw new Error('명단이 '+b.data.rows.length+'명이라 너무 큽니다 (최대 '+MAX_ROWS+'명)');
-  const cols=b.data.cols.filter(c=>typeof c==='string').map(c=>str(c,60)).slice(0,60);
+  if(b.data.cols.length>MAX_COLS || b.data.cols.some(c=>typeof c!=='string'||c.length>MAX_CELL)) throw new Error('열 정보가 올바르지 않습니다 (파일이 손상됨)');
+  const cols=b.data.cols.slice();
   if(!cols.length && b.data.rows.length) throw new Error('백업 파일의 열 정보가 없습니다');
-  const rows=b.data.rows.map((r,i)=>{ if(!r||typeof r!=='object') throw new Error((i+1)+'번째 명단 줄 형식이 잘못됐습니다'); const o={}; cols.forEach(c=>{ if(typeof r[c]!=='string') throw new Error((i+1)+'번째 줄에 「'+c+'」 칸이 없습니다 (파일이 손상됨)'); o[c]=str(r[c],200); }); return o; });
+  const rows=b.data.rows.map((r,i)=>{ if(!r||typeof r!=='object') throw new Error((i+1)+'번째 명단 줄 형식이 잘못됐습니다'); const o={}; cols.forEach(c=>{ if(typeof r[c]!=='string'||r[c].length>MAX_CELL) throw new Error((i+1)+'번째 줄의 「'+c+'」 칸이 없거나 너무 깁니다 (파일이 손상됨)'); o[c]=r[c]; }); return o; });
   if(!b.map||typeof b.map!=='object') throw new Error('열 연결 정보가 없습니다 (파일이 손상됨)');
   const map={}; Object.keys(b.map).forEach(k=>{ if(!FIELDS.includes(k)||!cols.includes(b.map[k])) throw new Error('열 연결 정보가 명단과 맞지 않습니다'); map[k]=b.map[k]; });
   // 이름 열이 아직 연결되지 않은 백업도 복원한다(인쇄 때 이름 열을 요구함)
   const globals={'기수':str(b.globals&&b.globals['기수'],40),'행사명':str(b.globals&&b.globals['행사명'],80)};
   if(!Array.isArray(b.rawRows)) throw new Error('원본 줄 정보가 없습니다 (파일이 손상됨)');
-  const raw=b.rawRows.map((r,i)=>{ if(!Array.isArray(r)) throw new Error((i+1)+'번째 원본 줄 형식이 잘못됐습니다'); return r.map(v=>{ if(typeof v!=='string') throw new Error((i+1)+'번째 원본 줄에 글자가 아닌 값이 있습니다 (파일이 손상됨)'); return str(v,200); }); });
-  const hIdx=headerIndexOf(b); if(!(hIdx===-1 || (hIdx>=0 && hIdx<raw.length))) throw new Error('머리글 줄 번호가 올바르지 않습니다 (파일이 손상됨)');
-  if(rows.length && !raw.length) throw new Error('원본 줄이 비어 있어 명단과 맞출 수 없습니다 (파일이 손상됨)');
-  // 원본 줄 + 머리글 줄로 명단을 다시 만들어 저장된 명단과 같은지 확인한다
-  if(raw.length){ const body=raw.slice(hIdx+1).filter(r=>r.some(v=>v.trim())); const hdr=hIdx>=0? raw[hIdx].map((v,i)=>v||('열'+(i+1))) : Array.from({length:Math.max(...raw.map(r=>r.length))},(_,i)=>'열'+(i+1));
-    const hdrU=hdr.map((c,i)=>hdr.indexOf(c)===i?c:c+'_'+(i+1));
-    if(hdrU.length!==cols.length || hdrU.some((c,i)=>c!==cols[i])) throw new Error('원본 줄의 열 이름이 명단과 맞지 않습니다 (파일이 손상됨)');
-    if(body.length!==rows.length) throw new Error('원본 줄 수('+body.length+')와 명단 수('+rows.length+')가 다릅니다 (파일이 손상됨)');
-    for(let i=0;i<rows.length;i++){ for(let c=0;c<cols.length;c++){ if((body[i][c]||'').trim()!==(rows[i][cols[c]]||'')) throw new Error((i+1)+'번째 사람의 「'+cols[c]+'」 값이 원본 줄과 다릅니다 (파일이 손상됨)'); } } }
+  const raw=b.rawRows.map((r,i)=>{ if(!Array.isArray(r)||r.length>MAX_COLS) throw new Error((i+1)+'번째 원본 줄 형식이 잘못됐습니다'); return r.map(v=>{ if(typeof v!=='string'||v.length>MAX_CELL||v!==v.trim()) throw new Error((i+1)+'번째 원본 줄에 잘못된 값이 있습니다 (파일이 손상됨)'); return v; }); });
+  if(raw.some(r=>!r.some(v=>v))) throw new Error('원본 줄에 빈 줄이 있습니다 (파일이 손상됨)');
+  const hIdx=headerIndexOf(b); if(!(hIdx===-1 || hIdx<raw.length)) throw new Error('머리글 줄 번호가 원본 줄 수를 넘습니다 (파일이 손상됨)');
+  // 원본 줄 + 머리글 번호로 명단을 똑같은 함수로 다시 만들어, 저장된 열·명단과 한 글자도 다르지 않은지 확인한다
+  const rebuilt=raw.length? buildRows(raw,hIdx) : {cols:[],rows:[]};
+  if(rebuilt.cols.length!==cols.length || rebuilt.cols.some((c,i)=>c!==cols[i])) throw new Error('원본 줄의 열 이름이 명단과 맞지 않습니다 (파일이 손상됨)');
+  if(rebuilt.rows.length!==rows.length) throw new Error('원본 줄 수와 명단 수가 다릅니다 (파일이 손상됨)');
+  for(let i=0;i<rows.length;i++){ for(const c of cols){ if(rebuilt.rows[i][c]!==rows[i][c]) throw new Error((i+1)+'번째 사람의 「'+c+'」 값이 원본 줄과 다릅니다 (파일이 손상됨)'); } }
   if(raw.length>MAX_ROWS+10) throw new Error('원본 줄이 너무 많습니다');
   const headerIndex=hIdx;
   let photo=null; if(b.photo!=null){ if(typeof b.photo!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.photo)) throw new Error('사진 정보 형식이 잘못됐습니다'); if(b.photo.length>12000000) throw new Error('사진이 너무 커서 불러올 수 없습니다'); photo=b.photo; }
@@ -540,10 +540,22 @@ function guessMap(cols, rows){
   return m;
 }
 let rawRows=[];
+const MAX_COLS=60, MAX_CELL=500;
+/* 원본 줄을 정리한다: 글자로 바꾸고 양끝 공백 제거, 칸 길이·열 수 제한, 빈 줄 제거 */
+function normalizeRaw(rows){ return rows.map(r=>r.slice(0,MAX_COLS).map(v=>(v==null?'':String(v).trim()).slice(0,MAX_CELL))).filter(r=>r.some(v=>v)); }
+/* 원본 줄 + 머리글 번호(-1이면 없음) → {cols, rows}. 명단 읽기와 백업 검증이 똑같이 쓰는 순수 함수 */
+function buildRows(raw, hi){
+  let body=raw, cols;
+  if(hi>=0){ cols=raw[hi].map((v,i)=>v||('열'+(i+1))); body=raw.slice(hi+1); }
+  else { const n=raw.reduce((m,r)=>Math.max(m,r.length),0); cols=Array.from({length:n},(_,i)=>'열'+(i+1)); }
+  const seen=new Set(); cols=cols.map(c=>{ let n=c, k=2; while(seen.has(n)){ n=c+'_'+k; k++; } seen.add(n); return n; });
+  const rows=body.map(r=>{ const o={}; cols.forEach((c,i)=>o[c]=r[i]||''); return o; });
+  return {cols, rows};
+}
 function setRows(rows, headerIndex){
-  rows=rows.map(r=>r.map(v=>v==null?'':String(v).trim())).filter(r=>r.some(v=>v));
+  rows=normalizeRaw(rows);
   rawRows=rows.map(r=>r.slice());
-  if(!rows.length){ state.data={cols:[],rows:[]}; state.map={}; afterData(); return; }
+  if(!rows.length){ state.data={cols:[],rows:[]}; state.map={}; state.headerIndex=-1; state.headerConfirmed=false; afterData(); return; }
   // 제목 행이 위에 있어도 되게, 앞 6줄 가운데 열 이름이 가장 많이 맞는 줄을 머리글로 삼는다 (사용자가 바꿀 수 있음)
   let hi=-1, hs=0;
   if(headerIndex!==undefined) hi=headerIndex;
@@ -551,18 +563,13 @@ function setRows(rows, headerIndex){
     rows.slice(0,6).forEach((r,i)=>{ const sc=r.filter(v=>HEADER_WORDS.test(v.replace(/\s/g,''))).length; const next=rows[i+1]; const dataBelow=!!next && next.some(nameLike) && !next.some(v=>HEADER_WORDS.test(v.replace(/\s/g,'')));
       const ok = sc>=2 || (sc>=1 && dataBelow); if(ok && sc>hs){ hs=sc; hi=i; } }); }
   state.headerIndex=hi;
-  let cols;
-  if(hi>=0){ cols=rows[hi].map((v,i)=>v||('열'+(i+1))); rows=rows.slice(hi+1); }
-  else { const n=Math.max(...rows.map(r=>r.length)); cols=Array.from({length:n},(_,i)=>'열'+(i+1)); }
-  if(!rows.length){ state.data={cols:[],rows:[]}; state.map={}; afterData(); return; }
-  cols=cols.map((c,i)=>cols.indexOf(c)===i?c:c+'_'+(i+1));
-  const objs=rows.map(r=>{ const o={}; cols.forEach((c,i)=>o[c]=r[i]||''); return o; });
-  state.data={cols, rows:objs}; state.map=guessMap(cols,objs); state.headerConfirmed=false;
+  const built=buildRows(rows, hi);
+  state.data=built; state.map=built.rows.length? guessMap(built.cols,built.rows) : {}; state.headerConfirmed=false;
   afterData();
 }
 function afterData(){ renderMap(); renderLines(); renderTplGrid(); render(); persist(); if(state.data.rows.length) toast(state.data.rows.length+'명을 읽었습니다'); }
 function parsePaste(){ const t=$('pasteBox').value; state.rawText=t; setRows(parseDelimited(t)); }
-function clearData(){ state.data={cols:[],rows:[]}; state.map={}; state.rawText=''; rawRows=[]; $('pasteBox').value=''; $('sheetRow').style.display='none'; workbook=null; afterData(); clearTimeout(saveTimer); persistNow(); }
+function clearData(){ state.data={cols:[],rows:[]}; state.map={}; state.rawText=''; rawRows=[]; state.headerIndex=-1; state.headerConfirmed=false; $('pasteBox').value=''; $('sheetRow').style.display='none'; workbook=null; afterData(); clearTimeout(saveTimer); persistNow(); }
 function renderMap(){
   const box=$('mapCard'); const d=state.data; if(!d.rows.length){ box.innerHTML=''; return; }
   const used=new Set(); state.tpl.lines.forEach(L=>L.parts.forEach(P=>{ if(P.src!=='fixed') used.add(P.src); }));
@@ -860,7 +867,9 @@ window.addEventListener('beforeprint',()=>{ buildAllPages(); document.querySelec
 window.addEventListener('afterprint',()=>render());
 
 document.querySelector('.top').inert=true; document.querySelector('.body').inert=true;
-load().catch(e=>{ console.error(e); }).then(()=>{ document.querySelector('.top').inert=false; document.querySelector('.body').inert=false; if(!state.templates||!Object.keys(state.templates).length) state.templates=presets(); if(!state.tpl) state.tpl=clone(state.templates[Object.keys(state.templates)[0]]); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1); const sh=$('bootShade'); if(sh) sh.remove(); });
+// 저장소 읽기가 4초 넘게 멈추면 기본 상태로 시작한다 (화면이 영원히 막히지 않게)
+const loadWithTimeout=Promise.race([ load().catch(e=>{ console.error(e); }), new Promise(r=>setTimeout(()=>r('timeout'),4000)) ]).then(v=>{ if(v==='timeout') toast('저장된 내용을 읽지 못해 기본 상태로 시작합니다', 4000); });
+loadWithTimeout.then(()=>{ document.querySelector('.top').inert=false; document.querySelector('.body').inert=false; if(!state.templates||!Object.keys(state.templates).length) state.templates=presets(); if(!state.tpl) state.tpl=clone(state.templates[Object.keys(state.templates)[0]]); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1); const sh=$('bootShade'); if(sh) sh.remove(); });
 </script>
 <script>
 /* ===== 사진으로 틀 만들기 (기기 안에서만 처리, 외부 전송 없음) ===== */
