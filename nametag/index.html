@@ -393,16 +393,21 @@ const DB_NAME='nametag', DB_STORE='kv';
 function idbOpen(){ return new Promise((res,rej)=>{ if(!window.indexedDB) return rej(new Error('IndexedDB 없음')); const r=indexedDB.open(DB_NAME,1); r.onupgradeneeded=()=>{ r.result.createObjectStore(DB_STORE); }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error||new Error('open 실패')); r.onblocked=()=>rej(new Error('blocked')); }); }
 function idbGet(keys){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(DB_STORE,'readonly'); const st=tx.objectStore(DB_STORE); const out={}; keys.forEach(k=>{ const q=st.get(k); q.onsuccess=()=>{ out[k]=q.result; }; }); tx.oncomplete=()=>{ db.close(); res(out); }; tx.onerror=()=>{ db.close(); rej(tx.error); }; })); }
 function idbSet(obj){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(DB_STORE,'readwrite'); const st=tx.objectStore(DB_STORE); Object.keys(obj).forEach(k=>{ if(obj[k]===undefined||obj[k]===null) st.delete(k); else st.put(obj[k],k); }); tx.oncomplete=()=>{ db.close(); res(); }; tx.onerror=()=>{ db.close(); rej(tx.error||new Error('tx 실패')); }; tx.onabort=()=>{ db.close(); rej(tx.error||new Error('tx 중단')); }; })); }
-let loadDone=false, bootDone=false, userTouched=false, holdUntilCommit=false, committedDuringLoad=false;
-/* 직원이 새 내용을 확정했을 때(명단 읽기 성공, 백업 불러오기, 틀 저장 등) 저장을 다시 연다 */
-function commitUser(){ if(holdUntilCommit){ holdUntilCommit=false; loadDone=true; saveFailed=false; updateSaveBadge(); } }
+let loadDone=false, bootDone=false, userTouched=false;
+/* 저장본을 읽기 전에 직원이 바꾼 부분을 기록한다. 늦게 읽힌 저장본은 안 바꾼 부분에만 들어간다 */
+const touched={data:false, templates:false, tpl:false, photo:false};
 async function load(){
   let got=null; try{ got=await idbGet(['main','photo']); }catch(e){ got=null; }
-  if(bootDone && ($('pasteBox').value.trim() || document.activeElement===$('pasteBox'))) userTouched=true;
-  if(bootDone && userTouched){ // 시간 초과 뒤 직원이 이미 입력한 경우: 물어본 뒤에만 적용
-    if(got && got.main && confirm('저장돼 있던 명단·틀을 읽어 왔습니다. 지금 화면 내용을 버리고 저장본을 불러올까요?')){ applyLoaded(got); loadDone=true; fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); toast('저장본을 불러왔습니다'); }
-    else if(committedDuringLoad){ loadDone=true; persist(); toast('지금 화면의 명단을 저장합니다', 3000); }
-    else { loadDone=false; holdUntilCommit=true; saveFailed=true; updateSaveBadge(); toast('기존 저장본은 그대로 두고, 지금 내용은 명단을 읽거나 틀을 저장하면 그때부터 저장됩니다', 5000); }
+  if(bootDone){ // 시간 초과 뒤 늦게 읽힘: 직원이 바꾼 부분은 지키고, 나머지는 저장본으로 채운다
+    const keep={data:state.data, map:state.map, globals:state.globals, headerIndex:state.headerIndex, headerConfirmed:state.headerConfirmed, rawText:state.rawText, raw:rawRows, templates:state.templates, current:state.current, tpl:state.tpl, photo:state.photo, pasteText:$('pasteBox').value};
+    applyLoaded(got);
+    if(touched.data){ state.data=keep.data; state.map=keep.map; state.globals=keep.globals; state.headerIndex=keep.headerIndex; state.headerConfirmed=keep.headerConfirmed; state.rawText=keep.rawText; rawRows=keep.raw; }
+    if(touched.templates){ state.templates=Object.assign({}, state.templates, keep.templates); state.current=keep.current; } // 저장본 틀 + 지금 만든 틀 (같은 이름은 지금 것)
+    if(touched.tpl){ state.tpl=keep.tpl; }
+    if(touched.photo){ state.photo=keep.photo; }
+    loadDone=true; saveFailed=false; updateSaveBadge();
+    fillSettingsUI(); if(keep.pasteText.trim()) $('pasteBox').value=keep.pasteText; renderMap(); renderLines(); renderTplGrid(); render();
+    toast(got&&got.main? '저장돼 있던 내용을 읽어 와 합쳤습니다 (지금 바꾼 부분은 그대로)' : '저장된 내용이 없어 지금 내용을 저장합니다', 4000);
     return 'late';
   }
   applyLoaded(got); loadDone=true;
@@ -447,7 +452,7 @@ function persistNow(){
   // 본체와 사진을 한 트랜잭션으로 저장한다. 실패하면 이전 저장본이 그대로 남고, 화면에 「저장 안 됨」을 표시한다
   const main=JSON.parse(JSON.stringify(Object.assign({},state,{photo:undefined, rawRows})));
   const photo=state.photo||null;
-  persistChain=persistChain.then(()=>idbSet({main, photo})).then(()=>{ saveFailed=false; updateSaveBadge(); try{ localStorage.removeItem('nametag.v2'); localStorage.removeItem('nametag.photo'); }catch(e){} })
+  persistChain=persistChain.then(()=>idbSet({main, photo, draft:null})).then(()=>{ saveFailed=false; updateSaveBadge(); try{ localStorage.removeItem('nametag.v2'); localStorage.removeItem('nametag.photo'); }catch(e){} })
     .catch(e=>{ saveFailed=true; updateSaveBadge(); if(!persistWarned){ persistWarned=true; alert('브라우저 저장 공간이 부족하거나 저장이 막혀 있어 지금 내용이 다음에 남지 않을 수 있습니다. 「전체 백업 파일로 저장」으로 보관해 주세요.'); } });
   return persistChain;
 }
@@ -472,20 +477,20 @@ function renderTplGrid(){
     const b=makeBadge(sampleRow(), t); const sc=150/((t.size.w-t.size.shrink)*MM); b.style.position='static'; b.style.zoom=sc; th.appendChild(b);
     const nm=document.createElement('div'); nm.className='nm'; nm.textContent=n;
     c.appendChild(th); c.appendChild(nm);
-    c.onclick=()=>{ state.current=n; state.tpl=clone(t); fillSettingsUI(); renderLines(); renderTplGrid(); render(); };
+    c.onclick=()=>{ touched.tpl=true; touched.templates=true; state.current=n; state.tpl=clone(t); fillSettingsUI(); renderLines(); renderTplGrid(); render(); };
     g.appendChild(c);
   });
   $('tplCur').textContent='현재: '+state.current;
 }
-function saveTemplate(){ commitUser(); state.templates[state.current]=clone(state.tpl); renderTplGrid(); persist(); toast('「'+state.current+'」 틀에 저장했습니다'); }
+function saveTemplate(){ touched.templates=true; state.templates[state.current]=clone(state.tpl); renderTplGrid(); persist(); toast('「'+state.current+'」 틀에 저장했습니다'); }
 function okName(n){ n=String(n||'').trim().slice(0,60); if(!n||['__proto__','constructor','prototype'].includes(n)) return null; return n; }
-function saveTemplateAs(){ let n=okName(prompt('새 틀 이름', state.current+' (복사)')); if(!n) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=clone(state.tpl); state.current=n; commitUser(); renderTplGrid(); persist(); }
-function renameTemplate(){ const n=okName(prompt('바꿀 이름', state.current)); if(!n||n===state.current) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=state.templates[state.current]; delete state.templates[state.current]; state.current=n; renderTplGrid(); persist(); }
-function deleteTemplate(){ if(Object.keys(state.templates).length<=1) return alert('틀은 하나 이상 있어야 합니다.'); if(!confirm('「'+state.current+'」 틀을 지울까요?')) return; delete state.templates[state.current]; state.current=Object.keys(state.templates)[0]; state.tpl=clone(state.templates[state.current]); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }
+function saveTemplateAs(){ let n=okName(prompt('새 틀 이름', state.current+' (복사)')); if(!n) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=clone(state.tpl); state.current=n; touched.templates=true; renderTplGrid(); persist(); }
+function renameTemplate(){ const n=okName(prompt('바꿀 이름', state.current)); if(!n||n===state.current) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; touched.templates=true; state.templates[n]=state.templates[state.current]; delete state.templates[state.current]; state.current=n; renderTplGrid(); persist(); }
+function deleteTemplate(){ if(Object.keys(state.templates).length<=1) return alert('틀은 하나 이상 있어야 합니다.'); if(!confirm('「'+state.current+'」 틀을 지울까요?')) return; touched.templates=true; touched.tpl=true; delete state.templates[state.current]; state.current=Object.keys(state.templates)[0]; state.tpl=clone(state.templates[state.current]); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }
 function exportTemplate(){ const blob=new Blob([JSON.stringify({name:state.current, template:state.tpl},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='명찰틀_'+state.current.replace(/[\\/:*?"<>|]/g,'_')+'.json'; a.click(); }
 function importTemplate(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let t,n; try{ const j=JSON.parse(r.result); t=sanitizeTemplate(j.template||j); n=okName(j.name||f.name.replace(/\.json$/,''))||'가져온 틀'; }catch(e){ alert('틀 파일을 읽지 못했습니다. 이 페이지에서 내보낸 틀 파일만 가져올 수 있습니다.'); return; }
   if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return;
-  state.templates[n]=t; state.current=n; state.tpl=clone(t); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }; r.readAsText(f); $('tplFile').value=''; }
+  touched.templates=true; touched.tpl=true; state.templates[n]=t; state.current=n; state.tpl=clone(t); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }; r.readAsText(f); $('tplFile').value=''; }
 /* 전체 백업: 명단·틀·공통 값·열 연결을 파일 하나로 */
 function exportAll(){ const b={kind:'nametag-backup', version:1, saved:new Date().toISOString(), templates:state.templates, current:state.current, tpl:state.tpl, data:state.data, map:state.map, globals:state.globals, headerIndex:state.headerIndex, rawRows, photo:state.photo||null};
   const blob=new Blob([JSON.stringify(b)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='명찰메이커_백업_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
@@ -529,7 +534,7 @@ function parseBackup(text){
 }
 function importAll(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let b; try{ b=parseBackup(r.result); }catch(e){ alert('백업을 불러오지 못했습니다: '+e.message+'\n기존 명단과 틀은 그대로 둡니다.'); return; }
   if(!confirm('지금 화면의 명단·틀을 백업 파일 내용으로 바꿉니다.\n백업 내용: '+b.rows.length+'명, 틀 '+Object.keys(b.tpls).length+'개'+(b.photo?', 겹쳐 보기 사진 포함':'')+'\n계속할까요?')) return;
-  commitUser(); state.templates=b.tpls; state.current=b.current; state.tpl=b.tpl; state.data={cols:b.cols, rows:b.rows}; state.map=b.map; state.globals=b.globals; state.headerIndex=b.headerIndex; rawRows=b.raw; state.photo=b.photo; state.headerConfirmed=false;
+  touched.data=touched.templates=touched.tpl=touched.photo=true; state.templates=b.tpls; state.current=b.current; state.tpl=b.tpl; state.data={cols:b.cols, rows:b.rows}; state.map=b.map; state.globals=b.globals; state.headerIndex=b.headerIndex; rawRows=b.raw; state.photo=b.photo; state.headerConfirmed=false;
   fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); persist(); toast('백업을 불러왔습니다 ('+b.rows.length+'명, 틀 '+Object.keys(b.tpls).length+'개)'); }; r.readAsText(f); $('allFile').value=''; }
 /* 틀 자료형 검증: 외부 파일·옛 저장분을 안전한 값으로 보정한다 */
 function sanitizeTemplate(t){
@@ -548,7 +553,7 @@ function sanitizeTemplate(t){
   if(!out.lines.length) out.lines=[line([part('이름')],{size:36,bold:true})];
   return out;
 }
-function resetPresets(){ Object.assign(state.templates, presets()); renderTplGrid(); persist(); toast('기본 틀 3개를 되살렸습니다'); }
+function resetPresets(){ touched.templates=true; Object.assign(state.templates, presets()); renderTplGrid(); persist(); toast('기본 틀 3개를 되살렸습니다'); }
 
 /* ---------- 명단 ---------- */
 const HEADER_WORDS=/^(이름|성명|성함|name|수강생|수강생명|참가자|참가자명|직책|직위|직급|직함|직위명|기수|차수|참가차수|회차|회사|회사명|소속|소속명|부서|팀|행사명|행사|과정|과정명|번호|no\.?|순번|연락처|전화|휴대폰|이메일|메모|비고|구분)$/i;
@@ -587,7 +592,7 @@ function setRows(rows, headerIndex){
   if(over.length && !confirm('이 명단은 일부만 읽힙니다:\n- '+over.join('\n- ')+'\n\n이대로 읽을까요? (취소하면 아무것도 바꾸지 않습니다)')){ toast('읽기를 취소했습니다. 기존 명단이 그대로입니다', 2500); return false; }
   rows=normalizeRaw(rows);
   rawRows=rows.map(r=>r.slice());
-  if(!rows.length){ state.data={cols:[],rows:[]}; state.map={}; state.headerIndex=-1; state.headerConfirmed=false; afterData(); return true; }
+  if(!rows.length){ touched.data=true; state.data={cols:[],rows:[]}; state.map={}; state.headerIndex=-1; state.headerConfirmed=false; afterData(); return true; }
   // 제목 행이 위에 있어도 되게, 앞 6줄 가운데 열 이름이 가장 많이 맞는 줄을 머리글로 삼는다 (사용자가 바꿀 수 있음)
   let hi=-1, hs=0;
   if(headerIndex!==undefined) hi=headerIndex;
@@ -597,11 +602,11 @@ function setRows(rows, headerIndex){
   state.headerIndex=hi;
   const built=buildRows(rows, hi);
   state.data=built; state.map=built.rows.length? guessMap(built.cols,built.rows) : {}; state.headerConfirmed=false;
-  if(!loadDone) committedDuringLoad=true; commitUser(); afterData(); return true;
+  touched.data=true; afterData(); return true;
 }
 function afterData(){ renderMap(); renderLines(); renderTplGrid(); render(); persist(); if(state.data.rows.length) toast(state.data.rows.length+'명을 읽었습니다'); }
 function parsePaste(){ const t=$('pasteBox').value; if(setRows(parseDelimited(t))) { state.rawText=t; persist(); } }
-function clearData(){ state.data={cols:[],rows:[]}; state.map={}; state.rawText=''; rawRows=[]; state.headerIndex=-1; state.headerConfirmed=false; $('pasteBox').value=''; $('sheetRow').style.display='none'; workbook=null; afterData(); clearTimeout(saveTimer); persistNow(); }
+function clearData(){ touched.data=true; state.data={cols:[],rows:[]}; state.map={}; state.rawText=''; rawRows=[]; state.headerIndex=-1; state.headerConfirmed=false; $('pasteBox').value=''; $('sheetRow').style.display='none'; workbook=null; afterData(); clearTimeout(saveTimer); persistNow(); }
 function renderMap(){
   const box=$('mapCard'); const d=state.data; if(!d.rows.length){ box.innerHTML=''; return; }
   const used=new Set(); state.tpl.lines.forEach(L=>L.parts.forEach(P=>{ if(P.src!=='fixed') used.add(P.src); }));
@@ -678,7 +683,7 @@ function readXls(f){
 let currentSheet=null;
 $('sheetSelect').onchange=e=>{ if(useSheet(e.target.value)) currentSheet=e.target.value; else e.target.value=currentSheet; };
 function useSheet(n){ return setRows(XLSX.utils.sheet_to_json(workbook.Sheets[n],{header:1,raw:false,defval:''})); }
-['기수','행사명'].forEach(k=>{ $('g'+k).oninput=e=>{ state.globals[k]=e.target.value; renderLines(); render(); persist(); }; });
+['기수','행사명'].forEach(k=>{ $('g'+k).oninput=e=>{ touched.data=true; state.globals[k]=e.target.value; renderLines(); render(); persist(); }; });
 
 /* ---------- 값 계산 ---------- */
 function sampleRow(){ return state.data.rows[0] || null; }
@@ -704,7 +709,7 @@ function lineText(row,L){
 
 /* ---------- 줄 편집 ---------- */
 let editingPart=null;
-function addLine(){ state.tpl.lines.push(line([part('이름')],{size:14})); renderLines(); render(); }
+function addLine(){ touched.tpl=true; state.tpl.lines.push(line([part('이름')],{size:14})); renderLines(); render(); }
 function renderLines(){
   const box=$('linesBox'); let h=''; const row=sampleRow();
   state.tpl.lines.forEach((L,li)=>{
@@ -731,28 +736,28 @@ function renderLines(){
   box.innerHTML=h;
 }
 function toggleEdit(li,pi){ editingPart=(editingPart&&editingPart[0]===li&&editingPart[1]===pi)?null:[li,pi]; renderLines(); }
-function setPart(li,pi,k,v){ state.tpl.lines[li].parts[pi][k]=v; refreshSamples(); render(); }
+function setPart(li,pi,k,v){ touched.tpl=true; state.tpl.lines[li].parts[pi][k]=v; refreshSamples(); render(); }
 function refreshSamples(){ const row=sampleRow(); document.querySelectorAll('.lineCard').forEach((c,li)=>{ const L=state.tpl.lines[li]; if(!L) return; const s=lineText(row,L); const el=c.querySelector('.lineSample'); el.textContent=s||'(이 줄에 들어갈 값이 없습니다)'; el.classList.toggle('empty',!s); }); }
-function setLine(li,k,v){ state.tpl.lines[li][k]=v; if(k==='size'&&document.activeElement&&document.activeElement.tagName==='INPUT'){ render(); return; } renderLines(); render(); }
-function addPart(li,src){ if(!src) return; state.tpl.lines[li].parts.push(part(src)); editingPart=src==='fixed'?[li,state.tpl.lines[li].parts.length-1]:null; renderLines(); renderMap(); render(); }
-function delPart(li,pi){ state.tpl.lines[li].parts.splice(pi,1); editingPart=null; renderLines(); render(); }
-function delLine(li){ if(!confirm((li+1)+'번째 줄을 지울까요?')) return; state.tpl.lines.splice(li,1); editingPart=null; renderLines(); render(); }
-function moveLine(li,d){ const L=state.tpl.lines; const j=li+d; if(j<0||j>=L.length) return; [L[li],L[j]]=[L[j],L[li]]; editingPart=null; renderLines(); render(); }
+function setLine(li,k,v){ touched.tpl=true; state.tpl.lines[li][k]=v; if(k==='size'&&document.activeElement&&document.activeElement.tagName==='INPUT'){ render(); return; } renderLines(); render(); }
+function addPart(li,src){ if(!src) return; touched.tpl=true; state.tpl.lines[li].parts.push(part(src)); editingPart=src==='fixed'?[li,state.tpl.lines[li].parts.length-1]:null; renderLines(); renderMap(); render(); }
+function delPart(li,pi){ touched.tpl=true; state.tpl.lines[li].parts.splice(pi,1); editingPart=null; renderLines(); render(); }
+function delLine(li){ if(!confirm((li+1)+'번째 줄을 지울까요?')) return; touched.tpl=true; state.tpl.lines.splice(li,1); editingPart=null; renderLines(); render(); }
+function moveLine(li,d){ const L=state.tpl.lines; const j=li+d; if(j<0||j>=L.length) return; touched.tpl=true; [L[li],L[j]]=[L[j],L[li]]; editingPart=null; renderLines(); render(); }
 
 /* ---------- 설정 UI ---------- */
 function seg(id, opts, get, set){
-  const el=$(id); el.innerHTML=''; opts.forEach(([v,l])=>{ const b=document.createElement('button'); b.textContent=l; b.className=get()===v?'on':''; b.onclick=()=>{ set(v); seg(id,opts,get,set); render(); }; el.appendChild(b); });
+  const el=$(id); el.innerHTML=''; opts.forEach(([v,l])=>{ const b=document.createElement('button'); b.textContent=l; b.className=get()===v?'on':''; b.onclick=()=>{ touched.tpl=true; set(v); seg(id,opts,get,set); render(); }; el.appendChild(b); });
 }
 function fillSettingsUI(){
   const t=state.tpl, s=t.size, c=t.cut, d=t.design;
   const sg=$('sizeGrid'); sg.innerHTML='';
   SIZES.forEach(([k,w,h,nm,sub])=>{ const b=document.createElement('button'); b.className='sizeOpt'+(s.preset===k?' on':''); const bw=k==='custom'?44:w*0.5, bh=k==='custom'?27:h*0.5;
     b.innerHTML=`<div class="box" style="width:${bw}px;height:${bh}px;${k==='custom'?'border-style:dashed':''}"></div><b>${nm}</b><small>${k==='custom'?'mm 입력':w+'×'+h+'mm'}</small>${sub?`<small style="display:block;color:var(--accent)">${sub}</small>`:''}`;
-    b.onclick=()=>{ s.preset=k; if(k!=='custom'){ s.w=w; s.h=h; $('szW').value=w; $('szH').value=h; } fillSettingsUI(); render(); }; sg.appendChild(b); });
+    b.onclick=()=>{ touched.tpl=true; s.preset=k; if(k!=='custom'){ s.w=w; s.h=h; $('szW').value=w; $('szH').value=h; } fillSettingsUI(); render(); }; sg.appendChild(b); });
   $('szW').value=s.w; $('szH').value=s.h; $('szShrink').value=s.shrink; $('szGap').value=s.gap; $('szMargin').value=s.margin;
   $('cutBorder').checked=c.border; $('offX').value=c.offX; $('offY').value=c.offY;
   const fl=$('fontList'); fl.innerHTML='';
-  FONTS.forEach(f=>{ const b=document.createElement('button'); b.className='fontOpt'+(d.font===f[0]?' on':''); b.innerHTML=`<div class="sm" style="font-family:${f[2]}">차상근</div><div class="nm">${f[1]}</div>`; b.onclick=()=>{ d.font=f[0]; fillSettingsUI(); render(); }; fl.appendChild(b); });
+  FONTS.forEach(f=>{ const b=document.createElement('button'); b.className='fontOpt'+(d.font===f[0]?' on':''); b.innerHTML=`<div class="sm" style="font-family:${f[2]}">차상근</div><div class="nm">${f[1]}</div>`; b.onclick=()=>{ touched.tpl=true; d.font=f[0]; fillSettingsUI(); render(); }; fl.appendChild(b); });
   $('dText').value=d.text; $('dBandColor').value=d.bandColor; $('dBandH').value=d.bandH; $('dBandInset').value=d.bandInset||0; $('dBg').value=d.bg; $('dPad').value=d.pad; $('dLineGap').value=d.lineGap; $('dLogoPos').value=d.logoPos; $('dLogoH').value=d.logoH;
   $('logoName').textContent = d.logo? '로고 있음' : '없음';
   seg('bandSeg',[['none','없음'],['top','위'],['left','왼쪽'],['bottom','아래']],()=>d.band,v=>d.band=v);
@@ -765,7 +770,7 @@ function fillSettingsUI(){
 function bind(id, path, type){
   $(id).addEventListener(type||'input', e=>{
     let v = e.target.type==='checkbox'? e.target.checked : e.target.type==='number'? +e.target.value : e.target.value;
-    const [a,b]=path.split('.'); state.tpl[a][b]=v;
+    const [a,b]=path.split('.'); touched.tpl=true; state.tpl[a][b]=v;
     if(id==='szW'||id==='szH'){ state.tpl.size.preset='custom'; document.querySelectorAll('.sizeOpt').forEach((o,i)=>o.classList.toggle('on', SIZES[i][0]==='custom')); }
     render();
   });
@@ -774,7 +779,7 @@ bind('szW','size.w'); bind('szH','size.h'); bind('szShrink','size.shrink'); bind
 bind('cutBorder','cut.border','change'); bind('offX','cut.offX'); bind('offY','cut.offY');
 bind('dText','design.text'); bind('dBandColor','design.bandColor'); bind('dBandH','design.bandH'); bind('dBandInset','design.bandInset'); bind('dBg','design.bg'); bind('dPad','design.pad'); bind('dLineGap','design.lineGap'); bind('dLogoPos','design.logoPos','change'); bind('dLogoH','design.logoH');
 $('logoFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>setLogo(r.result); r.readAsDataURL(f); e.target.value=''; };
-function setLogo(v){ state.tpl.design.logo=v; $('logoName').textContent=v?'로고 있음':'없음'; render(); }
+function setLogo(v){ touched.tpl=true; state.tpl.design.logo=v; $('logoName').textContent=v?'로고 있음':'없음'; render(); }
 
 /* ---------- 명찰 한 장 만들기 ---------- */
 function makeBadge(row, t){
@@ -907,8 +912,8 @@ document.querySelector('.top').inert=true; document.querySelector('.body').inert
 const loadPromise=load().catch(e=>{ console.error(e); loadDone=true; });
 const loadWithTimeout=Promise.race([ loadPromise, new Promise(r=>setTimeout(()=>r('timeout'),4000)) ]).then(v=>{
   if(v==='timeout'){ toast('저장된 내용을 아직 읽지 못해 우선 기본 상태로 엽니다. 읽히면 알려 드립니다. (그동안 저장은 되지 않습니다)', 5000); saveFailed=true;
-    // 늦게 읽히면: 아직 아무것도 안 만졌으면 저장본을 그대로 적용, 만졌으면 물어본다
-    loadPromise.then(v=>{ if(v!=='late'){ saveFailed=false; updateSaveBadge(); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); toast('저장본을 불러왔습니다'); } else if(!holdUntilCommit){ saveFailed=false; updateSaveBadge(); } }); } });
+    // 늦게 읽히면 load() 안에서 합치고 다시 그린다
+  } });
 loadWithTimeout.then(()=>{ document.querySelector('.top').inert=false; document.querySelector('.body').inert=false; if(!state.templates||!Object.keys(state.templates).length) state.templates=presets(); if(!state.tpl) state.tpl=clone(state.templates[Object.keys(state.templates)[0]]); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1); const sh=$('bootShade'); if(sh) sh.remove(); bootDone=true; });
 </script>
 <script>
@@ -1325,7 +1330,7 @@ function apply(){
   if(r.logos.length){ const lg=r.logos[0]; t.design.logo=lg.data; t.design.logoPos=lg.pos; t.design.logoH=+lg.hmm.toFixed(1); }
   // 기본 글자색: 가장 큰 줄 색
   const big=lines.reduce((a,b)=>b.h>(a?a.h:0)?b:a,null); if(big) t.design.text=big.color;
-  state.tpl=t; state.photo=flat.toDataURL('image/jpeg',0.85); state.showPhoto=true; commitUser();
+  state.tpl=t; state.photo=flat.toDataURL('image/jpeg',0.85); state.showPhoto=true; touched.tpl=true; touched.photo=true;
   fillSettingsUI(); renderLines(); render(); close(); goStep(2);
   toast('사진을 바탕으로 틀을 만들었습니다. 오른쪽에서 사진과 겹쳐 보며 다듬으세요.');
   setTimeout(()=>{ const n=okName(prompt('이 틀의 이름을 정해 주세요', '사진 틀 '+new Date().toLocaleDateString('ko-KR'))); if(n){ if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=clone(state.tpl); state.current=n; renderTplGrid(); persist(); } }, 300);
