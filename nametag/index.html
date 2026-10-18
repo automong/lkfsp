@@ -18,7 +18,7 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
-  body{min-width:900px;overflow-x:auto;font-family:Pretendard,'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;display:flex;flex-direction:column;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  body{min-width:0;overflow-x:auto;font-family:Pretendard,'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;display:flex;flex-direction:column;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
   button,input,select,textarea{font:inherit;color:inherit}
 
   /* 상단 바 */
@@ -164,10 +164,23 @@
 
   @media print{
     body{display:block;height:auto;overflow:visible;background:#fff;min-width:0;width:auto}
-    .top,.side,.oneWrap,.stageHead,.emptyMsg{display:none !important}
+    .top,.side,.oneWrap,.stageHead,.emptyMsg,#ovBar,#photoModal,.toast{display:none !important}
     .stage{padding:0;overflow:visible}
     .pageWrap{display:block !important;margin:0;box-shadow:none;zoom:1 !important;page-break-after:always;break-after:page}
     .pageWrap:last-child{page-break-after:auto;break-after:auto}
+  }
+</style>
+<style>
+  @media screen and (max-width:760px){
+    body{height:auto;overflow:auto}
+    .top{height:auto;flex-wrap:wrap;padding:10px 12px;gap:10px}
+    .status{margin-left:0;width:100%;order:3}
+    .body{flex-direction:column;min-height:0}
+    .side{width:100%;min-width:0;border-right:0;border-bottom:1px solid var(--line);padding:16px 14px 30px;overflow:visible}
+    .stage{min-width:0;padding:16px 12px;overflow:visible}
+    .tplGrid,.fontList{grid-template-columns:1fr 1fr}
+    .sizeGrid{grid-template-columns:repeat(2,1fr)}
+    .field{grid-template-columns:1fr}
   }
 </style>
 <style id="pageStyle">@page{size:A4 portrait;margin:0}</style>
@@ -195,7 +208,7 @@
       <div class="drop" id="drop"><div class="ic">📄</div><b>명단 파일을 여기에 끌어다 놓기</b><span class="muted">또는 클릭해서 파일 고르기<br>엑셀(.xlsx·.xls), CSV, 텍스트, 한컴 한셀로 저장한 CSV, 맥 넘버스, 구글 시트 내려받기 모두 됩니다</span></div>
       <input type="file" id="xlsFile" accept=".xlsx,.xlsm,.xlsb,.xls,.csv,.tsv,.txt,.ods,.numbers" style="display:none">
       <div class="field" id="sheetRow" style="display:none"><label>시트</label><select class="in" id="sheetSelect"></select></div>
-      <p class="muted" style="margin:10px 0 0">파일은 이 컴퓨터 안에서만 읽습니다. 어디로도 보내지 않습니다.</p>
+      <p class="muted" style="margin:10px 0 0">명단은 이 컴퓨터 안에서만 처리하고 서버로 보내지 않습니다. (글꼴과 엑셀·글자 인식 도구 파일만 인터넷에서 내려받습니다)</p>
     </div>
     <div class="card">
       <h3>붙여 넣기 <span class="sub">엑셀 칸을 복사해서</span></h3>
@@ -252,6 +265,7 @@
       <h3>명찰 크기</h3>
       <div class="sizeGrid" id="sizeGrid"></div>
       <div class="field" style="margin-top:10px"><label>직접 입력</label><div class="ctl"><input type="number" class="in num" id="szW" step="0.5"> × <input type="number" class="in num" id="szH" step="0.5"> mm</div></div>
+      <p class="muted" id="szNote" style="margin:6px 0 0"></p>
     </div>
 
     <div class="card">
@@ -307,6 +321,7 @@
       <div class="check"><span class="ic">📄</span><div><b>여백: 없음</b><span class="muted">용지 크기는 A4 그대로 둡니다.</span></div></div>
       <div class="check"><span class="ic">🧾</span><div><b>종이는 180~220g 두꺼운 A4</b><span class="muted">케이스 안에서 휘지 않습니다.</span></div></div>
       <div class="check"><span class="ic">💾</span><div><b>파일로 남기려면 「대상: PDF로 저장」</b><span class="muted">같은 인쇄 창에서 고를 수 있습니다.</span></div></div>
+      <div class="check"><span class="ic">🌐</span><div><b>인터넷이 필요한 기능</b><span class="muted">엑셀 파일 읽기, 사진 글자 읽기, 웹 글꼴. 붙여 넣기·CSV·인쇄는 인터넷 없이도 됩니다.</span></div></div>
     </div>
     <button class="btn primary big block" onclick="doPrint()">🖨 지금 인쇄하기</button>
     <p class="muted" style="text-align:center;margin-top:10px" id="printSummary"></p>
@@ -344,7 +359,7 @@ function part(src, o){ return Object.assign({src, text:'', prefix:'', suffix:''}
 function baseTemplate(){
   return {
     lines:[],
-    size:{preset:'90x55', w:90, h:55, shrink:1, gap:0, margin:8, orient:'auto'},
+    size:{preset:'90x55', w:90, h:55, shrink:0, gap:0, margin:8, orient:'auto'},
     cut:{style:'full', border:false, offX:0, offY:0},
     design:{font:'noto', text:'#111111', band:'none', bandColor:'#2457d6', bandH:6, bg:'#ffffff', valign:'center', pad:3, lineGap:2, logo:null, logoPos:'top', logoH:8}
   };
@@ -371,14 +386,32 @@ const $ = id => document.getElementById(id);
 
 function load(){
   try{ const s=JSON.parse(localStorage.getItem('nametag.v2')||'null'); if(s) state=Object.assign(state,s); }catch(e){}
+  try{ const ph=localStorage.getItem('nametag.photo'); state.photo=ph||null; }catch(e){ state.photo=null; }
   if(!state.templates || !Object.keys(state.templates).length) state.templates=presets();
   if(!state.current || !state.templates[state.current]) state.current=Object.keys(state.templates)[0];
   if(!state.tpl) state.tpl=clone(state.templates[state.current]);
-  // 옛 형식(col:이름) 보정
-  Object.values(state.templates).concat([state.tpl]).forEach(t=>t.lines.forEach(L=>L.parts.forEach(P=>{ if(P.src.startsWith('col:')) P.src=P.src.slice(4); })));
+  // 옛 형식(col:이름) 보정 + 자료형 검증
+  Object.values(state.templates).concat([state.tpl]).forEach(t=>{ if(t&&Array.isArray(t.lines)) t.lines.forEach(L=>(L.parts||[]).forEach(P=>{ if(typeof P.src==='string'&&P.src.startsWith('col:')) P.src=P.src.slice(4); })); });
+  const clean={}; Object.keys(state.templates).forEach(n=>{ if(!okName(n)) return; try{ clean[n]=sanitizeTemplate(state.templates[n]); }catch(e){} }); state.templates=clean;
+  if(!Object.keys(state.templates).length) state.templates=presets();
+  if(!state.templates[state.current]) state.current=Object.keys(state.templates)[0];
+  try{ state.tpl=sanitizeTemplate(state.tpl); }catch(e){ state.tpl=clone(state.templates[state.current]); }
+  if(typeof state.photo!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(state.photo)) state.photo=null;
 }
 let saveTimer=null;
-function persist(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ localStorage.setItem('nametag.v2', JSON.stringify(state)); }catch(e){} },300); }
+let persistWarned=false;
+function persistNow(){
+  // 명단·틀(작은 것)과 사진(큰 것)을 따로 저장해, 사진 때문에 명단 저장이 실패하지 않게 한다
+  const main=Object.assign({},state,{photo:undefined});
+  try{ localStorage.setItem('nametag.v2', JSON.stringify(main)); }
+  catch(e){
+    // 로고 그림을 빼고 다시 시도
+    try{ const lite=JSON.parse(JSON.stringify(main)); Object.values(lite.templates).forEach(t=>{ if(t.design) t.design.logo=null; }); if(lite.tpl&&lite.tpl.design) lite.tpl.design.logo=null; localStorage.setItem('nametag.v2', JSON.stringify(lite)); if(!persistWarned){ persistWarned=true; alert('브라우저 저장 공간이 부족해 로고 그림은 저장하지 못했습니다. 틀은 「틀 파일 내보내기」로 보관해 주세요.'); } }
+    catch(e2){ if(!persistWarned){ persistWarned=true; alert('브라우저 저장 공간이 부족해 명단과 틀이 다음에 남지 않을 수 있습니다. 「틀 파일 내보내기」로 틀을 보관해 주세요.'); } }
+  }
+  try{ if(state.photo) localStorage.setItem('nametag.photo', state.photo); else localStorage.removeItem('nametag.photo'); }catch(e){ /* 사진은 못 남겨도 됨 */ }
+}
+function persist(){ clearTimeout(saveTimer); saveTimer=setTimeout(persistNow,300); }
 
 /* ---------- 단계 ---------- */
 function goStep(n){
@@ -404,51 +437,82 @@ function renderTplGrid(){
   $('tplCur').textContent='현재: '+state.current;
 }
 function saveTemplate(){ state.templates[state.current]=clone(state.tpl); renderTplGrid(); persist(); toast('「'+state.current+'」 틀에 저장했습니다'); }
-function saveTemplateAs(){ const n=prompt('새 틀 이름', state.current+' (복사)'); if(!n) return; state.templates[n]=clone(state.tpl); state.current=n; renderTplGrid(); persist(); }
-function renameTemplate(){ const n=prompt('바꿀 이름', state.current); if(!n||n===state.current) return; state.templates[n]=state.templates[state.current]; delete state.templates[state.current]; state.current=n; renderTplGrid(); persist(); }
+function okName(n){ n=String(n||'').trim().slice(0,60); if(!n||['__proto__','constructor','prototype'].includes(n)) return null; return n; }
+function saveTemplateAs(){ let n=okName(prompt('새 틀 이름', state.current+' (복사)')); if(!n) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=clone(state.tpl); state.current=n; renderTplGrid(); persist(); }
+function renameTemplate(){ const n=okName(prompt('바꿀 이름', state.current)); if(!n||n===state.current) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=state.templates[state.current]; delete state.templates[state.current]; state.current=n; renderTplGrid(); persist(); }
 function deleteTemplate(){ if(Object.keys(state.templates).length<=1) return alert('틀은 하나 이상 있어야 합니다.'); if(!confirm('「'+state.current+'」 틀을 지울까요?')) return; delete state.templates[state.current]; state.current=Object.keys(state.templates)[0]; state.tpl=clone(state.templates[state.current]); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }
 function exportTemplate(){ const blob=new Blob([JSON.stringify({name:state.current, template:state.tpl},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='명찰틀_'+state.current.replace(/[\\/:*?"<>|]/g,'_')+'.json'; a.click(); }
-function importTemplate(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const j=JSON.parse(r.result); const t=j.template||j; if(!t.lines) throw 0; const n=j.name||f.name.replace(/\.json$/,''); state.templates[n]=t; state.current=n; state.tpl=clone(t); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }catch(e){ alert('틀 파일을 읽지 못했습니다.'); } }; r.readAsText(f); $('tplFile').value=''; }
+function importTemplate(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let t,n; try{ const j=JSON.parse(r.result); t=sanitizeTemplate(j.template||j); n=okName(j.name||f.name.replace(/\.json$/,''))||'가져온 틀'; }catch(e){ alert('틀 파일을 읽지 못했습니다. 이 페이지에서 내보낸 틀 파일만 가져올 수 있습니다.'); return; }
+  if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return;
+  state.templates[n]=t; state.current=n; state.tpl=clone(t); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }; r.readAsText(f); $('tplFile').value=''; }
+/* 틀 자료형 검증: 외부 파일·옛 저장분을 안전한 값으로 보정한다 */
+function sanitizeTemplate(t){
+  if(!t||typeof t!=='object'||!Array.isArray(t.lines)) throw new Error('bad template');
+  const num=(v,lo,hi,d)=>{ const n=Number(v); return Number.isFinite(n)? Math.min(hi,Math.max(lo,n)) : d; };
+  const str=(v,max)=>typeof v==='string'? v.slice(0,max||200) : '';
+  const col=(v,d)=>/^#[0-9a-fA-F]{6}$/.test(String(v))? String(v).toLowerCase() : d;
+  const one=(v,list,d)=>list.includes(v)? v : d;
+  const base=baseTemplate(); const S=t.size||{}, C=t.cut||{}, D=t.design||{};
+  const out=baseTemplate();
+  out.size={preset:one(S.preset,SIZES.map(x=>x[0]),'custom'), w:num(S.w,20,200,90), h:num(S.h,15,200,55), shrink:num(S.shrink,0,5,0), gap:num(S.gap,0,20,0), margin:num(S.margin,0,30,8), orient:one(S.orient,['auto','portrait','landscape'],'auto')};
+  out.cut={style:one(C.style,['full','mark','none'],'full'), border:!!C.border, offX:num(C.offX,-20,20,0), offY:num(C.offY,-20,20,0)};
+  out.design={font:one(D.font,FONTS.map(f=>f[0]),'noto'), text:col(D.text,'#111111'), band:one(D.band,['none','top','left','bottom'],'none'), bandColor:col(D.bandColor,'#2457d6'), bandH:num(D.bandH,0,40,6), bg:col(D.bg,'#ffffff'), valign:one(D.valign,['center','flex-start','flex-end'],'center'), pad:num(D.pad,0,30,3), lineGap:num(D.lineGap,0,30,2), logo:(typeof D.logo==='string'&&/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=]+$/.test(D.logo)&&D.logo.length<3000000)?D.logo:null, logoPos:one(D.logoPos,['top','bottom','tl','tr'],'top'), logoH:num(D.logoH,2,50,8)};
+  out.lines=t.lines.slice(0,12).map(L=>{ L=L&&typeof L==='object'?L:{}; const parts=(Array.isArray(L.parts)?L.parts:[]).slice(0,8).map(P=>{ P=P&&typeof P==='object'?P:{}; const src=P.src==='fixed'?'fixed':(FIELDS.includes(P.src)?P.src:'이름'); return {src, text:str(P.text,100), prefix:str(P.prefix,20), suffix:str(P.suffix,20)}; });
+    return {parts: parts.length?parts:[part('이름')], join:one(L.join,JOINS.map(j=>j[0]),'space'), size:num(L.size,4,200,14), bold:!!L.bold, color:(L.color?col(L.color,''):''), spacing:num(L.spacing,0,2,0), align:one(L.align,['left','center','right'],'center'), maxChars:num(L.maxChars,0,40,0)}; });
+  if(!out.lines.length) out.lines=[line([part('이름')],{size:36,bold:true})];
+  return out;
+}
 function resetPresets(){ Object.assign(state.templates, presets()); renderTplGrid(); persist(); toast('기본 틀 3개를 되살렸습니다'); }
 
 /* ---------- 명단 ---------- */
+const HEADER_WORDS=/^(이름|성명|name|직책|직위|직급|직함|직위명|기수|회사|회사명|소속|행사명|행사|번호|no\.?|연락처|전화|이메일|메모|비고|구분)$/i;
 function guessMap(cols, rows){
   const m={}; const used=new Set();
   const take=(f,c)=>{ if(c&&!used.has(c)){ m[f]=c; used.add(c);} };
-  cols.forEach(c=>{ const k=c.replace(/\s/g,''); if(/^(이름|성명|name)$/i.test(k)) take('이름',c); else if(/직책|직위|직급|역할/.test(k)) take('직책',c); else if(/기수|기$/.test(k)) take('기수',c); else if(/회사|소속|업체|단체/.test(k)) take('회사',c); else if(/직함|직위명/.test(k)) take('직함',c); else if(/행사|대회|과정/.test(k)) take('행사명',c); });
-  cols.forEach(c=>{ if(used.has(c)) return; const vals=rows.map(r=>r[c]).filter(Boolean); const k=vals.length||1;
+  const EXACT={'이름':['이름','성명','name','NAME','Name'],'직책':['직책','직위','직급','역할','구분'],'직함':['직함','직위명','호칭'],'기수':['기수','기'],'회사':['회사','회사명','소속','업체','단체','기관'],'행사명':['행사명','행사','대회','과정']};
+  const SKIP=/전화|연락|휴대|핸드폰|폰|메일|mail|주소|비고|메모|번호|no\.?|순번|생년|주민|성별|나이/i;
+  // 1) 정확히 같은 열 이름 먼저
+  cols.forEach(c=>{ const k=c.replace(/\s/g,''); for(const f of Object.keys(EXACT)){ if(EXACT[f].includes(k)){ take(f,c); break; } } });
+  // 2) 부분 일치 (전화·메일 같은 열은 건너뜀)
+  cols.forEach(c=>{ if(used.has(c)) return; const k=c.replace(/\s/g,''); if(SKIP.test(k)) return; if(/이름|성명|name/i.test(k)) take('이름',c); else if(/직함|직위명/.test(k)) take('직함',c); else if(/직책|직위|직급|역할/.test(k)) take('직책',c); else if(/기수|기$/.test(k)) take('기수',c); else if(/회사|소속|업체|단체|기관/.test(k)) take('회사',c); else if(/행사|대회|과정/.test(k)) take('행사명',c); });
+  cols.forEach(c=>{ if(used.has(c)||SKIP.test(c.replace(/\s/g,''))) return; const vals=rows.map(r=>r[c]).filter(Boolean); const k=vals.length||1;
     if(!m['기수'] && vals.filter(v=>/^\d{1,3}\s*기?$/.test(v)).length/k>0.6) take('기수',c);
     else if(!m['이름'] && vals.filter(v=>/^[가-힣]{2,4}$/.test(v)).length/k>0.6) take('이름',c);
-    else if(!m['직책']) take('직책',c); else if(!m['회사']) take('회사',c); else if(!m['직함']) take('직함',c); else if(!m['기타']) take('기타',c); });
+    // 그 밖의 열(전화·메일·주소·비고 등)은 자동으로 연결하지 않는다. 필요하면 사용자가 고른다.
+  });
   return m;
 }
-function setRows(rows){
+let rawRows=[];
+function setRows(rows, headerIndex){
   rows=rows.map(r=>r.map(v=>v==null?'':String(v).trim())).filter(r=>r.some(v=>v));
+  rawRows=rows.map(r=>r.slice());
   if(!rows.length){ state.data={cols:[],rows:[]}; state.map={}; afterData(); return; }
-  const first=rows[0];
-  const headerLike=first.some(v=>/^(이름|성명|name|직책|직위|기수|회사|회사명|소속|직함|행사|직급|번호|no\.?)$/i.test(v.replace(/\s/g,'')));
+  // 제목 행이 위에 있어도 되게, 앞 6줄 가운데 열 이름이 가장 많이 맞는 줄을 머리글로 삼는다 (사용자가 바꿀 수 있음)
+  let hi=-1, hs=0;
+  if(headerIndex!==undefined) hi=headerIndex;
+  else rows.slice(0,6).forEach((r,i)=>{ const sc=r.filter(v=>HEADER_WORDS.test(v.replace(/\s/g,''))).length; if(sc>hs){ hs=sc; hi=i; } });
+  state.headerIndex=hi;
   let cols;
-  if(headerLike){ cols=first.map((v,i)=>v||('열'+(i+1))); rows=rows.slice(1); }
+  if(hi>=0){ cols=rows[hi].map((v,i)=>v||('열'+(i+1))); rows=rows.slice(hi+1); }
   else { const n=Math.max(...rows.map(r=>r.length)); cols=Array.from({length:n},(_,i)=>'열'+(i+1)); }
+  if(!rows.length){ state.data={cols:[],rows:[]}; state.map={}; afterData(); return; }
   cols=cols.map((c,i)=>cols.indexOf(c)===i?c:c+'_'+(i+1));
   const objs=rows.map(r=>{ const o={}; cols.forEach((c,i)=>o[c]=r[i]||''); return o; });
   state.data={cols, rows:objs}; state.map=guessMap(cols,objs);
   afterData();
 }
 function afterData(){ renderMap(); renderLines(); renderTplGrid(); render(); persist(); if(state.data.rows.length) toast(state.data.rows.length+'명을 읽었습니다'); }
-function parsePaste(){
-  const t=$('pasteBox').value; state.rawText=t;
-  const lines=t.split(/\r?\n/).filter(l=>l.trim());
-  const hasTab=lines.some(l=>l.includes('\t'));
-  setRows(lines.map(l=>hasTab? l.split('\t') : (l.includes(',')? l.split(',') : [l])));
-}
-function clearData(){ state.data={cols:[],rows:[]}; state.map={}; state.rawText=''; $('pasteBox').value=''; $('sheetRow').style.display='none'; workbook=null; afterData(); }
+function parsePaste(){ const t=$('pasteBox').value; state.rawText=t; setRows(parseDelimited(t)); }
+function clearData(){ state.data={cols:[],rows:[]}; state.map={}; state.rawText=''; rawRows=[]; $('pasteBox').value=''; $('sheetRow').style.display='none'; workbook=null; afterData(); clearTimeout(saveTimer); persistNow(); }
 function renderMap(){
   const box=$('mapCard'); const d=state.data; if(!d.rows.length){ box.innerHTML=''; return; }
   const used=new Set(); state.tpl.lines.forEach(L=>L.parts.forEach(P=>{ if(P.src!=='fixed') used.add(P.src); }));
   const fields=FIELDS.filter(f=>used.has(f)||state.map[f]);
+  const hi=state.headerIndex; const headOpts=['<option value="-1" '+(hi<0?'selected':'')+'>머리글 없음 (첫 줄부터 사람)</option>'].concat(rawRows.slice(0,6).map((r,i)=>`<option value="${i}" ${i===hi?'selected':''}>${i+1}번째 줄: ${esc(r.filter(Boolean).slice(0,4).join(' · ')).slice(0,40)}</option>`)).join('');
   let h=`<div class="card"><div class="okbox"><span>✅ ${d.rows.length}명을 읽었습니다</span><span class="muted">열 ${d.cols.length}개</span></div>
-    <h3 style="margin-top:14px">어느 열이 무엇인지 확인 <span class="sub">틀린 곳만 바꾸세요</span></h3>`;
+    <div class="field" style="margin-top:10px"><label>머리글 줄</label><select class="in" onchange="setRows(rawRows,+this.value)">${headOpts}</select></div>
+    <h3 style="margin-top:10px">어느 열이 무엇인지 확인 <span class="sub">틀린 곳만 바꾸세요</span></h3>`;
+  if(!state.map['이름']) h+=`<p class="muted" style="color:var(--danger);margin:0 0 6px">이름 열을 찾지 못했습니다. 아래에서 이름 열을 골라 주세요.</p>`;
   fields.forEach(f=>{ const c=state.map[f]||''; const ex=c? d.rows.slice(0,2).map(r=>r[c]).filter(Boolean).join(', ') : '';
     h+=`<div class="mapRow"><span class="k">${f}</span><select class="in" onchange="setMap('${f}',this.value)"><option value="">(없음)</option>${d.cols.map(x=>`<option value="${esc(x)}" ${x===c?'selected':''}>${esc(x)}</option>`).join('')}</select><span class="ex" title="${esc(ex)}">${esc(ex)||'—'}</span></div>`; });
   h+=`</div>`;
@@ -466,15 +530,33 @@ function decodeText(buf){
   // 한글 CSV는 엑셀에서 EUC-KR(CP949)로 저장되는 일이 많아, UTF-8로 안 읽히면 EUC-KR로 다시 읽는다
   const b=new Uint8Array(buf);
   if(b.length>=2 && ((b[0]===0xFF&&b[1]===0xFE)||(b[0]===0xFE&&b[1]===0xFF))) return new TextDecoder('utf-16'+(b[0]===0xFF?'le':'be')).decode(buf);
-  try{ return new TextDecoder('utf-8',{fatal:true}).decode(buf); }catch(e){ try{ return new TextDecoder('euc-kr').decode(buf); }catch(e2){ return new TextDecoder().decode(buf); } }
+  // 후보 인코딩으로 모두 풀어 보고, 한글·영숫자가 많고 깨진 글자(U+FFFD)·NUL이 없는 쪽을 고른다
+  const score=t=>{ if(!t) return -1e9; const bad=(t.match(/[\uFFFD\u0000]/g)||[]).length; const good=(t.match(/[가-힣A-Za-z0-9]/g)||[]).length; const weird=(t.match(/[\u3130-\u318F\u4E00-\u9FFF\uAC00-\uD7A3]/g)||[]).length - (t.match(/[가-힣]/g)||[]).length; return good - bad*50 - weird*5; };
+  const tryDec=enc=>{ try{ return new TextDecoder(enc,{fatal:enc==='utf-8'}).decode(buf); }catch(e){ return null; } };
+  const cands=[['utf-8',tryDec('utf-8')],['euc-kr',tryDec('euc-kr')],['utf-16le',tryDec('utf-16le')],['utf-16be',tryDec('utf-16be')]].filter(c=>c[1]!==null);
+  cands.sort((a,b)=>score(b[1])-score(a[1]));
+  return cands.length? cands[0][1] : new TextDecoder().decode(buf);
 }
 function parseDelimited(text){
-  text=text.replace(/^\uFEFF/,'');
-  const lines=text.split(/\r?\n/).filter(l=>l.trim());
-  if(!lines.length) return [];
-  const cand=['\t',',',';','|']; const delim=cand.map(d=>[d,lines.slice(0,5).reduce((a,l)=>a+(l.split(d).length-1),0)]).sort((a,b)=>b[1]-a[1])[0];
-  const d=delim[1]>0?delim[0]:null;
-  return lines.map(l=>{ if(!d) return [l]; const out=[]; let cur='',q=false; for(let i=0;i<l.length;i++){ const ch=l[i]; if(ch==='"'){ if(q&&l[i+1]==='"'){cur+='"';i++;} else q=!q; } else if(ch===d&&!q){ out.push(cur); cur=''; } else cur+=ch; } out.push(cur); return out; });
+  text=text.replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n');
+  if(!text.trim()) return [];
+  // 따옴표 안의 쉼표·줄바꿈을 지키는 CSV 상태기계 (따옴표는 셀 처음에서만 열림)
+  const parseWith=d=>{ const rows=[]; let row=[], cur='', q=false, cellStart=true;
+    for(let i=0;i<text.length;i++){ const ch=text[i];
+      if(q){ if(ch==='"'){ if(text[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=ch; }
+      else if(ch==='"'&&cellStart){ q=true; }
+      else if(d&&ch===d){ row.push(cur); cur=''; cellStart=true; continue; }
+      else if(ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; cellStart=true; continue; }
+      else cur+=ch;
+      cellStart=false; }
+    row.push(cur); rows.push(row);
+    return rows.map(r=>r.map(v=>v.replace(/\n/g,' '))).filter(r=>r.some(v=>v.trim())); };
+  // 구분자 후보마다 파싱해서, 2칸 이상인 줄이 많고 칸 수가 고른 쪽을 고른다
+  let best=null, bs=-1;
+  for(const d of ['\t',',',';','|']){ const rows=parseWith(d); if(!rows.length) continue; const counts=rows.map(r=>r.length); const multi=counts.filter(n=>n>=2).length/rows.length; if(multi===0) continue;
+    const mode=counts.slice().sort((a,b)=>counts.filter(v=>v===a).length-counts.filter(v=>v===b).length).pop(); const consistent=counts.filter(n=>n===mode).length/rows.length;
+    const score=multi*2+consistent; if(score>bs){ bs=score; best=rows; } }
+  return best || parseWith(null);
 }
 function readXls(f){
   const ext=(f.name.split('.').pop()||'').toLowerCase();
@@ -537,11 +619,11 @@ function renderLines(){
       if(P.src==='fixed') h+=`<div class="partEdit">문구 <input class="in wide" value="${esc(P.text)}" oninput="setPart(${li},${pi},'text',this.value)" placeholder="예: 데일카네기 코스"></div>`;
       else h+=`<div class="partEdit">앞에 붙일 말 <input class="in" value="${esc(P.prefix)}" oninput="setPart(${li},${pi},'prefix',this.value)" placeholder="예: 제"> 뒤에 붙일 말 <input class="in" value="${esc(P.suffix)}" oninput="setPart(${li},${pi},'suffix',this.value)" placeholder="예: 기"></div>`; }
     if(L.parts.length>1) h+=`<div class="field"><label>이어 쓰기</label><div class="seg">${JOINS.map(j=>`<button class="${L.join===j[0]?'on':''}" onclick="setLine(${li},'join','${j[0]}')">${j[1]}</button>`).join('')}</div></div>`;
-    h+=`<div class="field"><label>글자 크기</label><div class="ctl"><div class="stepper"><button onclick="setLine(${li},'size',${Math.max(4,L.size-2)})">−</button><input type="number" value="${L.size}" oninput="setLine(${li},'size',+this.value||4)"><button onclick="setLine(${li},'size',${L.size+2})">+</button></div><span class="muted">pt</span>
-      <label class="toggle"><input type="checkbox" ${L.bold?'checked':''} onchange="setLine(${li},'bold',this.checked)">굵게</label><input type="color" value="${L.color||state.tpl.design.text}" oninput="setLine(${li},'color',this.value)" title="글자색"></div></div>`;
+    h+=`<div class="field"><label>글자 크기</label><div class="ctl"><div class="stepper"><button onclick="setLine(${li},'size',${Math.max(4,(+L.size||14)-2)})">−</button><input type="number" value="${esc(L.size)}" oninput="setLine(${li},'size',+this.value||4)"><button onclick="setLine(${li},'size',${(+L.size||14)+2})">+</button></div><span class="muted">pt</span>
+      <label class="toggle"><input type="checkbox" ${L.bold?'checked':''} onchange="setLine(${li},'bold',this.checked)">굵게</label><input type="color" value="${esc(L.color||state.tpl.design.text)}" oninput="setLine(${li},'color',this.value)" title="글자색"></div></div>`;
     h+=`<div class="field"><label>모양</label><div class="ctl"><label class="toggle"><input type="checkbox" ${L.spacing>0?'checked':''} onchange="setLine(${li},'spacing',this.checked?0.5:0)">글자 사이 띄우기 <span class="muted">(차 상 근)</span></label>
       <div class="seg"><button class="${L.align==='left'?'on':''}" onclick="setLine(${li},'align','left')">왼쪽</button><button class="${L.align==='center'?'on':''}" onclick="setLine(${li},'align','center')">가운데</button><button class="${L.align==='right'?'on':''}" onclick="setLine(${li},'align','right')">오른쪽</button></div></div></div>`;
-    h+=`<div class="field"><label>긴 글 줄이기</label><div class="ctl"><input type="number" class="in num" value="${L.maxChars}" min="0" oninput="setLine(${li},'maxChars',+this.value||0)"><span class="muted">자를 넘으면 자동으로 작게 (0이면 안 함)</span></div></div>`;
+    h+=`<div class="field"><label>긴 글 줄이기</label><div class="ctl"><input type="number" class="in num" value="${esc(L.maxChars)}" min="0" oninput="setLine(${li},'maxChars',+this.value||0)"><span class="muted">자를 넘으면 자동으로 작게 (0이면 안 함)</span></div></div>`;
     h+=`</div>`;
   });
   box.innerHTML=h;
@@ -621,6 +703,7 @@ function makeBadge(row, t){
 
 /* ---------- 전체 렌더 ---------- */
 function render(){
+  persist();
   const t=state.tpl, s=t.size, c=t.cut;
   const rows=state.data.rows;
   // 한 장 미리보기
@@ -637,7 +720,8 @@ function render(){
   $('pageStyle').textContent=`@page{size:A4 ${g.pw>g.ph?'landscape':'portrait'};margin:0}`;
   const per=g.cols*g.rows; const pages=per? Math.ceil(rows.length/per):0; pageCount=pages;
   $('status').innerHTML = rows.length? `<b>${rows.length}명</b> · A4 ${pages}장` : '명단을 넣어 주세요';
-  $('sheetInfo').textContent = per? `장당 ${per}개 (${g.cols}×${g.rows}) · 명찰 ${bw}×${bh}mm` : '';
+  $('sheetInfo').textContent = per? `장당 ${per}개 (${g.cols}×${g.rows}) · 실제 출력 ${bw}×${bh}mm` : '';
+  $('szNote').textContent = s.shrink>0 ? `실제로는 여유 줄임 ${s.shrink}mm를 뺀 ${bw}×${bh}mm로 인쇄됩니다.` : `선택한 ${s.w}×${s.h}mm 그대로 인쇄됩니다. 케이스에 빡빡하면 세부 설정의 「여유 줄임」을 1mm로 두세요.`;
   $('printSummary').textContent = rows.length? `${rows.length}명 → A4 ${pages}장이 인쇄됩니다` : '명단이 비어 있습니다';
   const pv=$('pages'); pv.innerHTML='';
   if(!rows.length){ pv.innerHTML='<div class="emptyMsg"><div class="ic">📋</div>왼쪽에서 명단을 넣으면 인쇄될 용지가 여기에 보입니다.</div>'; $('pager').style.visibility='hidden'; return; }
@@ -646,8 +730,16 @@ function render(){
   const gridW=g.cols*bw+(g.cols-1)*s.gap, gridH=g.rows*bh+(g.rows-1)*s.gap;
   const x0=(g.pw-gridW)/2+c.offX, y0=(g.ph-gridH)/2+c.offY;
   const scale=Math.min(1,(pv.clientWidth-16)/(g.pw*MM));
-  for(let p=0;p<pages;p++){
-    const wrap=document.createElement('div'); wrap.className='pageWrap'; wrap.style.width=g.pw+'mm'; wrap.style.height=g.ph+'mm'; wrap.style.zoom=scale;
+  pageBuild={t,s,c,rows,g,per,bw,bh,x0,y0,scale,pages};
+  for(let p=0;p<pages;p++){ const wrap=document.createElement('div'); wrap.className='pageWrap'; wrap.style.width=g.pw+'mm'; wrap.style.height=g.ph+'mm'; wrap.style.zoom=scale; wrap.dataset.p=p; pv.appendChild(wrap); }
+  if(curPage>=pages) curPage=0; showPage();
+  persist();
+}
+let pageBuild=null;
+function buildPage(wrap){
+  if(!pageBuild||wrap.dataset.built) return; wrap.dataset.built='1';
+  const {t,s,c,rows,g,per,bw,bh,x0,y0,pages}=pageBuild; const p=+wrap.dataset.p;
+  {
     const page=document.createElement('div'); page.className='page'; page.style.width=g.pw+'mm'; page.style.height=g.ph+'mm';
     if(c.style==='full'){
       const xs=new Set(), ys=new Set();
@@ -664,20 +756,19 @@ function render(){
       const b=makeBadge(r,t); b.style.left=x+'mm'; b.style.top=y+'mm'; page.appendChild(b);
     }
     const no=document.createElement('div'); no.className='pageNo'; no.textContent=`${p+1} / ${pages}`; page.appendChild(no);
-    wrap.appendChild(page); pv.appendChild(wrap);
+    wrap.appendChild(page);
   }
-  if(curPage>=pages) curPage=0; showPage();
-  persist();
 }
-function showPage(){ document.querySelectorAll('.pageWrap').forEach((w,i)=>w.classList.toggle('show',i===curPage)); $('pageLabel').textContent=pageCount? `${curPage+1} / ${pageCount}장`:'–'; }
+function showPage(){ document.querySelectorAll('.pageWrap').forEach((w,i)=>{ const on=i===curPage; w.classList.toggle('show',on); if(on) buildPage(w); }); $('pageLabel').textContent=pageCount? `${curPage+1} / ${pageCount}장`:'–'; }
+function buildAllPages(){ document.querySelectorAll('.pageWrap').forEach(w=>buildPage(w)); }
 function movePage(d){ if(!pageCount) return; curPage=(curPage+d+pageCount)%pageCount; showPage(); }
-function doPrint(){ if(!state.data.rows.length){ goStep(1); toast('먼저 명단을 넣어 주세요'); return; } window.print(); }
+function doPrint(){ if(!state.data.rows.length){ goStep(1); toast('먼저 명단을 넣어 주세요'); return; } if(!pageCount){ goStep(2); alert('명찰이 종이보다 커서 배치할 수 없습니다. 크기나 종이 여백을 줄여 주세요.'); return; } buildAllPages(); window.print(); }
 
 /* ---------- 기타 ---------- */
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 function toast(m){ const t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),1800); }
-window.addEventListener('resize',()=>render());
-window.addEventListener('beforeprint',()=>{ document.querySelectorAll('.pageWrap').forEach(w=>{ w.style.zoom=1; }); });
+let resizeTimer=null; window.addEventListener('resize',()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(render,150); });
+window.addEventListener('beforeprint',()=>{ buildAllPages(); document.querySelectorAll('.pageWrap').forEach(w=>{ w.style.zoom=1; }); });
 window.addEventListener('afterprint',()=>render());
 
 load(); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1);
@@ -696,8 +787,10 @@ modal.innerHTML = `
   <div class="pmHead"><b>📷 사진으로 틀 만들기</b><span class="pmStep" id="pmStep">1 / 3 · 사진 넣기</span><button class="ibtn" onclick="PhotoTpl.close()">✕</button></div>
   <div class="pmBody">
     <section class="pmPage active" data-p="1">
-      <div class="drop" id="pmDrop"><div class="ic">🪪</div><b>기존 명찰 사진을 여기에 놓기</b><span class="muted">클릭해서 고르거나, 휴대폰이면 바로 찍을 수 있습니다<br>책상에 놓고 위에서 찍으면 가장 잘 됩니다. 기울어져도 됩니다.</span></div>
-      <input type="file" id="pmFile" accept="image/*" capture="environment" style="display:none">
+      <div class="drop" id="pmDrop"><div class="ic">🪪</div><b>기존 명찰 사진을 여기에 놓기</b><span class="muted">클릭해서 사진을 고릅니다<br>책상(명찰과 다른 색)에 놓고 위에서 찍으면 귀퉁이를 자동으로 잡습니다. 기울어진 사진은 점 네 개를 맞추면 펴 줍니다. 사진은 서버로 보내지 않습니다.</span></div>
+      <div class="ctl" style="justify-content:center;margin:8px 0"><button class="btn" onclick="document.getElementById('pmFile').click()">📁 사진 고르기</button><button class="btn" onclick="document.getElementById('pmCam').click()">📷 지금 찍기 (휴대폰)</button></div>
+      <input type="file" id="pmFile" accept="image/*" style="display:none">
+      <input type="file" id="pmCam" accept="image/*" capture="environment" style="display:none">
       <div id="pmCropWrap" style="display:none">
         <p class="muted" style="margin:0 0 8px">명찰 네 귀퉁이에 점을 맞춰 주세요. 자동으로 잡은 위치가 맞으면 그대로 「펴기」를 누르면 됩니다.</p>
         <div class="pmCanvasWrap"><canvas id="pmCanvas"></canvas></div>
@@ -746,12 +839,12 @@ css.textContent = `
 .pmPhotoBtn{margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #ovWrap{position:relative;display:inline-block}
 #ovImg{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:fill;pointer-events:none;opacity:.5;mix-blend-mode:normal}
-@media (max-width:760px){.pmTwo{grid-template-columns:1fr}}
+@media screen and (max-width:760px){.pmTwo{grid-template-columns:1fr}}
 `;
 document.head.appendChild(css);
 
 /* ---------- 상태 ---------- */
-let img=null, quad=null, drag=-1, dragged=false, scaleK=1, flat=null, result=null, worker=null;
+let img=null, quad=null, drag=-1, dragged=false, scaleK=1, flat=null, result=null, worker=null, lastQuadScore=0;
 
 function open(){ modal.classList.add('open'); go(1); const s=$$('pmSize'); s.innerHTML=''; SIZES.filter(x=>x[0]!=='custom').forEach(x=>{ const o=document.createElement('option'); o.value=x[0]; o.textContent=`${x[3]} ${x[1]}×${x[2]}mm`; s.appendChild(o); }); const cur=state.tpl.size; const o=document.createElement('option'); o.value='custom'; o.textContent=`직접 입력 (지금 설정 ${cur.w}×${cur.h}mm)`; s.appendChild(o); s.value=cur.preset||'90x55'; }
 function close(){ modal.classList.remove('open'); }
@@ -764,9 +857,10 @@ dz.ondragover=e=>{e.preventDefault(); dz.classList.add('over');};
 dz.ondragleave=()=>dz.classList.remove('over');
 dz.ondrop=e=>{e.preventDefault(); dz.classList.remove('over'); if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);};
 $$('pmFile').onchange=e=>{ if(e.target.files[0]) loadFile(e.target.files[0]); e.target.value=''; };
+$$('pmCam').onchange=e=>{ if(e.target.files[0]) loadFile(e.target.files[0]); e.target.value=''; };
 
 function loadFile(f){ const r=new FileReader(); r.onload=()=>loadDataURL(r.result); r.readAsDataURL(f); }
-function loadDataURL(url){ const im=new Image(); im.onload=()=>{ img=im; dragged=false; quad=guessQuad(im); drawCrop(); dz.style.display='none'; $$('pmCropWrap').style.display='block'; const hint=$$('pmCropWrap').querySelector('p'); hint.textContent = (window.__quadScore||0)>=0.25 ? '명찰을 자동으로 찾았습니다. 초록 점이 네 귀퉁이에 맞으면 「펴기」를 누르세요. 어긋나면 점을 끌어 맞춥니다.' : '명찰 귀퉁이를 자동으로 찾지 못했습니다. 초록 점 네 개를 명찰 모서리로 끌어 주세요. (어두운 책상 위에서 찍으면 자동으로 잡힙니다)'; }; im.src=url; }
+function loadDataURL(url){ const im=new Image(); im.onload=()=>{ img=shrinkImage(im,1600); dragged=false; quad=guessQuad(img); drawCrop(); dz.style.display='none'; $$('pmCropWrap').style.display='block'; const hint=$$('pmCropWrap').querySelector('p'); hint.textContent = lastQuadScore>=0.25 ? '명찰을 자동으로 찾았습니다. 초록 점이 네 귀퉁이에 맞으면 「펴기」를 누르세요. 어긋나면 점을 끌어 맞춥니다.' : '명찰 귀퉁이를 자동으로 찾지 못했습니다. 초록 점 네 개를 명찰 모서리로 끌어 주세요. (어두운 책상 위에서 찍으면 자동으로 잡힙니다)'; }; im.src=url; }
 $$('pmSize').addEventListener('change',()=>{ if(img&&!dragged){ quad=guessQuad(img); drawCrop(); } });
 
 /* ---------- 귀퉁이 자동 추정 ---------- */
@@ -782,7 +876,7 @@ function guessQuad(im){
   const c2=blobByCenterChroma(d,W,H); if(c2) cands.push(c2);
   let best=null, bs=-1e9;
   cands.forEach(q=>{ const sc=scoreQuad(q,W,H,want); if(sc>bs){ bs=sc; best=q; } });
-  window.__quadScore=bs;
+  lastQuadScore=bs;
   if(!best || bs<0.25) return [[im.width*.15,im.height*.25],[im.width*.85,im.height*.25],[im.width*.85,im.height*.75],[im.width*.15,im.height*.75]];
   return best.pts.map(p=>[(p[0]+0.5)*k,(p[1]+0.5)*k]);
 }
@@ -818,7 +912,6 @@ function blobByEdges(d,W,H,q){
   const dilate=(m,r)=>{ const o=new Uint8Array(W*H); for(let y=0;y<H;y++) for(let x=0;x<W;x++){ if(!m[y*W+x]) continue; for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++){ const nx=x+dx,ny=y+dy; if(nx>=0&&ny>=0&&nx<W&&ny<H) o[ny*W+nx]=1; } } return o; };
   const core=erode(inside,2);
   const r0=largestComponent(core,W,H);
-  window.__edgeMasks={W,H,edge:dil,inside,core}; window.__edgeDbg={thr:+thr.toFixed(1), edgeFrac:+(edge.reduce((a,b)=>a+b,0)/(W*H)).toFixed(3), outsideFrac:+(outside.reduce((a,b)=>a+b,0)/(W*H)).toFixed(3), insideFrac:+(inside.reduce((a,b)=>a+b,0)/(W*H)).toFixed(3), coreFrac:+(core.reduce((a,b)=>a+b,0)/(W*H)).toFixed(3), r0:r0&&{area:r0.area,pts:r0.pts}};
   if(!r0||r0.area<W*H*0.03||r0.area>W*H*0.95) return null;
   // 가장 큰 속 영역에서 시작해, 주변(띠·그림자 선 너머)의 다른 속 영역을 닿는 대로 통째로 합친다
   const lab=labelAll(core,W,H); let cur=r0.mask;
@@ -877,21 +970,31 @@ function homography(src,dst){ // src 4점 → dst 4점, 3x3 행렬
 }
 function solve(A,b){ const n=b.length; const M=A.map((r,i)=>r.concat([b[i]]));
   for(let c=0;c<n;c++){ let p=c; for(let r=c+1;r<n;r++) if(Math.abs(M[r][c])>Math.abs(M[p][c])) p=r; [M[c],M[p]]=[M[p],M[c]];
+    if(Math.abs(M[c][c])<1e-9) throw new Error('네 점이 겹치거나 한 줄에 놓여 있어 펼 수 없습니다');
     for(let r=0;r<n;r++){ if(r===c) continue; const f=M[r][c]/M[c][c]; for(let k=c;k<=n;k++) M[r][k]-=f*M[c][k]; } }
   return M.map((r,i)=>r[n]/r[i]); }
 function warp(im, q, W, H){
   const sc=document.createElement('canvas'); sc.width=im.width; sc.height=im.height; sc.getContext('2d').drawImage(im,0,0); const S=sc.getContext('2d').getImageData(0,0,im.width,im.height).data;
   const Hm=homography([[0,0],[W,0],[W,H],[0,H]], q); // dst → src
+  if(Hm.some(v=>!Number.isFinite(v))) throw new Error('귀퉁이 좌표가 올바르지 않습니다');
   const out=new ImageData(W,H); const O=out.data; const sw=im.width, sh=im.height;
-  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const d=Hm[6]*x+Hm[7]*y+1; const sx=(Hm[0]*x+Hm[1]*y+Hm[2])/d, sy=(Hm[3]*x+Hm[4]*y+Hm[5])/d;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const d=Hm[6]*x+Hm[7]*y+1; if(Math.abs(d)<1e-6) continue; const sx=(Hm[0]*x+Hm[1]*y+Hm[2])/d, sy=(Hm[3]*x+Hm[4]*y+Hm[5])/d;
     const x0=Math.floor(sx), y0=Math.floor(sy); if(x0<0||y0<0||x0>=sw-1||y0>=sh-1){ continue; } const fx=sx-x0, fy=sy-y0; const o=(y*W+x)*4;
     for(let c=0;c<3;c++){ const i00=(y0*sw+x0)*4+c, i10=i00+4, i01=i00+sw*4, i11=i01+4; O[o+c]= (S[i00]*(1-fx)+S[i10]*fx)*(1-fy)+(S[i01]*(1-fx)+S[i11]*fx)*fy; } O[o+3]=255; }
   const c=document.createElement('canvas'); c.width=W; c.height=H; c.getContext('2d').putImageData(out,0,0); return c;
 }
+function shrinkImage(im,max){ const k=Math.min(1, max/Math.max(im.width,im.height)); if(k>=1) return im; const c=document.createElement('canvas'); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext('2d').drawImage(im,0,0,c.width,c.height); return c; }
 function sizeMM(){ const v=$$('pmSize').value; const s=SIZES.find(x=>x[0]===v); return v==='custom'? {preset:'custom',w:state.tpl.size.w,h:state.tpl.size.h} : {preset:v,w:s[1],h:s[2]}; }
+function quadValid(q){ // 네 점이 서로 떨어져 있고, 볼록하며, 넓이가 충분한지
+  for(let i=0;i<4;i++) for(let j=i+1;j<4;j++){ if(Math.hypot(q[i][0]-q[j][0],q[i][1]-q[j][1])<8) return false; }
+  let sign=0; for(let i=0;i<4;i++){ const a=q[i],b=q[(i+1)%4],c=q[(i+2)%4]; const cr=(b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-b[0]); if(Math.abs(cr)<1e-6) return false; const sg=cr>0?1:-1; if(sign&&sg!==sign) return false; sign=sg; }
+  const area=Math.abs(q.reduce((a,p,i)=>{ const n=q[(i+1)%4]; return a+(p[0]*n[1]-n[0]*p[1]); },0))/2;
+  return area>img.width*img.height*0.005; }
 async function flatten(){
+  if(!img) return;
+  if(!quadValid(quad)){ alert('초록 점 네 개가 겹치거나 한 줄에 놓여 있습니다. 명찰의 네 모서리에 하나씩 맞춰 주세요.'); return; }
   const mm=sizeMM(); const W=Math.round(mm.w*PX_PER_MM), H=Math.round(mm.h*PX_PER_MM);
-  flat=warp(img, quad, W, H); flat.mm=mm;
+  try{ flat=warp(img, quad, W, H); }catch(e){ alert(e.message); return; } flat.mm=mm;
   const fc=$$('pmFlat'); fc.width=W; fc.height=H; fc.getContext('2d').drawImage(flat,0,0);
   go(2); $$('pmApply').disabled=true; $$('pmFound').innerHTML='';
   try{ await analyze(); }catch(e){ console.error(e); msg('분석 중 문제가 생겼습니다: '+e.message, 100); }
@@ -958,11 +1061,11 @@ async function analyze(){
   let ocrOK=true;
   try{
     if(!worker){ if(typeof Tesseract==='undefined') throw new Error('OCR 도구를 불러오지 못했습니다'); worker=await Tesseract.createWorker('kor+eng',1,{logger:m=>{ if(m.status&&m.progress!=null) msg('글자를 읽는 중… '+m.status+' '+Math.round(m.progress*100)+'%', 40+m.progress*25); }}); await worker.setParameters({tessedit_pageseg_mode:'7', preserve_interword_spaces:'1'}); }
-    for(const L of textLines){ const c=lineCanvas(D,W,L,bg2,x0); L.crop=c; L.text=await ocrLine(c); }
-  }catch(e){ ocrOK=false; textLines.forEach(L=>{ if(!L.crop) L.crop=lineCanvas(D,W,L,bg2,x0); L.text=''; }); }
+    for(const L of textLines){ const c=lineCanvas(W,L); L.crop=c; L.text=await ocrLine(c); }
+  }catch(e){ ocrOK=false; textLines.forEach(L=>{ if(!L.crop) L.crop=lineCanvas(W,L); L.text=''; }); }
   // 5) 글꼴 맞추기
   msg('글꼴을 맞추는 중…',70); await tick();
-  for(const L of textLines){ L.role=guessRole(L.text, L, textLines); const fm=await matchFont(L); L.font=fm.font; L.bold=fm.bold; L.fontPx=fm.fontPx; L.match=fm.score; }
+  for(const L of textLines){ L.role=guessRole(L.text, L, textLines); const fm=await matchFont(L); L.font=fm.font; L.bold=fm.bold; L.fontPx=fm.fontPx; L.match=Math.max(0,fm.score); L.fontSkipped=fm.skipped; }
   // 로고 잘라내기
   const logos=lines.filter(L=>L.isLogo).map(L=>{ const c=document.createElement('canvas'); const pad=2; c.width=L.x1-L.x0+1+pad*2; c.height=L.h+pad*2; c.getContext('2d').drawImage(flat,L.x0-pad,L.y0-pad,c.width,c.height,0,0,c.width,c.height); const cy=(L.y0+L.y1)/2, cx=(L.x0+L.x1)/2; const pos = cy<H*0.45 ? (cx>W*0.66?'tr': cx<W*0.34?'tl':'top') : 'bottom'; return {data:c.toDataURL('image/png'), hmm:L.h/PX_PER_MM, pos}; });
   result={mm, bg:hex(...bg2), band, lines:textLines, logos, ocrOK, W, H};
@@ -973,16 +1076,25 @@ function tick(){ return new Promise(r=>setTimeout(r,10)); }
 async function ocrLine(c){ // 이진화 → 원본 확대 → 블록 모드 순서로 시도
   const clean=t=>(t||'').replace(/[\r\n]+/g,' ').replace(/[|_~`^]+/g,'').replace(/\s+/g,' ').trim();
   const tries=[[binarize(c),'7'],[upscale(c,2),'7'],[binarize(c),'6'],[binarize(c),'13']];
-  for(const [im,psm] of tries){ await worker.setParameters({tessedit_pageseg_mode:psm}); const {data}=await worker.recognize(im); const t=clean(data.text); if(/[가-힣A-Za-z0-9]/.test(t)) return t; }
-  return ''; }
+  let best={t:'',conf:-1};
+  for(const [im,psm] of tries){ await worker.setParameters({tessedit_pageseg_mode:psm}); const {data}=await worker.recognize(im); const t=clean(data.text); const good=(t.match(/[가-힣A-Za-z0-9]/g)||[]).length; if(!good) continue;
+    const conf=(data.confidence||0)+Math.min(good,6)*3; if(conf>best.conf) best={t,conf};
+    if(data.confidence>=75 && good>=2) break; }
+  return best.t; }
 function upscale(c,k){ const o=document.createElement('canvas'); o.width=c.width*k+32; o.height=c.height*k+32; const g=o.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,o.width,o.height); g.drawImage(c,16,16,c.width*k,c.height*k); return o; }
-function lineCanvas(D,W,L,bg,x0){ const pad=Math.round(L.h*0.25); const x=Math.max(0,L.x0-pad), y=Math.max(0,L.y0-pad), w=Math.min(W-x,L.x1-L.x0+1+pad*2), h=Math.min(flat.height-y,L.h+pad*2); const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(flat,x,y,w,h,0,0,w,h); return c; }
+function lineCanvas(W,L){ const pad=Math.round(L.h*0.25); const x=Math.max(0,L.x0-pad), y=Math.max(0,L.y0-pad), w=Math.min(W-x,L.x1-L.x0+1+pad*2), h=Math.min(flat.height-y,L.h+pad*2); const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(flat,x,y,w,h,0,0,w,h); return c; }
+function bgIsDark(c){ // 크롭 네 모서리(바탕) 밝기가 전체 평균보다 어두우면 흰 글자로 본다
+  const g=c.getContext('2d'); const d=g.getImageData(0,0,c.width,c.height).data; const lum=i=>0.3*d[i*4]+0.59*d[i*4+1]+0.11*d[i*4+2];
+  let sum=0; const n=c.width*c.height; for(let i=0;i<n;i++) sum+=lum(i); const mean=sum/n;
+  const corners=(lum(0)+lum(c.width-1)+lum((c.height-1)*c.width)+lum(n-1))/4; return corners<mean; }
 function binarize(c){ // 글자는 검정, 바탕은 흰색으로, 높이 64px로 키움
-  const s=Math.max(1, 64/c.height); const o=document.createElement('canvas'); o.width=Math.round(c.width*s)+16; o.height=Math.round(c.height*s)+16; const g=o.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,o.width,o.height); g.imageSmoothingEnabled=true; g.drawImage(c,8,8,Math.round(c.width*s),Math.round(c.height*s));
-  const im=g.getImageData(0,0,o.width,o.height); const d=im.data; let sum=0,n=0; for(let i=0;i<d.length;i+=4){ sum+=0.3*d[i]+0.59*d[i+1]+0.11*d[i+2]; n++; } const mean=sum/n;
-  // 바탕이 어두우면 반전
-  const corner=0.3*d[0]+0.59*d[1]+0.11*d[2]; const inv=corner<mean; const T=mean;
-  for(let i=0;i<d.length;i+=4){ let l=0.3*d[i]+0.59*d[i+1]+0.11*d[i+2]; if(inv) l=255-l; const v=l<T?0:255; d[i]=d[i+1]=d[i+2]=v; } g.putImageData(im,0,0); return o; }
+  const inv=bgIsDark(c);
+  const s=Math.max(1, 64/c.height); const o=document.createElement('canvas'); o.width=Math.round(c.width*s)+16; o.height=Math.round(c.height*s)+16; const g=o.getContext('2d'); g.fillStyle=inv?'#000':'#fff'; g.fillRect(0,0,o.width,o.height); g.imageSmoothingEnabled=true; g.drawImage(c,8,8,Math.round(c.width*s),Math.round(c.height*s));
+  const im=g.getImageData(0,0,o.width,o.height); const d=im.data; const n=d.length/4; const L=new Float32Array(n); let sum=0;
+  for(let i=0;i<n;i++){ let l=0.3*d[i*4]+0.59*d[i*4+1]+0.11*d[i*4+2]; if(inv) l=255-l; L[i]=l; sum+=l; }
+  // 뒤집은 값 기준으로 바탕(밝음)과 글자(어두움)의 중간을 문턱으로 (두 평균의 중간)
+  const mean=sum/n; let lo=0,ln=0,hi=0,hn=0; for(let i=0;i<n;i++){ if(L[i]<mean){ lo+=L[i]; ln++; } else { hi+=L[i]; hn++; } } const T=(ln&&hn)? ((lo/ln)+(hi/hn))/2 : mean;
+  for(let i=0;i<n;i++){ const v=L[i]<T?0:255; d[i*4]=d[i*4+1]=d[i*4+2]=v; } g.putImageData(im,0,0); return o; }
 function guessRole(t,L,all){ const s=(t||'').replace(/\s/g,'');
   if(/\d{1,3}기/.test(s) && /[가-힣]{2,}(?=\s*\(?\d)/.test(s) ) return 'title_gisu';
   if(/^\(?\d{1,3}기\)?$/.test(s)) return 'gisu';
@@ -994,13 +1106,14 @@ function guessRole(t,L,all){ const s=(t||'').replace(/\s/g,'');
 
 /* 글꼴 맞추기: 후보 글꼴로 같은 글자를 그려 잉크 높이를 맞춘 뒤 모양을 비교 */
 async function matchFont(L){
-  const text=(L.text&&L.text.length? L.text : '홍길동');
-  const target=gray(tightCrop(L.crop), 200, 48);
-  let best={font:state.tpl.design.font, bold:L.inkRatio>0.3, score:0, fontPx:L.h/0.9};
+  let best={font:state.tpl.design.font, bold:L.inkRatio>0.3, score:0, fontPx:L.h/0.9, skipped:false};
+  if(!L.text||!/[가-힣A-Za-z0-9]/.test(L.text)){ best.skipped=true; return best; }
+  const text=L.text;
+  const inv=bgIsDark(L.crop); const target=gray(tightCrop(L.crop), 200, 48, inv);
   try{ await document.fonts.ready; await Promise.all(FONTS.flatMap(f=>[400,700].map(w=>document.fonts.load(`${w} 40px ${f[2]}`, text).catch(()=>null)))); }catch(e){}
   for(const f of FONTS){ for(const bold of [false,true]){
     const probe=renderText(text,f[2],100,bold,L.spacing); if(!probe.inkH) continue;
-    const fontPx=100*L.h/probe.inkH; const r=renderText(text,f[2],fontPx,bold,L.spacing); const cand=gray(r.canvas,200,48);
+    const fontPx=100*L.h/probe.inkH; const r=renderText(text,f[2],fontPx,bold,L.spacing); const cand=gray(r.canvas,200,48,false);
     const sc=ncc(target,cand); if(sc>best.score) best={font:f[0],bold,score:sc,fontPx}; } }
   return best;
 }
@@ -1012,10 +1125,10 @@ function tightCrop(c){ // 글자 잉크가 있는 상자만 남기기 (바탕보
   const bgL=(lum(0)+lum(c.width-1)+lum((c.height-1)*c.width)+lum(c.width*c.height-1))/4; let x0=c.width,x1=0,y0=c.height,y1=0;
   for(let y=0;y<c.height;y++) for(let x=0;x<c.width;x++){ if(Math.abs(lum(y*c.width+x)-bgL)>70){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } }
   if(x1<=x0||y1<=y0) return c; const o=document.createElement('canvas'); o.width=x1-x0+1; o.height=y1-y0+1; o.getContext('2d').drawImage(c,x0,y0,o.width,o.height,0,0,o.width,o.height); return o; }
-function gray(c,w,h){ const o=document.createElement('canvas'); o.width=w; o.height=h; const g=o.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,w,h); g.drawImage(c,0,0,w,h); const d=g.getImageData(0,0,w,h).data; const out=new Float32Array(w*h); let mean=0; for(let i=0;i<w*h;i++){ out[i]=0.3*d[i*4]+0.59*d[i*4+1]+0.11*d[i*4+2]; mean+=out[i]; } mean/=w*h;
-  // 글자 쪽이 어둡게 되도록 정규화
-  const corner=out[0]; const inv=corner<mean; let s=0; for(let i=0;i<w*h;i++){ let v=inv?255-out[i]:out[i]; v=v-mean*(inv?-1:1); out[i]=v; } return out; }
-function ncc(a,b){ let ma=0,mb=0; for(let i=0;i<a.length;i++){ma+=a[i];mb+=b[i];} ma/=a.length; mb/=b.length; let s=0,sa=0,sb=0; for(let i=0;i<a.length;i++){ const x=a[i]-ma,y=b[i]-mb; s+=x*y; sa+=x*x; sb+=y*y; } return sa&&sb? Math.max(0,s/Math.sqrt(sa*sb)) : 0; }
+function gray(c,w,h,inv){ // inv=true면 흰 글자 사진이므로 뒤집어서 글자가 어둡게 되게 맞춘다
+  const o=document.createElement('canvas'); o.width=w; o.height=h; const g=o.getContext('2d'); g.fillStyle=inv?'#000':'#fff'; g.fillRect(0,0,w,h); g.drawImage(c,0,0,w,h); const d=g.getImageData(0,0,w,h).data; const out=new Float32Array(w*h);
+  for(let i=0;i<w*h;i++){ const l=0.3*d[i*4]+0.59*d[i*4+1]+0.11*d[i*4+2]; out[i]=inv?255-l:l; } return out; }
+function ncc(a,b){ let ma=0,mb=0; for(let i=0;i<a.length;i++){ma+=a[i];mb+=b[i];} ma/=a.length; mb/=b.length; let s=0,sa=0,sb=0; for(let i=0;i<a.length;i++){ const x=a[i]-ma,y=b[i]-mb; s+=x*y; sa+=x*x; sb+=y*y; } return sa&&sb? s/Math.sqrt(sa*sb) : 0; }
 
 /* ---------- 결과 보여 주기 ---------- */
 const ROLES=[['name','이름'],['title_gisu','직책 (기수)'],['gisu','기수'],['title','직책'],['event','행사명'],['company','회사'],['position','직함'],['fixed','고정 문구'],['skip','빼기']];
@@ -1025,7 +1138,7 @@ function showFound(){
   r.lines.forEach((L,i)=>{ h+=`<div class="pmLine"><canvas id="pmc${i}"></canvas><div class="r">
     <select class="in" onchange="PhotoTpl.setRole(${i},this.value)">${ROLES.map(x=>`<option value="${x[0]}" ${L.role===x[0]?'selected':''}>${x[1]}</option>`).join('')}</select>
     <input class="in" value="${esc(L.text||'')}" placeholder="읽은 글자" oninput="PhotoTpl.setText(${i},this.value)">
-    <span class="muted">${(L.fontPx/PX_PER_MM/0.3528).toFixed(0)}pt · ${fontName(L.font)}${L.bold?' 굵게':''} · 일치 ${Math.round(L.match*100)}% · <span class="pmSw" style="background:${L.color}"></span></span></div></div>`; });
+    <span class="muted">${(L.fontPx/PX_PER_MM/0.3528).toFixed(0)}pt · ${L.fontSkipped?'글꼴 판단 안 함(글자를 못 읽음)':`${fontName(L.font)}${L.bold?' 굵게':''} · 닮은 정도 ${Math.round(L.match*100)}%`} · <span class="pmSw" style="background:${L.color}"></span></span></div></div>`; });
   F.innerHTML=h;
   r.lines.forEach((L,i)=>{ const c=$$('pmc'+i); c.width=L.crop.width; c.height=L.crop.height; c.getContext('2d').drawImage(L.crop,0,0); });
 }
@@ -1039,7 +1152,7 @@ function apply(){
   t.design.bg=r.bg; const dark=lum(r.bg)<0.5; t.design.text= r.lines[0]? r.lines[0].color : (dark?'#ffffff':'#111111');
   if(r.band){ t.design.band=r.band.side; t.design.bandColor=r.band.color; t.design.bandH=+r.band.h.toFixed(1); }
   const lines=r.lines.filter(L=>L.role!=='skip');
-  const fontVotes={}; lines.forEach(L=>{ fontVotes[L.font]=(fontVotes[L.font]||0)+L.match*L.h; }); t.design.font=Object.keys(fontVotes).sort((a,b)=>fontVotes[b]-fontVotes[a])[0]||t.design.font;
+  const fontVotes={}; lines.forEach(L=>{ if(!L.fontSkipped&&L.match>0.3) fontVotes[L.font]=(fontVotes[L.font]||0)+L.match*L.h; }); t.design.font=Object.keys(fontVotes).sort((a,b)=>fontVotes[b]-fontVotes[a])[0]||t.design.font;
   t.lines=lines.map(L=>{ const pt=L.fontPx/PX_PER_MM/0.3528; let parts;
     switch(L.role){ case 'name': parts=[part('이름')]; break; case 'title_gisu': parts=[part('직책'),part('기수',{suffix:'기'})]; break; case 'gisu': parts=[part('기수',{suffix:'기'})]; break; case 'title': parts=[part('직책')]; break; case 'event': parts=[part('행사명')]; break; case 'company': parts=[part('회사')]; break; case 'position': parts=[part('직함')]; break; default: parts=[part('fixed',{text:L.text||''})]; }
     return line(parts,{join:L.role==='title_gisu'?'paren':'space', size:Math.round(pt), bold:L.bold, color:L.color, spacing:L.role==='name'?+Math.min(1,L.spacing).toFixed(2):+Math.min(0.5,L.spacing).toFixed(2), align:L.align, maxChars:L.role==='name'?4:0}); });
@@ -1068,7 +1181,7 @@ window.render=function(){ _render(); const ow=$$('oneWrap'); const b=ow.querySel
     if(state.showPhoto){ const wrap=document.createElement('div'); wrap.id='ovWrap'; b.parentNode.insertBefore(wrap,b); wrap.appendChild(b); const im=document.createElement('img'); im.id='ovImg'; im.src=state.photo; im.style.opacity=state.ovAlpha||0.5; wrap.appendChild(im); wrap.style.zoom=b.style.zoom; b.style.zoom=1; } }
   else bar.style.display='none'; };
 
-window.PhotoTpl={open,close,go,pick,flatten,apply,setRole,setText,loadDataURL,_analyze:()=>result,_flat:()=>flat,_worker:()=>worker,_quad:()=>quad,_dbg:{blobByEdges,blobByBorderColor,blobByCenterChroma,scoreQuad,sizeMM},_img:()=>img};
+window.PhotoTpl={open,close,go,pick,flatten,apply,setRole,setText,loadDataURL};
 })();
 
 </script>
