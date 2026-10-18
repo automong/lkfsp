@@ -463,6 +463,7 @@ function importTemplate(f){ if(!f) return; const r=new FileReader(); r.onload=()
 function exportAll(){ const b={kind:'nametag-backup', version:1, saved:new Date().toISOString(), templates:state.templates, current:state.current, tpl:state.tpl, data:state.data, map:state.map, globals:state.globals, headerIndex:state.headerIndex, rawRows, photo:state.photo||null};
   const blob=new Blob([JSON.stringify(b)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='명찰메이커_백업_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
 const MAX_ROWS=20000;
+function headerIndexOf(b){ return Number.isInteger(b.headerIndex)&&b.headerIndex>=-1? b.headerIndex : -1; }
 /* 백업 파일을 임시 객체로 전부 검증한다. 하나라도 틀리면 예외 → 기존 상태는 손대지 않는다 */
 function parseBackup(text){
   const b=JSON.parse(text);
@@ -471,21 +472,22 @@ function parseBackup(text){
   const str=(v,max)=>typeof v==='string'? v.slice(0,max||200) : '';
   const tpls={}; Object.keys(b.templates).forEach(n=>{ const nn=okName(n); if(!nn) return; tpls[nn]=sanitizeTemplate(b.templates[n]); });
   if(!Object.keys(tpls).length) throw new Error('백업 파일에 쓸 수 있는 틀이 없습니다');
-  const current=Object.hasOwn(tpls,b.current)?b.current:Object.keys(tpls)[0];
-  let tpl; try{ tpl=sanitizeTemplate(b.tpl); }catch(e){ tpl=clone(tpls[current]); }
+  if(typeof b.current!=='string'||!Object.hasOwn(tpls,b.current)) throw new Error('현재 틀 이름이 틀 목록에 없습니다 (파일이 손상됨)');
+  const current=b.current;
+  let tpl; try{ tpl=sanitizeTemplate(b.tpl); }catch(e){ throw new Error('편집 중이던 틀 정보가 손상됐습니다'); }
   if(b.data.rows.length>MAX_ROWS) throw new Error('명단이 '+b.data.rows.length+'명이라 너무 큽니다 (최대 '+MAX_ROWS+'명)');
   const cols=b.data.cols.filter(c=>typeof c==='string').map(c=>str(c,60)).slice(0,60);
   if(!cols.length && b.data.rows.length) throw new Error('백업 파일의 열 정보가 없습니다');
   const rows=b.data.rows.map((r,i)=>{ if(!r||typeof r!=='object') throw new Error((i+1)+'번째 명단 줄 형식이 잘못됐습니다'); const o={}; cols.forEach(c=>{ if(typeof r[c]!=='string') throw new Error((i+1)+'번째 줄에 「'+c+'」 칸이 없습니다 (파일이 손상됨)'); o[c]=str(r[c],200); }); return o; });
   if(!b.map||typeof b.map!=='object') throw new Error('열 연결 정보가 없습니다 (파일이 손상됨)');
   const map={}; Object.keys(b.map).forEach(k=>{ if(!FIELDS.includes(k)||!cols.includes(b.map[k])) throw new Error('열 연결 정보가 명단과 맞지 않습니다'); map[k]=b.map[k]; });
-  if(rows.length && !map['이름']) throw new Error('이름 열 연결이 없습니다');
-  if(typeof b.current!=='string'||!b.tpl||typeof b.tpl!=='object') throw new Error('틀 정보가 빠져 있습니다');
+  // 이름 열이 아직 연결되지 않은 백업도 복원한다(인쇄 때 이름 열을 요구함)
   const globals={'기수':str(b.globals&&b.globals['기수'],40),'행사명':str(b.globals&&b.globals['행사명'],80)};
   if(!Array.isArray(b.rawRows)) throw new Error('원본 줄 정보가 없습니다 (파일이 손상됨)');
-  const raw=b.rawRows.map(r=>{ if(!Array.isArray(r)) throw new Error('원본 줄 형식이 잘못됐습니다'); return r.map(v=>str(v,200)); });
+  const raw=b.rawRows.map((r,i)=>{ if(!Array.isArray(r)) throw new Error((i+1)+'번째 원본 줄 형식이 잘못됐습니다'); return r.map(v=>{ if(typeof v!=='string') throw new Error((i+1)+'번째 원본 줄에 글자가 아닌 값이 있습니다 (파일이 손상됨)'); return str(v,200); }); });
+  if(raw.length && headerIndexOf(b)>=raw.length) throw new Error('머리글 줄 번호가 원본 줄 수를 넘습니다');
   if(raw.length>MAX_ROWS+10) throw new Error('원본 줄이 너무 많습니다');
-  const headerIndex=Number.isInteger(b.headerIndex)&&b.headerIndex>=-1&&b.headerIndex<raw.length? b.headerIndex : -1;
+  const headerIndex=headerIndexOf(b);
   let photo=null; if(b.photo!=null){ if(typeof b.photo!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.photo)) throw new Error('사진 정보 형식이 잘못됐습니다'); if(b.photo.length>12000000) throw new Error('사진이 너무 커서 불러올 수 없습니다'); photo=b.photo; }
   return {tpls,current,tpl,cols,rows,map,globals,raw,headerIndex,photo};
 }
@@ -827,6 +829,7 @@ function movePage(d){ if(!pageCount) return; curPage=(curPage+d+pageCount)%pageC
 function looksLikeHeaderRow(r){ // 첫 줄에 이름·기수·영문 이름이 아닌 5자 이상 글자가 있으면 제목이나 머리글일 가능성
   return r.some(v=>v && v.length>=5 && !/^[가-힣]{2,4}$/.test(v) && !/^\d{1,3}\s*기?$/.test(v) && !/^[A-Za-z .'-]{2,}$/.test(v)); }
 function doPrint(){ if(!state.data.rows.length){ goStep(1); toast('먼저 명단을 넣어 주세요'); return; }
+  if(!state.map['이름'] && state.tpl.lines.some(L=>L.parts.some(P=>P.src==='이름'))){ goStep(1); alert('이름 열이 연결되지 않았습니다. 명단 단계의 「어느 열이 무엇인지 확인」에서 이름 열을 골라 주세요.'); return; }
   if(state.headerIndex<0 && !state.headerConfirmed && (state.data.cols.length>=2 || (rawRows.length && looksLikeHeaderRow(rawRows[0])))){
     const firstRow = rawRows.length? rawRows[0] : state.data.cols.map(c=>state.data.rows[0][c]);
     const first=firstRow.filter(Boolean).join(' · ').slice(0,60); const nameCol=state.map['이름']||'(없음)';
