@@ -8,8 +8,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Nanum+Gothic:wght@400;700;800&family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Dodum&family=Do+Hyeon&family=Black+Han+Sans&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<!-- 보안: 스크립트는 같은 폴더(lib/)에서만 읽고, 네트워크 연결은 같은 주소로만 허용한다. 글꼴 CSS만 구글·jsDelivr에서 받는다(글자 모양 파일이라 명단을 읽을 수 없음). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'none'">
+<script src="lib/xlsx.full.min.js"></script>
+<script src="lib/tesseract.min.js"></script>
 <style>
   :root{
     --bg:#f4f5f7; --card:#fff; --line:#e4e6ea; --line2:#cfd3d9; --text:#1a1d21; --muted:#6b7280; --soft:#f0f2f5;
@@ -160,7 +162,9 @@
   .pageNo{position:absolute;right:4mm;bottom:2mm;font-size:7pt;color:#9ca3af}
   .emptyMsg{color:var(--muted);text-align:center;padding:60px 20px;font-size:16px;line-height:1.8}
   .emptyMsg .ic{font-size:40px}
-  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:99;font-weight:600}
+  #ovWrap{position:relative;display:inline-block}
+  #ovImg{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:fill;pointer-events:none;opacity:.5}
+    .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:99;font-weight:600}
 
   @media print{
     body{display:block;height:auto;overflow:visible;background:#fff;min-width:0;width:auto}
@@ -276,7 +280,7 @@
     <div class="card">
       <h3>색과 띠</h3>
       <div class="field"><label>글자색</label><input type="color" id="dText"></div>
-      <div class="field"><label>색띠</label><div class="ctl"><div class="seg" id="bandSeg"></div><input type="color" id="dBandColor"> <span class="muted">두께</span><input type="number" class="in num" id="dBandH" step="0.5" min="0"></div></div>
+      <div class="field"><label>색띠</label><div class="ctl"><div class="seg" id="bandSeg"></div><input type="color" id="dBandColor"> <span class="muted">두께</span><input type="number" class="in num" id="dBandH" step="0.5" min="0"> <span class="muted">가장자리 띄움</span><input type="number" class="in num" id="dBandInset" step="0.5" min="0" title="띠를 가장자리에서 이만큼 안쪽에 둡니다 (mm)"></div></div>
       <div class="field"><label>바탕색</label><input type="color" id="dBg"></div>
     </div>
 
@@ -361,7 +365,7 @@ function baseTemplate(){
     lines:[],
     size:{preset:'90x55', w:90, h:55, shrink:0, gap:0, margin:8, orient:'auto'},
     cut:{style:'full', border:false, offX:0, offY:0},
-    design:{font:'noto', text:'#111111', band:'none', bandColor:'#2457d6', bandH:6, bg:'#ffffff', valign:'center', pad:3, lineGap:2, logo:null, logoPos:'top', logoH:8}
+    design:{font:'noto', text:'#111111', band:'none', bandColor:'#2457d6', bandH:6, bandInset:0, bg:'#ffffff', valign:'center', pad:3, lineGap:2, logo:null, logoPos:'top', logoH:8}
   };
 }
 function presets(){
@@ -466,7 +470,7 @@ function sanitizeTemplate(t){
   const out=baseTemplate();
   out.size={preset:one(S.preset,SIZES.map(x=>x[0]),'custom'), w:num(S.w,20,200,90), h:num(S.h,15,200,55), shrink:num(S.shrink,0,5,0), gap:num(S.gap,0,20,0), margin:num(S.margin,0,30,8), orient:one(S.orient,['auto','portrait','landscape'],'auto')};
   out.cut={style:one(C.style,['full','mark','none'],'full'), border:!!C.border, offX:num(C.offX,-20,20,0), offY:num(C.offY,-20,20,0)};
-  out.design={font:one(D.font,FONTS.map(f=>f[0]),'noto'), text:col(D.text,'#111111'), band:one(D.band,['none','top','left','bottom'],'none'), bandColor:col(D.bandColor,'#2457d6'), bandH:num(D.bandH,0,40,6), bg:col(D.bg,'#ffffff'), valign:one(D.valign,['center','flex-start','flex-end'],'center'), pad:num(D.pad,0,30,3), lineGap:num(D.lineGap,0,30,2), logo:(typeof D.logo==='string'&&/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=]+$/.test(D.logo)&&D.logo.length<3000000)?D.logo:null, logoPos:one(D.logoPos,['top','bottom','tl','tr'],'top'), logoH:num(D.logoH,2,50,8)};
+  out.design={font:one(D.font,FONTS.map(f=>f[0]),'noto'), text:col(D.text,'#111111'), band:one(D.band,['none','top','left','bottom'],'none'), bandColor:col(D.bandColor,'#2457d6'), bandH:num(D.bandH,0,40,6), bandInset:num(D.bandInset,0,20,0), bg:col(D.bg,'#ffffff'), valign:one(D.valign,['center','flex-start','flex-end'],'center'), pad:num(D.pad,0,30,3), lineGap:num(D.lineGap,0,30,2), logo:(typeof D.logo==='string'&&/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=]+$/.test(D.logo)&&D.logo.length<3000000)?D.logo:null, logoPos:one(D.logoPos,['top','bottom','tl','tr'],'top'), logoH:num(D.logoH,2,50,8)};
   out.lines=t.lines.slice(0,12).map(L=>{ L=L&&typeof L==='object'?L:{}; const parts=(Array.isArray(L.parts)?L.parts:[]).slice(0,8).map(P=>{ P=P&&typeof P==='object'?P:{}; const src=P.src==='fixed'?'fixed':(FIELDS.includes(P.src)?P.src:'이름'); return {src, text:str(P.text,100), prefix:str(P.prefix,20), suffix:str(P.suffix,20)}; });
     return {parts: parts.length?parts:[part('이름')], join:one(L.join,JOINS.map(j=>j[0]),'space'), size:num(L.size,4,200,14), bold:!!L.bold, color:(L.color?col(L.color,''):''), spacing:num(L.spacing,0,2,0), align:one(L.align,['left','center','right'],'center'), maxChars:num(L.maxChars,0,40,0)}; });
   if(!out.lines.length) out.lines=[line([part('이름')],{size:36,bold:true})];
@@ -500,7 +504,9 @@ function setRows(rows, headerIndex){
   // 제목 행이 위에 있어도 되게, 앞 6줄 가운데 열 이름이 가장 많이 맞는 줄을 머리글로 삼는다 (사용자가 바꿀 수 있음)
   let hi=-1, hs=0;
   if(headerIndex!==undefined) hi=headerIndex;
-  else rows.slice(0,6).forEach((r,i)=>{ const sc=r.filter(v=>HEADER_WORDS.test(v.replace(/\s/g,''))).length; if(sc>hs){ hs=sc; hi=i; } });
+  else { const nameLike=v=>/^[가-힣]{2,4}$/.test(v)||/^[A-Za-z]{2,}(\s[A-Za-z]{2,})?$/.test(v);
+    rows.slice(0,6).forEach((r,i)=>{ const sc=r.filter(v=>HEADER_WORDS.test(v.replace(/\s/g,''))).length; const next=rows[i+1]; const dataBelow=!!next && next.some(nameLike) && !next.some(v=>HEADER_WORDS.test(v.replace(/\s/g,'')));
+      const ok = sc>=2 || (sc>=1 && dataBelow); if(ok && sc>hs){ hs=sc; hi=i; } }); }
   state.headerIndex=hi;
   let cols;
   if(hi>=0){ cols=rows[hi].map((v,i)=>v||('열'+(i+1))); rows=rows.slice(hi+1); }
@@ -661,7 +667,7 @@ function fillSettingsUI(){
   $('cutBorder').checked=c.border; $('offX').value=c.offX; $('offY').value=c.offY;
   const fl=$('fontList'); fl.innerHTML='';
   FONTS.forEach(f=>{ const b=document.createElement('button'); b.className='fontOpt'+(d.font===f[0]?' on':''); b.innerHTML=`<div class="sm" style="font-family:${f[2]}">차상근</div><div class="nm">${f[1]}</div>`; b.onclick=()=>{ d.font=f[0]; fillSettingsUI(); render(); }; fl.appendChild(b); });
-  $('dText').value=d.text; $('dBandColor').value=d.bandColor; $('dBandH').value=d.bandH; $('dBg').value=d.bg; $('dPad').value=d.pad; $('dLineGap').value=d.lineGap; $('dLogoPos').value=d.logoPos; $('dLogoH').value=d.logoH;
+  $('dText').value=d.text; $('dBandColor').value=d.bandColor; $('dBandH').value=d.bandH; $('dBandInset').value=d.bandInset||0; $('dBg').value=d.bg; $('dPad').value=d.pad; $('dLineGap').value=d.lineGap; $('dLogoPos').value=d.logoPos; $('dLogoH').value=d.logoH;
   $('logoName').textContent = d.logo? '로고 있음' : '없음';
   seg('bandSeg',[['none','없음'],['top','위'],['left','왼쪽'],['bottom','아래']],()=>d.band,v=>d.band=v);
   seg('valignSeg',[['center','가운데'],['flex-start','위쪽'],['flex-end','아래쪽']],()=>d.valign,v=>d.valign=v);
@@ -680,7 +686,7 @@ function bind(id, path, type){
 }
 bind('szW','size.w'); bind('szH','size.h'); bind('szShrink','size.shrink'); bind('szGap','size.gap'); bind('szMargin','size.margin');
 bind('cutBorder','cut.border','change'); bind('offX','cut.offX'); bind('offY','cut.offY');
-bind('dText','design.text'); bind('dBandColor','design.bandColor'); bind('dBandH','design.bandH'); bind('dBg','design.bg'); bind('dPad','design.pad'); bind('dLineGap','design.lineGap'); bind('dLogoPos','design.logoPos','change'); bind('dLogoH','design.logoH');
+bind('dText','design.text'); bind('dBandColor','design.bandColor'); bind('dBandH','design.bandH'); bind('dBandInset','design.bandInset'); bind('dBg','design.bg'); bind('dPad','design.pad'); bind('dLineGap','design.lineGap'); bind('dLogoPos','design.logoPos','change'); bind('dLogoH','design.logoH');
 $('logoFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>setLogo(r.result); r.readAsDataURL(f); e.target.value=''; };
 function setLogo(v){ state.tpl.design.logo=v; $('logoName').textContent=v?'로고 있음':'없음'; render(); }
 
@@ -693,7 +699,7 @@ function makeBadge(row, t){
   b.style.cssText=`width:${bw}mm;height:${bh}mm;background:${d.bg};font-family:${font};color:${d.text};${c.border?'outline:0.2mm solid #9ca3af;outline-offset:-0.2mm;':''}`;
   if(d.band==='left') b.style.flexDirection='row';
   if(d.band==='bottom') b.style.flexDirection='column-reverse';
-  if(d.band!=='none'){ const band=document.createElement('div'); band.style.cssText=`background:${d.bandColor};flex:none;${d.band==='left'?`width:${d.bandH}mm;height:100%`:`height:${d.bandH}mm;width:100%`}`; b.appendChild(band); }
+  if(d.band!=='none'){ const band=document.createElement('div'); const ins=d.bandInset||0; const mg=d.band==='left'?`margin-left:${ins}mm`:d.band==='top'?`margin-top:${ins}mm`:`margin-bottom:${ins}mm`; band.style.cssText=`background:${d.bandColor};flex:none;${mg};${d.band==='left'?`width:${d.bandH}mm;height:calc(100% - ${ins*2}mm);align-self:center`:`height:${d.bandH}mm;width:calc(100% - ${ins*2}mm);align-self:center`}`; b.appendChild(band); }
   const content=document.createElement('div'); content.className='content';
   content.style.cssText=`justify-content:${d.valign};padding:${d.pad}mm;gap:${d.lineGap}mm;position:relative`;
   const logo=(pos)=>{ if(!d.logo||d.logoPos!==pos) return null; const im=document.createElement('img'); im.src=d.logo; im.style.cssText=`height:${d.logoH}mm;width:auto;max-width:90%;object-fit:contain;flex:none`; return im; };
@@ -721,6 +727,7 @@ function render(){
   const one=makeBadge(sampleRow(), t); one.classList.add('oneBadge'); one.style.position='static';
   const availW=ow.clientWidth-48; const bwpx=(s.w-s.shrink)*MM; one.style.zoom=Math.max(0.4, Math.min(2.2, availW/bwpx));
   ow.appendChild(one);
+  renderPhotoOverlay(ow, one);
   $('oneLabel').textContent = rows.length? '첫 번째 사람 기준, 실제보다 크게 보여 줍니다' : '예시 이름입니다. 명단을 넣으면 실제 이름으로 바뀝니다';
   // 용지
   const bw=Math.max(10,s.w-s.shrink), bh=Math.max(10,s.h-s.shrink);
@@ -744,6 +751,14 @@ function render(){
   for(let p=0;p<pages;p++){ const wrap=document.createElement('div'); wrap.className='pageWrap'; wrap.style.width=g.pw+'mm'; wrap.style.height=g.ph+'mm'; wrap.style.zoom=scale; wrap.dataset.p=p; pv.appendChild(wrap); }
   if(curPage>=pages) curPage=0; showPage();
   persist();
+}
+/* 사진 겹쳐 보기: 한 장 미리보기 위에 펴진 사진을 반투명으로 */
+function renderPhotoOverlay(ow, b){
+  let bar=$('ovBar'); if(!bar){ bar=document.createElement('div'); bar.id='ovBar'; bar.className='pmPhotoBtn'; ow.parentNode.insertBefore(bar, ow); }
+  if(!state.photo){ bar.style.display='none'; return; }
+  bar.style.display='flex';
+  bar.innerHTML=`<label class="toggle"><input type="checkbox" ${state.showPhoto?'checked':''} onchange="state.showPhoto=this.checked;render()">사진과 겹쳐 보기</label><span class="muted">투명도</span><input type="range" min="0.1" max="0.9" step="0.1" value="${esc(state.ovAlpha||0.5)}" oninput="state.ovAlpha=+this.value;const i=document.getElementById('ovImg');if(i)i.style.opacity=this.value"><button class="btn sm ghost" onclick="state.photo=null;state.showPhoto=false;render()">사진 지우기</button>`;
+  if(state.showPhoto){ const wrap=document.createElement('div'); wrap.id='ovWrap'; b.parentNode.insertBefore(wrap,b); wrap.appendChild(b); const im=document.createElement('img'); im.id='ovImg'; im.src=state.photo; im.style.opacity=state.ovAlpha||0.5; wrap.appendChild(im); wrap.style.zoom=b.style.zoom; b.style.zoom=1; }
 }
 let pageBuild=null;
 function buildPage(wrap){
@@ -772,11 +787,17 @@ function buildPage(wrap){
 function showPage(){ document.querySelectorAll('.pageWrap').forEach((w,i)=>{ const on=i===curPage; w.classList.toggle('show',on); if(on) buildPage(w); }); $('pageLabel').textContent=pageCount? `${curPage+1} / ${pageCount}장`:'–'; }
 function buildAllPages(){ document.querySelectorAll('.pageWrap').forEach(w=>buildPage(w)); }
 function movePage(d){ if(!pageCount) return; curPage=(curPage+d+pageCount)%pageCount; showPage(); }
-function doPrint(){ if(!state.data.rows.length){ goStep(1); toast('먼저 명단을 넣어 주세요'); return; } if(!pageCount){ goStep(2); alert('명찰이 종이보다 커서 배치할 수 없습니다. 크기나 종이 여백을 줄여 주세요.'); return; } buildAllPages(); window.print(); }
+function doPrint(){ if(!state.data.rows.length){ goStep(1); toast('먼저 명단을 넣어 주세요'); return; } if(!pageCount){ goStep(2); alert('명찰이 종이보다 커서 배치할 수 없습니다. 크기나 종이 여백을 줄여 주세요.'); return; }
+  const wraps=[...document.querySelectorAll('.pageWrap')].filter(w=>!w.dataset.built);
+  if(wraps.length<=8){ buildAllPages(); window.print(); return; }
+  // 장수가 많으면 5장씩 나눠 만들어 화면이 멈추지 않게 하고, 다 만든 뒤 인쇄 창을 연다
+  const t=toast('인쇄 준비 중… 0 / '+wraps.length+'장', 60000); let i=0;
+  const step=()=>{ const end=Math.min(i+5,wraps.length); for(;i<end;i++) buildPage(wraps[i]); t.textContent='인쇄 준비 중… '+i+' / '+wraps.length+'장'; if(i<wraps.length) setTimeout(step,0); else { t.remove(); window.print(); } };
+  setTimeout(step,0); }
 
 /* ---------- 기타 ---------- */
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
-function toast(m){ const t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),1800); }
+function toast(m,ms){ const t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),ms||1800); return t; }
 let resizeTimer=null; window.addEventListener('resize',()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(render,150); });
 window.addEventListener('beforeprint',()=>{ buildAllPages(); document.querySelectorAll('.pageWrap').forEach(w=>{ w.style.zoom=1; }); });
 window.addEventListener('afterprint',()=>render());
@@ -847,8 +868,6 @@ css.textContent = `
 .pmSw{display:inline-block;width:16px;height:16px;border-radius:4px;border:1px solid #0003;vertical-align:middle}
 .pmSum{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:10px;line-height:1.7}
 .pmPhotoBtn{margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-#ovWrap{position:relative;display:inline-block}
-#ovImg{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:fill;pointer-events:none;opacity:.5;mix-blend-mode:normal}
 @media screen and (max-width:760px){.pmTwo{grid-template-columns:1fr}}
 `;
 document.head.appendChild(css);
@@ -857,7 +876,8 @@ document.head.appendChild(css);
 let img=null, quad=null, drag=-1, dragged=false, scaleK=1, flat=null, result=null, worker=null, lastQuadScore=0;
 
 function open(){ modal.classList.add('open'); go(1); const s=$$('pmSize'); s.innerHTML=''; SIZES.filter(x=>x[0]!=='custom').forEach(x=>{ const o=document.createElement('option'); o.value=x[0]; o.textContent=`${x[3]} ${x[1]}×${x[2]}mm`; s.appendChild(o); }); const cur=state.tpl.size; const o=document.createElement('option'); o.value='custom'; o.textContent=`직접 입력 (지금 설정 ${cur.w}×${cur.h}mm)`; s.appendChild(o); s.value=cur.preset||'90x55'; }
-function close(){ modal.classList.remove('open'); }
+function close(){ modal.classList.remove('open'); releaseWorker(); }
+function releaseWorker(){ if(worker){ try{ worker.terminate(); }catch(e){} worker=null; } }
 function go(n){ modal.querySelectorAll('.pmPage').forEach(p=>p.classList.toggle('active',+p.dataset.p===n)); $$('pmStep').textContent = n===1? '1 / 2 · 사진 넣기' : '2 / 2 · 자동 분석'; }
 function pick(){ $$('pmFile').click(); }
 
@@ -950,7 +970,8 @@ function blobByCenterChroma(d,W,H){
   for(let i=0;i<W*H;i++){ if(lab[i]!==id) continue; area++; const x=i%W,y=(i/W)|0; const s=x+y,df=x-y; if(!tl||s<tl[0]+tl[1]) tl=[x,y]; if(!brc||s>brc[0]+brc[1]) brc=[x,y]; if(!tr||df>tr[0]-tr[1]) tr=[x,y]; if(!bl||df<bl[0]-bl[1]) bl=[x,y]; }
   return area>W*H*0.03 && area<W*H*0.9 ? {pts:[tl,tr,brc,bl],area} : null; }
 function scoreQuad(q,W,H,want){ const [tl,tr,br,bl]=q.pts; const wTop=Math.hypot(tr[0]-tl[0],tr[1]-tl[1]), wBot=Math.hypot(br[0]-bl[0],br[1]-bl[1]), hL=Math.hypot(bl[0]-tl[0],bl[1]-tl[1]), hR=Math.hypot(br[0]-tr[0],br[1]-tr[1]);
-  const ratio=((wTop+wBot)/2)/Math.max(1,(hL+hR)/2); const quadArea=Math.abs((tl[0]*tr[1]-tr[0]*tl[1])+(tr[0]*br[1]-br[0]*tr[1])+(br[0]*bl[1]-bl[0]*br[1])+(bl[0]*tl[1]-tl[0]*bl[1]))/2;
+  const r1=((wTop+wBot)/2)/Math.max(1,(hL+hR)/2), r2=Math.max(wTop,wBot)/Math.max(1,Math.max(hL,hR)), r3=Math.min(wTop,wBot)/Math.max(1,Math.min(hL,hR));
+  const ratio=[r1,r2,r3].sort((a,b)=>Math.abs(Math.log(a/want))-Math.abs(Math.log(b/want)))[0]; const quadArea=Math.abs((tl[0]*tr[1]-tr[0]*tl[1])+(tr[0]*br[1]-br[0]*tr[1])+(br[0]*bl[1]-bl[0]*br[1])+(bl[0]*tl[1]-tl[0]*bl[1]))/2;
   const fill=Math.min(1,q.area/Math.max(1,quadArea)); const frac=quadArea/(W*H);
   return fill - 1.5*Math.abs(Math.log(ratio/want)) - (frac<0.04||frac>0.9?1:0); }
 /* ---------- 귀퉁이 조정 화면 ---------- */
@@ -971,12 +992,21 @@ cvEl.addEventListener('mousedown',down); window.addEventListener('mousemove',mov
 cvEl.addEventListener('touchstart',down,{passive:false}); window.addEventListener('touchmove',move,{passive:false}); window.addEventListener('touchend',up);
 
 /* ---------- 원근 보정(호모그래피) ---------- */
-function homography(src,dst){ // src 4점 → dst 4점, 3x3 행렬
+function homography(src,dst){ // src 4점 → dst 4점, 3x3 행렬 (좌표를 정규화해 풀고 되돌린다)
+  const norm=pts=>{ const cx=pts.reduce((a,p)=>a+p[0],0)/4, cy=pts.reduce((a,p)=>a+p[1],0)/4; const sc=pts.reduce((a,p)=>a+Math.hypot(p[0]-cx,p[1]-cy),0)/4||1; const k=Math.SQRT2/sc; return {pts:pts.map(p=>[(p[0]-cx)*k,(p[1]-cy)*k]), T:[k,0,-k*cx, 0,k,-k*cy, 0,0,1]}; };
+  const ns=norm(src), nd=norm(dst);
   const A=[],b=[];
-  for(let i=0;i<4;i++){ const [x,y]=src[i],[u,v]=dst[i];
+  for(let i=0;i<4;i++){ const [x,y]=ns.pts[i],[u,v]=nd.pts[i];
     A.push([x,y,1,0,0,0,-u*x,-u*y]); b.push(u);
     A.push([0,0,0,x,y,1,-v*x,-v*y]); b.push(v); }
-  const h=solve(A,b); return [h[0],h[1],h[2],h[3],h[4],h[5],h[6],h[7],1];
+  const h=solve(A,b); const Hn=[h[0],h[1],h[2],h[3],h[4],h[5],h[6],h[7],1];
+  // H = Td^-1 · Hn · Ts
+  const inv3=m=>{ const [a,b2,c,d,e,f,g,h2,i]=m; const det=a*(e*i-f*h2)-b2*(d*i-f*g)+c*(d*h2-e*g); if(Math.abs(det)<1e-12) throw new Error('좌표 변환을 만들 수 없습니다'); return [(e*i-f*h2)/det,(c*h2-b2*i)/det,(b2*f-c*e)/det,(f*g-d*i)/det,(a*i-c*g)/det,(c*d-a*f)/det,(d*h2-e*g)/det,(b2*g-a*h2)/det,(a*e-b2*d)/det]; };
+  const mul=(m,n)=>{ const o=new Array(9).fill(0); for(let r=0;r<3;r++) for(let c=0;c<3;c++) for(let k=0;k<3;k++) o[r*3+c]+=m[r*3+k]*n[k*3+c]; return o; };
+  let Hm=mul(mul(inv3(nd.T),Hn),ns.T); Hm=Hm.map(v=>v/Hm[8]);
+  // 재투영 오차 검사
+  for(let i=0;i<4;i++){ const [x,y]=src[i]; const d=Hm[6]*x+Hm[7]*y+Hm[8]; const u=(Hm[0]*x+Hm[1]*y+Hm[2])/d, v=(Hm[3]*x+Hm[4]*y+Hm[5])/d; if(!Number.isFinite(u)||!Number.isFinite(v)||Math.hypot(u-dst[i][0],v-dst[i][1])>1.5) throw new Error('네 점의 배치가 올바르지 않아 펼 수 없습니다'); }
+  return Hm;
 }
 function solve(A,b){ const n=b.length; const M=A.map((r,i)=>r.concat([b[i]]));
   for(let c=0;c<n;c++){ let p=c; for(let r=c+1;r<n;r++) if(Math.abs(M[r][c])>Math.abs(M[p][c])) p=r; [M[c],M[p]]=[M[p],M[c]];
@@ -1029,16 +1059,28 @@ async function analyze(){
   // 2) 띠: 가장자리에서 바탕과 다른 색이 이어지는 두께
   const rowMean=y=>{ let r=0,g=0,b=0; for(let x=0;x<W;x+=2){ const p=at(x,y); r+=p[0];g+=p[1];b+=p[2]; } const n=Math.ceil(W/2); return [r/n,g/n,b/n]; };
   const colMean=x=>{ let r=0,g=0,b=0; for(let y=0;y<H;y+=2){ const p=at(x,y); r+=p[0];g+=p[1];b+=p[2]; } const n=Math.ceil(H/2); return [r/n,g/n,b/n]; };
-  const bandScan=(len,fn,sign)=>{ const e=Math.round(len*0.03); let k=0; const cols=[]; let ref=null; for(let i=e;i<len*0.35;i++){ const m=fn(sign>0?i:len-1-i); if(dist(m,bg)>45){ if(ref&&dist(m,ref)>40) break; ref=ref||m; k=i; cols.push(m); } else if(i>k+3) break; } return (k-e)>len*0.04? {t:k, c:cols.reduce((a,c)=>[a[0]+c[0],a[1]+c[1],a[2]+c[2]],[0,0,0]).map(v=>v/cols.length)} : null; };
+  // 가장자리에서 최대 15% 안쪽까지 바탕색 여백을 건너뛴 뒤, 바탕과 다른 색이 고르게 이어지는 구간을 띠로 본다
+  const bandScan=(len,fn,sign)=>{ const e=Math.round(len*0.03); let start=-1, end=-1; const cols=[]; let ref=null;
+    for(let i=e;i<len*0.4;i++){ const m=fn(sign>0?i:len-1-i); const diff=dist(m,bg)>45;
+      if(start<0){ if(diff){ start=i; ref=m; cols.push(m); } else if(i>len*0.15) break; }
+      else { // 띠 색의 누적 평균과 비교 (가장자리 번짐 행 때문에 일찍 끊기지 않게)
+        const mean=cols.reduce((a,c)=>[a[0]+c[0],a[1]+c[1],a[2]+c[2]],[0,0,0]).map(v=>v/cols.length);
+        if(diff && (dist(m,mean)<=40 || cols.length<3)){ end=i; cols.push(m); } else break; } }
+    if(start<0||end<0) return null; const thick=end-start+1; if(thick<len*0.04) return null;
+    return {t:end+1, inset:Math.max(0,start-e), thick, c:cols.reduce((a,c)=>[a[0]+c[0],a[1]+c[1],a[2]+c[2]],[0,0,0]).map(v=>v/cols.length)}; };
   const bands={top:bandScan(H,rowMean,1), bottom:bandScan(H,rowMean,-1), left:bandScan(W,colMean,1)};
-  let band=null; if(bands.top) band={side:'top',h:bands.top.t/PX_PER_MM,color:hex(...bands.top.c)}; else if(bands.bottom) band={side:'bottom',h:bands.bottom.t/PX_PER_MM,color:hex(...bands.bottom.c)}; else if(bands.left) band={side:'left',h:bands.left.t/PX_PER_MM,color:hex(...bands.left.c)};
+  let band=null; const mk=(side,b)=>({side, h:b.thick/PX_PER_MM, inset:b.inset/PX_PER_MM, color:hex(...b.c)});
+  if(bands.top) band=mk('top',bands.top); else if(bands.bottom) band=mk('bottom',bands.bottom); else if(bands.left) band=mk('left',bands.left);
   const edge=Math.round(Math.min(W,H)*0.035); // 펴진 가장자리의 배경 찌꺼기 제외
   const y0=Math.max(edge, bands.top?bands.top.t+2:0), y1=Math.min(H-edge, bands.bottom?H-bands.bottom.t-2:H), x0=Math.max(edge, bands.left?bands.left.t+2:0), x1=W-edge;
   // 중앙 영역에서 바탕 다시 추정(띠 제외)
   const px2=[]; for(let y=y0;y<y1;y+=3) for(let x=x0;x<x1;x+=3) px2.push(at(x,y)); const cl2=kmeans(px2,4,8); const bg2=cl2[0].c;
   msg('글자 줄을 찾는 중…',25); await tick();
   // 3) 잉크 마스크
-  const ink=new Uint8Array(W*H); const thr=Math.max(60, Math.min(140, (cl2[1]?dist(cl2[1].c,bg2):120)*0.5));
+  // 바탕과의 색 거리 분포에서 문턱을 정한다: 상위 5% 거리의 45% (연한 글자는 낮게, 진한 글자는 높게)
+  const dists=[]; for(let y=y0;y<y1;y+=2) for(let x=x0;x<x1;x+=2) dists.push(dist(at(x,y),bg2)); dists.sort((a,b)=>a-b);
+  const p95=dists[Math.floor(dists.length*0.95)]||0; const thr=Math.max(35, Math.min(140, p95*0.45));
+  const ink=new Uint8Array(W*H);
   for(let y=y0;y<y1;y++) for(let x=x0;x<x1;x++){ if(dist(at(x,y),bg2)>thr) ink[y*W+x]=1; }
   // 가로 투영 → 줄
   const rows=new Int32Array(H); for(let y=y0;y<y1;y++){ let s=0; for(let x=x0;x<x1;x++) s+=ink[y*W+x]; rows[y]=s; }
@@ -1070,7 +1112,7 @@ async function analyze(){
   const textLines=lines.filter(L=>!L.isLogo);
   let ocrOK=true;
   try{
-    if(!worker){ if(typeof Tesseract==='undefined') throw new Error('OCR 도구를 불러오지 못했습니다'); worker=await Tesseract.createWorker('kor+eng',1,{logger:m=>{ if(m.status&&m.progress!=null) msg('글자를 읽는 중… '+m.status+' '+Math.round(m.progress*100)+'%', 40+m.progress*25); }}); await worker.setParameters({tessedit_pageseg_mode:'7', preserve_interword_spaces:'1'}); }
+    if(!worker){ if(typeof Tesseract==='undefined') throw new Error('OCR 도구를 불러오지 못했습니다'); const LIB=new URL('lib/',location.href).href; worker=await Tesseract.createWorker('kor+eng',1,{workerPath:LIB+'worker.min.js', corePath:LIB, langPath:LIB+'lang', gzip:true, workerBlobURL:false, logger:m=>{ if(m.status&&m.progress!=null) msg('글자를 읽는 중… '+m.status+' '+Math.round(m.progress*100)+'%', 40+m.progress*25); }}); await worker.setParameters({tessedit_pageseg_mode:'7', preserve_interword_spaces:'1'}); }
     for(const L of textLines){ const c=lineCanvas(W,L); L.crop=c; L.text=await ocrLine(c); }
   }catch(e){ ocrOK=false; textLines.forEach(L=>{ if(!L.crop) L.crop=lineCanvas(W,L); L.text=''; }); }
   // 5) 글꼴 맞추기
@@ -1090,7 +1132,7 @@ async function ocrLine(c){ // 이진화 → 원본 확대 → 블록 모드 순�
   for(const [im,psm] of tries){ await worker.setParameters({tessedit_pageseg_mode:psm}); const {data}=await worker.recognize(im); const t=clean(data.text); const good=(t.match(/[가-힣A-Za-z0-9]/g)||[]).length; if(!good) continue;
     const conf=(data.confidence||0)+Math.min(good,6)*3; if(conf>best.conf) best={t,conf};
     if(data.confidence>=75 && good>=2) break; }
-  return best.t; }
+  return best.conf>=45? best.t : ''; }
 function upscale(c,k){ const o=document.createElement('canvas'); o.width=c.width*k+32; o.height=c.height*k+32; const g=o.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,o.width,o.height); g.drawImage(c,16,16,c.width*k,c.height*k); return o; }
 function lineCanvas(W,L){ const pad=Math.round(L.h*0.25); const x=Math.max(0,L.x0-pad), y=Math.max(0,L.y0-pad), w=Math.min(W-x,L.x1-L.x0+1+pad*2), h=Math.min(flat.height-y,L.h+pad*2); const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(flat,x,y,w,h,0,0,w,h); return c; }
 function bgIsDark(c){ // 크롭 네 모서리(바탕) 밝기가 전체 평균보다 어두우면 흰 글자로 본다
@@ -1144,7 +1186,7 @@ function ncc(a,b){ let ma=0,mb=0; for(let i=0;i<a.length;i++){ma+=a[i];mb+=b[i];
 const ROLES=[['name','이름'],['title_gisu','직책 (기수)'],['gisu','기수'],['title','직책'],['event','행사명'],['company','회사'],['position','직함'],['fixed','고정 문구'],['skip','빼기']];
 function showFound(){
   const r=result; const F=$$('pmFound'); const fontName=id=>(FONTS.find(f=>f[0]===id)||FONTS[0])[1];
-  let h=`<div class="pmSum">바탕색 <span class="pmSw" style="background:${r.bg}"></span> ${r.bg} · ${r.band?`띠: ${({top:'위',bottom:'아래',left:'왼쪽'})[r.band.side]} ${r.band.h.toFixed(1)}mm <span class="pmSw" style="background:${r.band.color}"></span>`:'띠 없음'} · 글자 줄 ${r.lines.length}개${r.logos.length?` · 그림 ${r.logos.length}개`:''}</div>`;
+  let h=`<div class="pmSum">바탕색 <span class="pmSw" style="background:${r.bg}"></span> ${r.bg} · ${r.band?`띠: ${({top:'위',bottom:'아래',left:'왼쪽'})[r.band.side]} ${r.band.h.toFixed(1)}mm${r.band.inset>0.5?` (가장자리에서 ${r.band.inset.toFixed(1)}mm 안쪽)`:''} <span class="pmSw" style="background:${r.band.color}"></span>`:'띠 없음'} · 글자 줄 ${r.lines.length}개${r.logos.length?` · 그림 ${r.logos.length}개`:''}</div>`;
   r.lines.forEach((L,i)=>{ h+=`<div class="pmLine"><canvas id="pmc${i}"></canvas><div class="r">
     <select class="in" onchange="PhotoTpl.setRole(${i},this.value)">${ROLES.map(x=>`<option value="${x[0]}" ${L.role===x[0]?'selected':''}>${x[1]}</option>`).join('')}</select>
     <input class="in" value="${esc(L.text||'')}" placeholder="읽은 글자" oninput="PhotoTpl.setText(${i},this.value)">
@@ -1160,7 +1202,7 @@ function apply(){
   const r=result; const t=baseTemplate(); const mm=r.mm;
   t.size={preset:mm.preset, w:mm.w, h:mm.h, shrink:state.tpl.size.shrink, gap:state.tpl.size.gap, margin:state.tpl.size.margin, orient:'auto'};
   t.design.bg=r.bg; const dark=lum(r.bg)<0.5; t.design.text= r.lines[0]? r.lines[0].color : (dark?'#ffffff':'#111111');
-  if(r.band){ t.design.band=r.band.side; t.design.bandColor=r.band.color; t.design.bandH=+r.band.h.toFixed(1); }
+  if(r.band){ t.design.band=r.band.side; t.design.bandColor=r.band.color; t.design.bandH=+r.band.h.toFixed(1); t.design.bandInset=+r.band.inset.toFixed(1); }
   const lines=r.lines.filter(L=>L.role!=='skip');
   const fontVotes={}; lines.forEach(L=>{ if(!L.fontSkipped&&L.match>0.3) fontVotes[L.font]=(fontVotes[L.font]||0)+L.match*L.h; }); t.design.font=Object.keys(fontVotes).sort((a,b)=>fontVotes[b]-fontVotes[a])[0]||t.design.font;
   t.lines=lines.map(L=>{ const pt=L.fontPx/PX_PER_MM/0.3528; let parts;
@@ -1184,13 +1226,6 @@ function apply(){
 function lum(h){ const r=parseInt(h.slice(1,3),16)/255,g=parseInt(h.slice(3,5),16)/255,b=parseInt(h.slice(5,7),16)/255; return 0.2126*r+0.7152*g+0.0722*b; }
 
 /* ---------- 사진 겹쳐 보기 (미리보기 위에 반투명) ---------- */
-const _render=window.render;
-window.render=function(){ _render(); const ow=$$('oneWrap'); const b=ow.querySelector('.badge'); if(!b) return;
-  let bar=$$('ovBar'); if(!bar){ bar=document.createElement('div'); bar.id='ovBar'; bar.className='pmPhotoBtn'; ow.parentNode.insertBefore(bar, ow); }
-  if(state.photo){ bar.style.display='flex'; bar.innerHTML=`<label class="toggle"><input type="checkbox" ${state.showPhoto?'checked':''} onchange="state.showPhoto=this.checked;render()">사진과 겹쳐 보기</label><span class="muted">투명도</span><input type="range" min="0.1" max="0.9" step="0.1" value="${state.ovAlpha||0.5}" oninput="state.ovAlpha=+this.value;const i=document.getElementById('ovImg');if(i)i.style.opacity=this.value"><button class="btn sm ghost" onclick="state.photo=null;state.showPhoto=false;render()">사진 지우기</button>`;
-    if(state.showPhoto){ const wrap=document.createElement('div'); wrap.id='ovWrap'; b.parentNode.insertBefore(wrap,b); wrap.appendChild(b); const im=document.createElement('img'); im.id='ovImg'; im.src=state.photo; im.style.opacity=state.ovAlpha||0.5; wrap.appendChild(im); wrap.style.zoom=b.style.zoom; b.style.zoom=1; } }
-  else bar.style.display='none'; };
-
 window.PhotoTpl={open,close,go,pick,flatten,apply,setRole,setText,loadDataURL};
 })();
 
