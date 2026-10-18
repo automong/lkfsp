@@ -198,7 +198,7 @@
   <button class="btn primary big" onclick="doPrint()">🖨 인쇄하기</button>
 </header>
 
-<div id="bootShade" style="position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:60;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted)">저장된 내용을 불러오는 중…</div>
+<div id="bootShade" aria-live="polite" style="position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:60;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted)">저장된 내용을 불러오는 중…</div>
 <div class="body">
 <aside class="side">
 
@@ -395,7 +395,7 @@ function idbGet(keys){ return idbOpen().then(db=>new Promise((res,rej)=>{ const 
 function idbSet(obj){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(DB_STORE,'readwrite'); const st=tx.objectStore(DB_STORE); Object.keys(obj).forEach(k=>{ if(obj[k]===undefined||obj[k]===null) st.delete(k); else st.put(obj[k],k); }); tx.oncomplete=()=>{ db.close(); res(); }; tx.onerror=()=>{ db.close(); rej(tx.error||new Error('tx 실패')); }; tx.onabort=()=>{ db.close(); rej(tx.error||new Error('tx 중단')); }; })); }
 async function load(){
   let got=null; try{ got=await idbGet(['main','photo']); }catch(e){ got=null; }
-  if(got && got.main){ state=Object.assign(state, got.main); state.photo=(typeof got.photo==='string')? got.photo : null; }
+  if(got && got.main){ state=Object.assign(state, got.main); state.photo=(typeof got.photo==='string')? got.photo : null; rawRows=Array.isArray(state.rawRows)? state.rawRows.filter(r=>Array.isArray(r)).map(r=>r.map(v=>typeof v==='string'?v:'')) : []; delete state.rawRows; }
   else { // 옛 저장본(localStorage) 이어받기: 한 번만
     try{ const s=JSON.parse(localStorage.getItem('nametag.v2')||'null'); if(s) state=Object.assign(state,s); }catch(e){}
     try{ const ph=localStorage.getItem('nametag.photo'); const oldPhoto=state.photo;
@@ -418,7 +418,7 @@ let persistWarned=false;
 let saveFailed=false, persistChain=Promise.resolve();
 function persistNow(){
   // 본체와 사진을 한 트랜잭션으로 저장한다. 실패하면 이전 저장본이 그대로 남고, 화면에 「저장 안 됨」을 표시한다
-  const main=JSON.parse(JSON.stringify(Object.assign({},state,{photo:undefined})));
+  const main=JSON.parse(JSON.stringify(Object.assign({},state,{photo:undefined, rawRows})));
   const photo=state.photo||null;
   persistChain=persistChain.then(()=>idbSet({main, photo})).then(()=>{ saveFailed=false; updateSaveBadge(); try{ localStorage.removeItem('nametag.v2'); localStorage.removeItem('nametag.photo'); }catch(e){} })
     .catch(e=>{ saveFailed=true; updateSaveBadge(); if(!persistWarned){ persistWarned=true; alert('브라우저 저장 공간이 부족하거나 저장이 막혀 있어 지금 내용이 다음에 남지 않을 수 있습니다. 「전체 백업 파일로 저장」으로 보관해 주세요.'); } });
@@ -476,13 +476,17 @@ function parseBackup(text){
   if(b.data.rows.length>MAX_ROWS) throw new Error('명단이 '+b.data.rows.length+'명이라 너무 큽니다 (최대 '+MAX_ROWS+'명)');
   const cols=b.data.cols.filter(c=>typeof c==='string').map(c=>str(c,60)).slice(0,60);
   if(!cols.length && b.data.rows.length) throw new Error('백업 파일의 열 정보가 없습니다');
-  const rows=b.data.rows.map(r=>{ if(!r||typeof r!=='object') throw new Error('명단 줄 형식이 잘못됐습니다'); const o={}; cols.forEach(c=>o[c]=str(r[c],200)); return o; });
-  const map={}; Object.keys(b.map||{}).forEach(k=>{ if(FIELDS.includes(k)&&cols.includes(b.map[k])) map[k]=b.map[k]; });
+  const rows=b.data.rows.map((r,i)=>{ if(!r||typeof r!=='object') throw new Error((i+1)+'번째 명단 줄 형식이 잘못됐습니다'); const o={}; cols.forEach(c=>{ if(typeof r[c]!=='string') throw new Error((i+1)+'번째 줄에 「'+c+'」 칸이 없습니다 (파일이 손상됨)'); o[c]=str(r[c],200); }); return o; });
+  if(!b.map||typeof b.map!=='object') throw new Error('열 연결 정보가 없습니다 (파일이 손상됨)');
+  const map={}; Object.keys(b.map).forEach(k=>{ if(!FIELDS.includes(k)||!cols.includes(b.map[k])) throw new Error('열 연결 정보가 명단과 맞지 않습니다'); map[k]=b.map[k]; });
+  if(rows.length && !map['이름']) throw new Error('이름 열 연결이 없습니다');
+  if(typeof b.current!=='string'||!b.tpl||typeof b.tpl!=='object') throw new Error('틀 정보가 빠져 있습니다');
   const globals={'기수':str(b.globals&&b.globals['기수'],40),'행사명':str(b.globals&&b.globals['행사명'],80)};
-  const raw=Array.isArray(b.rawRows)? b.rawRows.map(r=>Array.isArray(r)?r.map(v=>str(v,200)):[]) : [];
+  if(!Array.isArray(b.rawRows)) throw new Error('원본 줄 정보가 없습니다 (파일이 손상됨)');
+  const raw=b.rawRows.map(r=>{ if(!Array.isArray(r)) throw new Error('원본 줄 형식이 잘못됐습니다'); return r.map(v=>str(v,200)); });
   if(raw.length>MAX_ROWS+10) throw new Error('원본 줄이 너무 많습니다');
   const headerIndex=Number.isInteger(b.headerIndex)&&b.headerIndex>=-1&&b.headerIndex<raw.length? b.headerIndex : -1;
-  const photo=(typeof b.photo==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.photo)&&b.photo.length<4000000)? b.photo : null;
+  let photo=null; if(b.photo!=null){ if(typeof b.photo!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.photo)) throw new Error('사진 정보 형식이 잘못됐습니다'); if(b.photo.length>12000000) throw new Error('사진이 너무 커서 불러올 수 없습니다'); photo=b.photo; }
   return {tpls,current,tpl,cols,rows,map,globals,raw,headerIndex,photo};
 }
 function importAll(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let b; try{ b=parseBackup(r.result); }catch(e){ alert('백업을 불러오지 못했습니다: '+e.message+'\n기존 명단과 틀은 그대로 둡니다.'); return; }
@@ -823,8 +827,9 @@ function movePage(d){ if(!pageCount) return; curPage=(curPage+d+pageCount)%pageC
 function looksLikeHeaderRow(r){ // 첫 줄에 이름·기수·영문 이름이 아닌 5자 이상 글자가 있으면 제목이나 머리글일 가능성
   return r.some(v=>v && v.length>=5 && !/^[가-힣]{2,4}$/.test(v) && !/^\d{1,3}\s*기?$/.test(v) && !/^[A-Za-z .'-]{2,}$/.test(v)); }
 function doPrint(){ if(!state.data.rows.length){ goStep(1); toast('먼저 명단을 넣어 주세요'); return; }
-  if(state.headerIndex<0 && !state.headerConfirmed && rawRows.length && (state.data.cols.length>=2 || looksLikeHeaderRow(rawRows[0]))){
-    const first=rawRows[0].filter(Boolean).join(' · ').slice(0,60); const nameCol=state.map['이름']||'(없음)';
+  if(state.headerIndex<0 && !state.headerConfirmed && (state.data.cols.length>=2 || (rawRows.length && looksLikeHeaderRow(rawRows[0])))){
+    const firstRow = rawRows.length? rawRows[0] : state.data.cols.map(c=>state.data.rows[0][c]);
+    const first=firstRow.filter(Boolean).join(' · ').slice(0,60); const nameCol=state.map['이름']||'(없음)';
     if(!confirm('머리글(제목 줄)을 찾지 못해 첫 줄부터 사람으로 봅니다.\n\n첫 사람: 「'+first+'」\n이름 열: '+nameCol+'\n\n첫 줄이 사람이 맞으면 「확인」, 제목이나 머리글이면 「취소」를 누르고 명단 단계에서 「머리글 줄」을 고르세요.')){ goStep(1); return; }
     state.headerConfirmed=true; persist(); }
   if(false){ const first=rawRows[0].filter(Boolean).join(' · ').slice(0,60); if(!confirm('첫 줄 「'+first+'」도 사람 한 명으로 인쇄됩니다. 머리글(제목 줄)이라면 「취소」를 누르고 명단 단계에서 「머리글 줄」을 고르세요.\n\n이대로 인쇄할까요?')){ goStep(1); return; } }
@@ -844,7 +849,8 @@ let resizeTimer=null; window.addEventListener('resize',()=>{ clearTimeout(resize
 window.addEventListener('beforeprint',()=>{ buildAllPages(); document.querySelectorAll('.pageWrap').forEach(w=>{ w.style.zoom=1; }); });
 window.addEventListener('afterprint',()=>render());
 
-load().catch(e=>{ console.error(e); }).then(()=>{ if(!state.templates||!Object.keys(state.templates).length) state.templates=presets(); if(!state.tpl) state.tpl=clone(state.templates[Object.keys(state.templates)[0]]); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1); const sh=$('bootShade'); if(sh) sh.remove(); });
+document.querySelector('.top').inert=true; document.querySelector('.body').inert=true;
+load().catch(e=>{ console.error(e); }).then(()=>{ document.querySelector('.top').inert=false; document.querySelector('.body').inert=false; if(!state.templates||!Object.keys(state.templates).length) state.templates=presets(); if(!state.tpl) state.tpl=clone(state.templates[Object.keys(state.templates)[0]]); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1); const sh=$('bootShade'); if(sh) sh.remove(); });
 </script>
 <script>
 /* ===== 사진으로 틀 만들기 (기기 안에서만 처리, 외부 전송 없음) ===== */
