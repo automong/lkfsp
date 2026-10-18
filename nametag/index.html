@@ -485,9 +485,16 @@ function parseBackup(text){
   const globals={'기수':str(b.globals&&b.globals['기수'],40),'행사명':str(b.globals&&b.globals['행사명'],80)};
   if(!Array.isArray(b.rawRows)) throw new Error('원본 줄 정보가 없습니다 (파일이 손상됨)');
   const raw=b.rawRows.map((r,i)=>{ if(!Array.isArray(r)) throw new Error((i+1)+'번째 원본 줄 형식이 잘못됐습니다'); return r.map(v=>{ if(typeof v!=='string') throw new Error((i+1)+'번째 원본 줄에 글자가 아닌 값이 있습니다 (파일이 손상됨)'); return str(v,200); }); });
-  if(raw.length && headerIndexOf(b)>=raw.length) throw new Error('머리글 줄 번호가 원본 줄 수를 넘습니다');
+  const hIdx=headerIndexOf(b); if(!(hIdx===-1 || (hIdx>=0 && hIdx<raw.length))) throw new Error('머리글 줄 번호가 올바르지 않습니다 (파일이 손상됨)');
+  if(rows.length && !raw.length) throw new Error('원본 줄이 비어 있어 명단과 맞출 수 없습니다 (파일이 손상됨)');
+  // 원본 줄 + 머리글 줄로 명단을 다시 만들어 저장된 명단과 같은지 확인한다
+  if(raw.length){ const body=raw.slice(hIdx+1).filter(r=>r.some(v=>v.trim())); const hdr=hIdx>=0? raw[hIdx].map((v,i)=>v||('열'+(i+1))) : Array.from({length:Math.max(...raw.map(r=>r.length))},(_,i)=>'열'+(i+1));
+    const hdrU=hdr.map((c,i)=>hdr.indexOf(c)===i?c:c+'_'+(i+1));
+    if(hdrU.length!==cols.length || hdrU.some((c,i)=>c!==cols[i])) throw new Error('원본 줄의 열 이름이 명단과 맞지 않습니다 (파일이 손상됨)');
+    if(body.length!==rows.length) throw new Error('원본 줄 수('+body.length+')와 명단 수('+rows.length+')가 다릅니다 (파일이 손상됨)');
+    for(let i=0;i<rows.length;i++){ for(let c=0;c<cols.length;c++){ if((body[i][c]||'').trim()!==(rows[i][cols[c]]||'')) throw new Error((i+1)+'번째 사람의 「'+cols[c]+'」 값이 원본 줄과 다릅니다 (파일이 손상됨)'); } } }
   if(raw.length>MAX_ROWS+10) throw new Error('원본 줄이 너무 많습니다');
-  const headerIndex=headerIndexOf(b);
+  const headerIndex=hIdx;
   let photo=null; if(b.photo!=null){ if(typeof b.photo!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.photo)) throw new Error('사진 정보 형식이 잘못됐습니다'); if(b.photo.length>12000000) throw new Error('사진이 너무 커서 불러올 수 없습니다'); photo=b.photo; }
   return {tpls,current,tpl,cols,rows,map,globals,raw,headerIndex,photo};
 }
@@ -829,7 +836,7 @@ function movePage(d){ if(!pageCount) return; curPage=(curPage+d+pageCount)%pageC
 function looksLikeHeaderRow(r){ // 첫 줄에 이름·기수·영문 이름이 아닌 5자 이상 글자가 있으면 제목이나 머리글일 가능성
   return r.some(v=>v && v.length>=5 && !/^[가-힣]{2,4}$/.test(v) && !/^\d{1,3}\s*기?$/.test(v) && !/^[A-Za-z .'-]{2,}$/.test(v)); }
 function doPrint(){ if(!state.data.rows.length){ goStep(1); toast('먼저 명단을 넣어 주세요'); return; }
-  if(!state.map['이름'] && state.tpl.lines.some(L=>L.parts.some(P=>P.src==='이름'))){ goStep(1); alert('이름 열이 연결되지 않았습니다. 명단 단계의 「어느 열이 무엇인지 확인」에서 이름 열을 골라 주세요.'); return; }
+  if(!state.map['이름']){ goStep(1); alert('이름 열이 연결되지 않았습니다. 명단 단계의 「어느 열이 무엇인지 확인」에서 이름 열을 골라 주세요.'); return; }
   if(state.headerIndex<0 && !state.headerConfirmed && (state.data.cols.length>=2 || (rawRows.length && looksLikeHeaderRow(rawRows[0])))){
     const firstRow = rawRows.length? rawRows[0] : state.data.cols.map(c=>state.data.rows[0][c]);
     const first=firstRow.filter(Boolean).join(' · ').slice(0,60); const nameCol=state.map['이름']||'(없음)';
