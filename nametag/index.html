@@ -198,6 +198,7 @@
   <button class="btn primary big" onclick="doPrint()">🖨 인쇄하기</button>
 </header>
 
+<div id="bootShade" style="position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:60;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted)">저장된 내용을 불러오는 중…</div>
 <div class="body">
 <aside class="side">
 
@@ -459,18 +460,35 @@ function importTemplate(f){ if(!f) return; const r=new FileReader(); r.onload=()
   if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return;
   state.templates[n]=t; state.current=n; state.tpl=clone(t); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }; r.readAsText(f); $('tplFile').value=''; }
 /* 전체 백업: 명단·틀·공통 값·열 연결을 파일 하나로 */
-function exportAll(){ const b={kind:'nametag-backup', version:1, saved:new Date().toISOString(), templates:state.templates, current:state.current, tpl:state.tpl, data:state.data, map:state.map, globals:state.globals, headerIndex:state.headerIndex, rawRows};
+function exportAll(){ const b={kind:'nametag-backup', version:1, saved:new Date().toISOString(), templates:state.templates, current:state.current, tpl:state.tpl, data:state.data, map:state.map, globals:state.globals, headerIndex:state.headerIndex, rawRows, photo:state.photo||null};
   const blob=new Blob([JSON.stringify(b)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='명찰메이커_백업_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
-function importAll(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let b; try{ b=JSON.parse(r.result); if(!b||b.kind!=='nametag-backup') throw 0; }catch(e){ alert('백업 파일이 아닙니다. 이 페이지에서 「전체 백업 파일로 저장」으로 만든 파일만 불러올 수 있습니다.'); return; }
-  if(!confirm('지금 화면의 명단·틀을 백업 파일 내용으로 바꿉니다. 계속할까요?')) return;
+const MAX_ROWS=20000;
+/* 백업 파일을 임시 객체로 전부 검증한다. 하나라도 틀리면 예외 → 기존 상태는 손대지 않는다 */
+function parseBackup(text){
+  const b=JSON.parse(text);
+  if(!b||typeof b!=='object'||b.kind!=='nametag-backup'||b.version!==1) throw new Error('이 페이지의 백업 파일이 아닙니다');
+  if(!b.templates||typeof b.templates!=='object'||!b.data||typeof b.data!=='object'||!Array.isArray(b.data.cols)||!Array.isArray(b.data.rows)) throw new Error('백업 파일에 명단이나 틀 정보가 없습니다 (파일이 잘렸을 수 있음)');
   const str=(v,max)=>typeof v==='string'? v.slice(0,max||200) : '';
-  const tpls={}; Object.keys(b.templates||{}).forEach(n=>{ const nn=okName(n); if(!nn) return; try{ tpls[nn]=sanitizeTemplate(b.templates[n]); }catch(e){} }); if(!Object.keys(tpls).length) Object.assign(tpls,presets());
-  state.templates=tpls; state.current=Object.hasOwn(tpls,b.current)?b.current:Object.keys(tpls)[0]; try{ state.tpl=sanitizeTemplate(b.tpl); }catch(e){ state.tpl=clone(tpls[state.current]); }
-  const cols=Array.isArray(b.data&&b.data.cols)? b.data.cols.filter(c=>typeof c==='string').map(c=>str(c,60)).slice(0,60) : [];
-  const rows=Array.isArray(b.data&&b.data.rows)? b.data.rows.slice(0,5000).map(r=>{ const o={}; cols.forEach(c=>o[c]=str(r&&r[c],200)); return o; }) : [];
-  state.data={cols, rows}; state.map={}; Object.keys(b.map||{}).forEach(k=>{ if(FIELDS.includes(k)&&cols.includes(b.map[k])) state.map[k]=b.map[k]; });
-  state.globals={'기수':str(b.globals&&b.globals['기수'],40),'행사명':str(b.globals&&b.globals['행사명'],80)}; state.headerIndex=Number.isInteger(b.headerIndex)?b.headerIndex:-1; rawRows=Array.isArray(b.rawRows)? b.rawRows.slice(0,5000).map(r=>Array.isArray(r)?r.map(v=>str(v,200)):[]) : [];
-  state.photo=null; fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); persist(); toast('백업을 불러왔습니다 ('+rows.length+'명, 틀 '+Object.keys(tpls).length+'개)'); }; r.readAsText(f); $('allFile').value=''; }
+  const tpls={}; Object.keys(b.templates).forEach(n=>{ const nn=okName(n); if(!nn) return; tpls[nn]=sanitizeTemplate(b.templates[n]); });
+  if(!Object.keys(tpls).length) throw new Error('백업 파일에 쓸 수 있는 틀이 없습니다');
+  const current=Object.hasOwn(tpls,b.current)?b.current:Object.keys(tpls)[0];
+  let tpl; try{ tpl=sanitizeTemplate(b.tpl); }catch(e){ tpl=clone(tpls[current]); }
+  if(b.data.rows.length>MAX_ROWS) throw new Error('명단이 '+b.data.rows.length+'명이라 너무 큽니다 (최대 '+MAX_ROWS+'명)');
+  const cols=b.data.cols.filter(c=>typeof c==='string').map(c=>str(c,60)).slice(0,60);
+  if(!cols.length && b.data.rows.length) throw new Error('백업 파일의 열 정보가 없습니다');
+  const rows=b.data.rows.map(r=>{ if(!r||typeof r!=='object') throw new Error('명단 줄 형식이 잘못됐습니다'); const o={}; cols.forEach(c=>o[c]=str(r[c],200)); return o; });
+  const map={}; Object.keys(b.map||{}).forEach(k=>{ if(FIELDS.includes(k)&&cols.includes(b.map[k])) map[k]=b.map[k]; });
+  const globals={'기수':str(b.globals&&b.globals['기수'],40),'행사명':str(b.globals&&b.globals['행사명'],80)};
+  const raw=Array.isArray(b.rawRows)? b.rawRows.map(r=>Array.isArray(r)?r.map(v=>str(v,200)):[]) : [];
+  if(raw.length>MAX_ROWS+10) throw new Error('원본 줄이 너무 많습니다');
+  const headerIndex=Number.isInteger(b.headerIndex)&&b.headerIndex>=-1&&b.headerIndex<raw.length? b.headerIndex : -1;
+  const photo=(typeof b.photo==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.photo)&&b.photo.length<4000000)? b.photo : null;
+  return {tpls,current,tpl,cols,rows,map,globals,raw,headerIndex,photo};
+}
+function importAll(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let b; try{ b=parseBackup(r.result); }catch(e){ alert('백업을 불러오지 못했습니다: '+e.message+'\n기존 명단과 틀은 그대로 둡니다.'); return; }
+  if(!confirm('지금 화면의 명단·틀을 백업 파일 내용으로 바꿉니다.\n백업 내용: '+b.rows.length+'명, 틀 '+Object.keys(b.tpls).length+'개'+(b.photo?', 겹쳐 보기 사진 포함':'')+'\n계속할까요?')) return;
+  state.templates=b.tpls; state.current=b.current; state.tpl=b.tpl; state.data={cols:b.cols, rows:b.rows}; state.map=b.map; state.globals=b.globals; state.headerIndex=b.headerIndex; rawRows=b.raw; state.photo=b.photo; state.headerConfirmed=false;
+  fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); persist(); toast('백업을 불러왔습니다 ('+b.rows.length+'명, 틀 '+Object.keys(b.tpls).length+'개)'); }; r.readAsText(f); $('allFile').value=''; }
 /* 틀 자료형 검증: 외부 파일·옛 저장분을 안전한 값으로 보정한다 */
 function sanitizeTemplate(t){
   if(!t||typeof t!=='object'||!Array.isArray(t.lines)) throw new Error('bad template');
@@ -526,7 +544,7 @@ function setRows(rows, headerIndex){
   if(!rows.length){ state.data={cols:[],rows:[]}; state.map={}; afterData(); return; }
   cols=cols.map((c,i)=>cols.indexOf(c)===i?c:c+'_'+(i+1));
   const objs=rows.map(r=>{ const o={}; cols.forEach((c,i)=>o[c]=r[i]||''); return o; });
-  state.data={cols, rows:objs}; state.map=guessMap(cols,objs);
+  state.data={cols, rows:objs}; state.map=guessMap(cols,objs); state.headerConfirmed=false;
   afterData();
 }
 function afterData(){ renderMap(); renderLines(); renderTplGrid(); render(); persist(); if(state.data.rows.length) toast(state.data.rows.length+'명을 읽었습니다'); }
@@ -541,6 +559,7 @@ function renderMap(){
     <div class="field" style="margin-top:10px"><label>머리글 줄</label><select class="in" onchange="setRows(rawRows,+this.value)">${headOpts}</select></div>
     <h3 style="margin-top:10px">어느 열이 무엇인지 확인 <span class="sub">틀린 곳만 바꾸세요</span></h3>`;
   if(!state.map['이름']) h+=`<p class="muted" style="color:var(--danger);margin:0 0 6px">이름 열을 찾지 못했습니다. 아래에서 이름 열을 골라 주세요.</p>`;
+  if(hi<0 && d.cols.length>=2) h+=`<p class="muted" style="color:var(--danger);margin:0 0 6px">머리글(제목 줄)을 찾지 못해 첫 줄부터 사람으로 봅니다. 첫 줄이 제목이면 위에서 「머리글 줄」을 골라 주세요.</p>`;
   fields.forEach(f=>{ const c=state.map[f]||''; const ex=c? d.rows.slice(0,2).map(r=>r[c]).filter(Boolean).join(', ') : '';
     h+=`<div class="mapRow"><span class="k">${f}</span><select class="in" onchange="setMap('${f}',this.value)"><option value="">(없음)</option>${d.cols.map(x=>`<option value="${esc(x)}" ${x===c?'selected':''}>${esc(x)}</option>`).join('')}</select><span class="ex" title="${esc(ex)}">${esc(ex)||'—'}</span></div>`; });
   h+=`</div>`;
@@ -804,7 +823,11 @@ function movePage(d){ if(!pageCount) return; curPage=(curPage+d+pageCount)%pageC
 function looksLikeHeaderRow(r){ // 첫 줄에 이름·기수·영문 이름이 아닌 5자 이상 글자가 있으면 제목이나 머리글일 가능성
   return r.some(v=>v && v.length>=5 && !/^[가-힣]{2,4}$/.test(v) && !/^\d{1,3}\s*기?$/.test(v) && !/^[A-Za-z .'-]{2,}$/.test(v)); }
 function doPrint(){ if(!state.data.rows.length){ goStep(1); toast('먼저 명단을 넣어 주세요'); return; }
-  if(state.headerIndex<0 && rawRows.length && looksLikeHeaderRow(rawRows[0])){ const first=rawRows[0].filter(Boolean).join(' · ').slice(0,60); if(!confirm('첫 줄 「'+first+'」도 사람 한 명으로 인쇄됩니다. 머리글(제목 줄)이라면 「취소」를 누르고 명단 단계에서 「머리글 줄」을 고르세요.\n\n이대로 인쇄할까요?')){ goStep(1); return; } }
+  if(state.headerIndex<0 && !state.headerConfirmed && rawRows.length && (state.data.cols.length>=2 || looksLikeHeaderRow(rawRows[0]))){
+    const first=rawRows[0].filter(Boolean).join(' · ').slice(0,60); const nameCol=state.map['이름']||'(없음)';
+    if(!confirm('머리글(제목 줄)을 찾지 못해 첫 줄부터 사람으로 봅니다.\n\n첫 사람: 「'+first+'」\n이름 열: '+nameCol+'\n\n첫 줄이 사람이 맞으면 「확인」, 제목이나 머리글이면 「취소」를 누르고 명단 단계에서 「머리글 줄」을 고르세요.')){ goStep(1); return; }
+    state.headerConfirmed=true; persist(); }
+  if(false){ const first=rawRows[0].filter(Boolean).join(' · ').slice(0,60); if(!confirm('첫 줄 「'+first+'」도 사람 한 명으로 인쇄됩니다. 머리글(제목 줄)이라면 「취소」를 누르고 명단 단계에서 「머리글 줄」을 고르세요.\n\n이대로 인쇄할까요?')){ goStep(1); return; } }
   if(!pageCount){ goStep(2); alert('명찰이 종이보다 커서 배치할 수 없습니다. 크기나 종이 여백을 줄여 주세요.'); return; }
   const wraps=[...document.querySelectorAll('.pageWrap')].filter(w=>!w.dataset.built);
   if(wraps.length<=8){ buildAllPages(); window.print(); return; }
@@ -821,7 +844,7 @@ let resizeTimer=null; window.addEventListener('resize',()=>{ clearTimeout(resize
 window.addEventListener('beforeprint',()=>{ buildAllPages(); document.querySelectorAll('.pageWrap').forEach(w=>{ w.style.zoom=1; }); });
 window.addEventListener('afterprint',()=>render());
 
-load().then(()=>{ fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1); });
+load().catch(e=>{ console.error(e); }).then(()=>{ if(!state.templates||!Object.keys(state.templates).length) state.templates=presets(); if(!state.tpl) state.tpl=clone(state.templates[Object.keys(state.templates)[0]]); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1); const sh=$('bootShade'); if(sh) sh.remove(); });
 </script>
 <script>
 /* ===== 사진으로 틀 만들기 (기기 안에서만 처리, 외부 전송 없음) ===== */
