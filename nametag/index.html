@@ -396,6 +396,7 @@ function idbSet(obj){ return idbOpen().then(db=>new Promise((res,rej)=>{ const t
 let loadDone=false, bootDone=false, userTouched=false;
 async function load(){
   let got=null; try{ got=await idbGet(['main','photo']); }catch(e){ got=null; }
+  if(bootDone && ($('pasteBox').value.trim() || document.activeElement===$('pasteBox'))) userTouched=true;
   if(bootDone && userTouched){ // 시간 초과 뒤 직원이 이미 입력한 경우: 물어본 뒤에만 적용
     if(got && got.main && confirm('저장돼 있던 명단·틀을 읽어 왔습니다. 지금 화면 내용을 버리고 저장본을 불러올까요?')){ applyLoaded(got); loadDone=true; fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); toast('저장본을 불러왔습니다'); }
     else { loadDone=true; persist(); }
@@ -513,9 +514,11 @@ function parseBackup(text){
   const hIdx=headerIndexOf(b); if(!(hIdx===-1 || hIdx<raw.length)) throw new Error('머리글 줄 번호가 원본 줄 수를 넘습니다 (파일이 손상됨)');
   // 원본 줄 + 머리글 번호로 명단을 똑같은 함수로 다시 만들어, 저장된 열·명단과 한 글자도 다르지 않은지 확인한다
   const rebuilt=raw.length? buildRows(raw,hIdx) : {cols:[],rows:[]};
-  if(rebuilt.cols.length!==cols.length || rebuilt.cols.some((c,i)=>c!==cols[i])) throw new Error('원본 줄의 열 이름이 명단과 맞지 않습니다 (파일이 손상됨)');
+  if(rebuilt.cols.length!==cols.length) throw new Error('원본 줄의 열 수가 명단과 맞지 않습니다 (파일이 손상됨)');
   if(rebuilt.rows.length!==rows.length) throw new Error('원본 줄 수와 명단 수가 다릅니다 (파일이 손상됨)');
-  for(let i=0;i<rows.length;i++){ for(const c of cols){ if(rebuilt.rows[i][c]!==rows[i][c]) throw new Error((i+1)+'번째 사람의 「'+c+'」 값이 원본 줄과 다릅니다 (파일이 손상됨)'); } }
+  // 자리별로 모든 값이 같아야 한다 (열 이름이 옛 규칙이어도 값이 같으면 새 이름으로 바꿔 복원)
+  for(let i=0;i<rows.length;i++){ for(let k=0;k<cols.length;k++){ if(rebuilt.rows[i][rebuilt.cols[k]]!==rows[i][cols[k]]) throw new Error((i+1)+'번째 사람의 「'+cols[k]+'」 값이 원본 줄과 다릅니다 (파일이 손상됨)'); } }
+  if(rebuilt.cols.some((c,i)=>c!==cols[i])){ const rename={}; cols.forEach((c,i)=>rename[c]=rebuilt.cols[i]); Object.keys(map).forEach(f=>{ map[f]=rename[map[f]]; }); cols.length=0; rebuilt.cols.forEach(c=>cols.push(c)); rows.splice(0,rows.length,...rebuilt.rows); }
   if(raw.length>MAX_ROWS+10) throw new Error('원본 줄이 너무 많습니다');
   const headerIndex=hIdx;
   let photo=null; if(b.photo!=null){ if(typeof b.photo!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.photo)) throw new Error('사진 정보 형식이 잘못됐습니다'); if(b.photo.length>12000000) throw new Error('사진이 너무 커서 불러올 수 없습니다'); photo=b.photo; }
@@ -578,10 +581,10 @@ function buildRows(raw, hi){
 function setRows(rows, headerIndex){
   const over=[]; const maxLen=rows.reduce((m,r)=>Math.max(m,(r||[]).length),0); if(maxLen>MAX_COLS) over.push('열이 '+maxLen+'개라 '+(MAX_COLS+1)+'번째 열부터는 읽지 않습니다');
   const longCells=rows.reduce((n,r)=>n+(r||[]).filter(v=>v!=null&&String(v).length>MAX_CELL).length,0); if(longCells) over.push(longCells+'개 칸이 '+MAX_CELL+'자를 넘어 앞 '+MAX_CELL+'자만 읽습니다');
-  if(over.length && !confirm('이 명단은 일부만 읽힙니다:\n- '+over.join('\n- ')+'\n\n이대로 읽을까요? (취소하면 아무것도 바꾸지 않습니다)')) return;
+  if(over.length && !confirm('이 명단은 일부만 읽힙니다:\n- '+over.join('\n- ')+'\n\n이대로 읽을까요? (취소하면 아무것도 바꾸지 않습니다)')){ toast('읽기를 취소했습니다. 기존 명단이 그대로입니다', 2500); return false; }
   rows=normalizeRaw(rows);
   rawRows=rows.map(r=>r.slice());
-  if(!rows.length){ state.data={cols:[],rows:[]}; state.map={}; state.headerIndex=-1; state.headerConfirmed=false; afterData(); return; }
+  if(!rows.length){ state.data={cols:[],rows:[]}; state.map={}; state.headerIndex=-1; state.headerConfirmed=false; afterData(); return true; }
   // 제목 행이 위에 있어도 되게, 앞 6줄 가운데 열 이름이 가장 많이 맞는 줄을 머리글로 삼는다 (사용자가 바꿀 수 있음)
   let hi=-1, hs=0;
   if(headerIndex!==undefined) hi=headerIndex;
@@ -591,10 +594,10 @@ function setRows(rows, headerIndex){
   state.headerIndex=hi;
   const built=buildRows(rows, hi);
   state.data=built; state.map=built.rows.length? guessMap(built.cols,built.rows) : {}; state.headerConfirmed=false;
-  afterData();
+  afterData(); return true;
 }
 function afterData(){ renderMap(); renderLines(); renderTplGrid(); render(); persist(); if(state.data.rows.length) toast(state.data.rows.length+'명을 읽었습니다'); }
-function parsePaste(){ const t=$('pasteBox').value; state.rawText=t; setRows(parseDelimited(t)); }
+function parsePaste(){ const t=$('pasteBox').value; if(setRows(parseDelimited(t))) { state.rawText=t; persist(); } }
 function clearData(){ state.data={cols:[],rows:[]}; state.map={}; state.rawText=''; rawRows=[]; state.headerIndex=-1; state.headerConfirmed=false; $('pasteBox').value=''; $('sheetRow').style.display='none'; workbook=null; afterData(); clearTimeout(saveTimer); persistNow(); }
 function renderMap(){
   const box=$('mapCard'); const d=state.data; if(!d.rows.length){ box.innerHTML=''; return; }
@@ -613,12 +616,13 @@ function renderMap(){
 }
 function setMap(f,c){ if(c) state.map[f]=c; else delete state.map[f]; renderMap(); renderLines(); render(); persist(); }
 
+$('pasteBox').addEventListener('input',()=>{ userTouched=true; });
 const drop=$('drop');
 drop.onclick=()=>$('xlsFile').click();
 drop.ondragover=e=>{e.preventDefault(); drop.classList.add('over');};
 drop.ondragleave=()=>drop.classList.remove('over');
-drop.ondrop=e=>{e.preventDefault(); drop.classList.remove('over'); if(e.dataTransfer.files[0]) readXls(e.dataTransfer.files[0]);};
-$('xlsFile').onchange=e=>{ if(e.target.files[0]) readXls(e.target.files[0]); e.target.value=''; };
+drop.ondrop=e=>{e.preventDefault(); drop.classList.remove('over'); userTouched=true; if(e.dataTransfer.files[0]) readXls(e.dataTransfer.files[0]);};
+$('xlsFile').onchange=e=>{ userTouched=true; if(e.target.files[0]) readXls(e.target.files[0]); e.target.value=''; };
 function decodeText(buf){
   // 한글 CSV는 엑셀에서 EUC-KR(CP949)로 저장되는 일이 많아, UTF-8로 안 읽히면 EUC-KR로 다시 읽는다
   const b=new Uint8Array(buf);
@@ -656,19 +660,18 @@ function readXls(f){
   const r=new FileReader();
   r.onload=()=>{
     try{
-      if(['csv','tsv','txt'].includes(ext)){ workbook=null; $('sheetRow').style.display='none'; setRows(parseDelimited(decodeText(r.result))); toast(f.name+' 을(를) 읽었습니다'); return; }
+      if(['csv','tsv','txt'].includes(ext)){ if(setRows(parseDelimited(decodeText(r.result)))){ workbook=null; $('sheetRow').style.display='none'; toast(f.name+' 을(를) 읽었습니다'); } return; }
       if(typeof XLSX==='undefined') return alert('엑셀 읽기 도구를 불러오지 못했습니다. 인터넷 연결을 확인하거나, CSV로 저장해서 넣거나, 명단을 복사해 붙여 넣어 주세요.');
       workbook=XLSX.read(new Uint8Array(r.result),{type:'array'});
       const sel=$('sheetSelect'); sel.innerHTML=''; workbook.SheetNames.forEach(n=>{const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o);});
-      $('sheetRow').style.display= workbook.SheetNames.length>1?'grid':'none';
       const first=workbook.SheetNames.find(n=>XLSX.utils.sheet_to_json(workbook.Sheets[n],{header:1}).length>0)||workbook.SheetNames[0];
-      sel.value=first; useSheet(first);
+      sel.value=first; if(useSheet(first)) $('sheetRow').style.display= workbook.SheetNames.length>1?'grid':'none';
     }catch(e){ alert('파일을 읽지 못했습니다. 엑셀에서 「다른 이름으로 저장 → CSV」로 저장해서 다시 넣어 보세요.'); }
   };
   r.readAsArrayBuffer(f);
 }
 $('sheetSelect').onchange=e=>useSheet(e.target.value);
-function useSheet(n){ setRows(XLSX.utils.sheet_to_json(workbook.Sheets[n],{header:1,raw:false,defval:''})); }
+function useSheet(n){ return setRows(XLSX.utils.sheet_to_json(workbook.Sheets[n],{header:1,raw:false,defval:''})); }
 ['기수','행사명'].forEach(k=>{ $('g'+k).oninput=e=>{ state.globals[k]=e.target.value; renderLines(); render(); persist(); }; });
 
 /* ---------- 값 계산 ---------- */
