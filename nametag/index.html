@@ -392,8 +392,12 @@ function idbGet(keys){ return idbOpen().then(db=>new Promise((res,rej)=>{ const 
 function idbSet(obj){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(DB_STORE,'readwrite'); const st=tx.objectStore(DB_STORE); Object.keys(obj).forEach(k=>{ if(obj[k]===undefined||obj[k]===null) st.delete(k); else st.put(obj[k],k); }); tx.oncomplete=()=>{ db.close(); res(); }; tx.onerror=()=>{ db.close(); rej(tx.error||new Error('tx 실패')); }; tx.onabort=()=>{ db.close(); rej(tx.error||new Error('tx 중단')); }; })); }
 let loadDone=false, bootDone=false, noSave=false;
 async function load(){
-  let got=null; try{ got=await idbGet(['main','photo']); }catch(e){ got=null; }
+  let got=null, failed=false; try{ got=await idbGet(['main','photo']); }catch(e){ console.error(e); failed=true; }
   if(noSave) return; // 「저장본 없이 시작」을 고른 뒤 늦게 읽힌 것은 쓰지 않는다
+  if(failed){ // 읽기 실패는 「저장본 없음」과 다르다: 이번 세션은 저장하지 않아 기존 저장본을 지킨다
+    noSave=true; saveFailed=true; applyLoaded(null); updateSaveBadge();
+    setTimeout(()=>alert('저장된 내용을 읽지 못했습니다. 이번에는 저장 없이 엽니다(기존 저장본은 그대로 둡니다). 브라우저를 다시 열어도 같으면 「전체 백업 파일로 저장」으로 보관해 주세요.'),300);
+    return; }
   applyLoaded(got); loadDone=true;
 }
 function applyLoaded(got){
@@ -891,7 +895,7 @@ window.addEventListener('afterprint',()=>render());
 
 document.querySelector('.top').inert=true; document.querySelector('.body').inert=true;
 // 저장소 읽기가 4초 넘게 멈추면 기본 상태로 시작한다 (화면이 영원히 막히지 않게)
-const loadPromise=load().catch(e=>{ console.error(e); noSave=true; alert('저장된 내용을 읽지 못했습니다. 이번에는 저장 없이 엽니다. (기존 저장본은 그대로 둡니다)'); });
+const loadPromise=load().catch(e=>{ console.error(e); noSave=true; saveFailed=true; });
 // 10초 넘게 읽히지 않으면 「저장본 없이 시작」을 고를 수 있게 한다. 고르면 이번 세션은 저장하지 않는다(기존 저장본 보호)
 const noSaveStart=new Promise(res=>{ setTimeout(()=>{ if(loadDone) return; const sh=$('bootShade'); if(!sh) return; sh.innerHTML='<div style="text-align:center"><div style="margin-bottom:12px">저장된 내용을 읽는 데 시간이 걸립니다…</div><button class="btn" id="noSaveBtn">저장본 없이 시작 (이번에는 저장되지 않음)</button></div>'; $('noSaveBtn').onclick=()=>{ noSave=true; res('nosave'); }; }, 10000); });
 const loadWithTimeout=Promise.race([ loadPromise, noSaveStart ]).then(v=>{ if(v==='nosave'){ saveFailed=true; toast('저장본 없이 시작했습니다. 이번 세션은 저장되지 않으니 필요하면 「전체 백업 파일로 저장」을 쓰세요', 6000); } });
