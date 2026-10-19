@@ -207,17 +207,14 @@
     <h2>명단 넣기</h2>
     <p class="lead">엑셀 파일을 넣거나, 명단을 복사해 붙여 넣으세요.</p>
     <div class="card">
-      <div class="drop" id="drop"><div class="ic">📄</div><b>명단 파일을 여기에 끌어다 놓기</b><span class="muted">또는 클릭해서 파일 고르기<br>엑셀(.xlsx·.xls), CSV, 텍스트, 한컴 한셀로 저장한 CSV, 맥 넘버스, 구글 시트 내려받기 모두 됩니다</span></div>
+      <div class="drop" id="drop"><div class="ic">📄</div><b>엑셀·CSV 파일 끌어다 놓기</b><span class="muted">또는 클릭해서 고르기</span></div>
       <input type="file" id="xlsFile" accept=".xlsx,.xlsm,.xlsb,.xls,.csv,.tsv,.txt,.ods,.numbers" style="display:none">
       <div class="field" id="sheetRow" style="display:none"><label>시트</label><select class="in" id="sheetSelect"></select></div>
-      <p class="muted" style="margin:10px 0 0">명단은 이 컴퓨터 안에서만 처리하고 서버로 보내지 않습니다. (글꼴과 엑셀·글자 인식 도구 파일만 인터넷에서 내려받습니다)</p>
+      <p class="muted" style="margin:10px 0 0">명단은 이 컴퓨터 안에서만 처리됩니다.</p>
     </div>
     <div class="card">
       <h3>붙여 넣기 <span class="sub">엑셀 칸을 복사해서</span></h3>
-      <textarea class="in full" id="pasteBox" placeholder="직책	기수	이름
-대구총동문회장	73	차상근
-	76	김영희
-
+      <textarea class="in full" id="pasteBox" placeholder="엑셀에서 복사한 칸을 붙여 넣으세요.
 이름만 한 줄에 하나씩 넣어도 됩니다."></textarea>
       <div class="ctl" style="margin-top:8px"><button class="btn" onclick="parsePaste()">붙여 넣은 명단 읽기</button><button class="btn ghost danger" onclick="clearData()">명단 지우기</button></div>
       <div class="ctl" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span class="muted">백업</span><button class="btn sm" onclick="exportAll()">⬇ 전체 백업 파일로 저장</button><button class="btn sm" onclick="document.getElementById('allFile').click()">⬆ 백업 불러오기</button><input type="file" id="allFile" accept=".json" style="display:none" onchange="importAll(this.files[0])"></div>
