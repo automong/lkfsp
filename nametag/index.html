@@ -226,9 +226,9 @@
 <div id="guide" onclick="if(event.target===this)Guide.close()">
   <div class="box">
     <div class="head"><b>❓ 사용법 · 5장</b><button class="btn sm ghost" onclick="Guide.close()">닫기 ✕</button></div>
-    <div class="slide" data-i="0"><div class="t"><span class="n">1</span>📋 엑셀 명단 파일을 넣습니다</div><div class="d">쓰던 엑셀을 그대로 끌어다 놓습니다. 이름·기수·직책 열은 저절로 찾습니다.</div><img src="guide/1.jpg" alt=""></div>
-    <div class="slide" data-i="1"><div class="t"><span class="n">2</span>🏷️ 띠와 📅 일정표 파일을 고릅니다</div><div class="d">행사마다 바뀌는 두 가지입니다. PPT에서 그림을 오른쪽 클릭 → 「그림으로 저장」 한 파일을 「📂 파일 선택」으로 넣습니다. 오른쪽에서 바로 확인됩니다.</div><img src="guide/2.jpg" alt=""></div>
-    <div class="slide" data-i="2"><div class="t"><span class="n">3</span>🖨️ 인쇄합니다</div><div class="d">「지금 인쇄하기」를 누르고, 인쇄 창에서 <b>배율 100%</b>, <b>여백 없음</b>만 확인합니다. A4 가로, 한 장에 두 사람 몫이 나옵니다.</div><img src="guide/3.jpg" alt=""></div>
+    <div class="slide" data-i="0"><div class="t"><span class="n">1</span>📋 엑셀 명단 파일을 넣습니다</div><div class="d">쓰던 엑셀을 그대로 끌어다 놓습니다.<br>• 명단을 넣은 뒤 이름·기수·직책 열을 확인하세요.</div><img src="guide/1.jpg" alt=""></div>
+    <div class="slide" data-i="1"><div class="t"><span class="n">2</span>🏷️ 띠와 📅 일정표 파일을 고릅니다</div><div class="d">① PPT 그림을 오른쪽 클릭 → 「그림으로 저장」<br>② 띠·일정표 각각 「📂 파일 선택」<br>③ 미리보기 확인</div><img src="guide/2.jpg" alt=""></div>
+    <div class="slide" data-i="2"><div class="t"><span class="n">3</span>🖨️ 인쇄합니다</div><div class="d">「지금 인쇄하기」를 누르고 인쇄 설정을 확인하세요.<br>• 용지: A4<br>• 방향: 미리보기와 같게<br>• 배율: <b>100%</b> · 여백: <b>없음</b><br>띠·일정표를 넣은 기본 배치는 한 장에 두 사람 몫입니다.</div><img src="guide/3.jpg" alt=""></div>
     <div class="slide" data-i="3"><div class="t"><span class="n">4</span>✂️ 실선 6개를 자르고, 점선에서 접습니다</div><div class="d">세로 3번, 가로 3번. 띠는 맨 위에 붙어 나오므로 같이 잘립니다. 가운데 점선은 자르지 말고 접습니다.</div>
       <svg viewBox="0 0 900 420"><rect x="0" y="0" width="900" height="420" fill="#fff"/>
         <g transform="translate(60,30)"><rect x="0" y="0" width="420" height="297" fill="#fff" stroke="#333" stroke-width="2"/>
@@ -282,7 +282,7 @@
 이름만 한 줄에 하나씩 넣어도 됩니다."></textarea>
       <div class="ctl" style="margin-top:8px"><button class="btn" onclick="parsePaste()">붙여 넣은 명단 읽기</button><button class="btn ghost danger" onclick="clearData()">명단 지우기</button></div>
       <div class="ctl" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span class="muted">백업</span><button class="btn sm" onclick="exportAll()">⬇ 전체 백업 파일로 저장</button><button class="btn sm" onclick="document.getElementById('allFile').click()">⬆ 백업 불러오기</button><input type="file" id="allFile" accept=".json" style="display:none" onchange="importAll(this.files[0])"></div>
-      <p class="muted" style="margin:6px 0 0">명단과 틀을 파일 하나로 저장합니다.</p>
+      <p class="muted" style="margin:6px 0 0">명단과 양식을 파일 하나로 저장합니다.</p>
     </div>
     <div class="card" style="border:0;padding:0">
       <h3>명단에 없는 값 채우기</h3>
@@ -296,7 +296,7 @@
   <!-- 2단계 디자인 -->
   <section data-step="2">
     <h2>🏷️ 2. 띠·일정표</h2>
-    <p class="lead">행사마다 바뀌는 두 가지입니다. PPT에서 오른쪽 클릭 → 「그림으로 저장」 한 파일을 고르세요.</p>
+    <p class="lead">• PPT 그림: 오른쪽 클릭 → 「그림으로 저장」<br>• 아래에서 띠·일정표 파일을 각각 선택하세요.</p>
         <div class="card numcard">
       <span class="n">1</span><div class="nb">
       <h3>🏷️ 윗칸 띠 <span class="sub" id="stripName"></span></h3>
@@ -319,20 +319,20 @@
         <label class="toggle"><input type="checkbox" id="dBackOn"> 뒷면 함께 인쇄</label></div>
     </div></div>
 <div class="card">
-      <h3>🎨 틀 <span class="sub" id="tplCur"></span></h3>
+      <h3>🎨 명찰 양식 <span class="sub" id="tplCur"></span></h3>
       <p class="muted" style="margin:0 0 8px">쓰던 양식이 기본입니다. 다른 행사면 여기서 바꾸세요.</p>
       <div class="tplGrid" id="tplGrid"></div>
-      <details class="adv" style="margin-top:8px"><summary>💾 틀 저장·관리</summary><div class="inner"><div class="ctl" style="margin-top:10px">
-        <button class="btn sm primary" onclick="saveTemplate()">이 틀에 저장</button>
-        <button class="btn sm" onclick="saveTemplateAs()">새 틀로 저장</button>
+      <details class="adv" style="margin-top:8px"><summary>💾 양식 저장·관리</summary><div class="inner"><div class="ctl" style="margin-top:10px">
+        <button class="btn sm primary" onclick="saveTemplate()">현재 양식에 저장</button>
+        <button class="btn sm" onclick="saveTemplateAs()">새 양식으로 저장</button>
         <button class="btn sm" onclick="renameTemplate()">이름 바꾸기</button>
         <button class="btn sm danger" onclick="deleteTemplate()">삭제</button>
       </div>
       <div class="ctl" style="margin-top:6px">
-        <button class="btn sm ghost" onclick="exportTemplate()">⬇ 틀 파일 내보내기</button>
-        <button class="btn sm ghost" onclick="document.getElementById('tplFile').click()">⬆ 틀 파일 가져오기</button>
+        <button class="btn sm ghost" onclick="exportTemplate()">⬇ 양식 파일 내보내기</button>
+        <button class="btn sm ghost" onclick="document.getElementById('tplFile').click()">⬆ 양식 파일 가져오기</button>
         <input type="file" id="tplFile" accept=".json" style="display:none" onchange="importTemplate(this.files[0])">
-        <button class="btn sm ghost" onclick="resetPresets()">기본 틀 되살리기</button>
+        <button class="btn sm ghost" onclick="resetPresets()">기본 양식 복원</button>
       </div></div></details>
     </div>
 
@@ -373,16 +373,16 @@
     </div>
 
 <div class="card" style="background:linear-gradient(135deg,#eef3ff,#f7f9ff);border-color:#c7d6f7">
-      <h3>새 디자인이 필요할 때 <span class="sub">사진 한 장이면 됩니다</span></h3>
-      <p class="muted" style="margin:0 0 10px">명찰 사진을 넣으면 비슷한 틀을 만들어 줍니다.</p>
-      <button class="btn primary block" onclick="PhotoTpl.open()">📷 사진으로 틀 만들기</button>
+      <h3>새 디자인이 필요할 때</h3>
+      <p class="muted" style="margin:0 0 10px">명찰 사진을 넣으면 비슷한 양식을 만들어 줍니다.</p>
+      <button class="btn primary block" onclick="PhotoTpl.open()">📷 사진으로 양식 만들기</button>
     </div>
     </div></details>
             <details class="adv"><summary>⚙️ 세부 설정</summary><div class="inner">
       <div class="field"><label>세로 위치</label><div class="seg" id="valignSeg"></div></div>
       <div class="field"><label>안쪽 여백</label><div class="ctl"><input type="number" class="in num" id="dPad" step="0.5" min="0"> mm</div></div>
       <div class="field"><label>줄 간격</label><div class="ctl"><input type="number" class="in num" id="dLineGap" step="0.5" min="0"> mm</div></div>
-      <div class="field"><label>여유 줄임</label><div class="ctl"><input type="number" class="in num" id="szShrink" step="0.5" min="0"> mm <span class="muted">케이스에 넉넉히 들어가도록</span></div></div>
+      <div class="field"><label>명찰 크기 줄이기</label><div class="ctl"><input type="number" class="in num" id="szShrink" step="0.5" min="0"> mm <span class="muted">너비·높이를 각각 입력한 값만큼 줄입니다.(mm)</span></div></div>
       <div class="field"><label>명찰 사이</label><div class="ctl"><input type="number" class="in num" id="szGap" step="0.5" min="0"> mm <span class="muted">0이면 붙여서 한 번에 자름</span></div></div>
       <div class="field"><label>종이 여백</label><div class="ctl"><input type="number" class="in num" id="szMargin" step="0.5" min="0"> mm</div></div>
       <div class="field"><label>종이 방향</label><div class="seg" id="orientSeg"></div></div>
@@ -395,8 +395,8 @@
     <h2>🖨️ 3. 인쇄</h2>
     <div class="card">
       <div class="todo">
-        <div class="row"><span class="n">1</span><div><div class="t">🖨️ 아래 「지금 인쇄하기」를 누르세요</div><div class="d">A4 가로로 나옵니다. 종이는 두꺼운 A4(180g 이상)가 좋습니다.</div></div></div>
-        <div class="row"><span class="n">2</span><div><div class="t">⚙️ 인쇄 창에서 두 가지를 맞추세요</div><div class="d">배율 <b>100%</b> (「페이지에 맞춤」 아님) · 여백 <b>없음</b></div></div></div>
+        <div class="row"><span class="n">1</span><div><div class="t">🖨️ 아래 「지금 인쇄하기」를 누르세요</div><div class="d">• 용지: A4<br>• 방향: 미리보기와 같게</div></div></div>
+        <div class="row"><span class="n">2</span><div><div class="t">⚙️ 인쇄 창에서 두 가지를 맞추세요</div><div class="d">• 배율: <b>100%</b> · 여백: <b>없음</b></div></div></div>
         <div class="row"><span class="n">3</span><div><div class="t">✂️ 실선을 따라 자르고, 📄 점선에서 접으세요</div><div class="d">한 장에 곧은 선 6개입니다. 재단기면 여러 장을 겹쳐 한 번에 자릅니다.</div></div></div>
       </div>
     </div>
@@ -418,7 +418,7 @@
 </aside>
 
 <main class="stage">
-  <div class="stageHead"><h3>명찰 한 장</h3><span class="muted" id="oneLabel">첫 번째 사람 기준, 실제보다 크게 보여 줍니다</span></div>
+  <div class="stageHead"><h3>명찰 한 장</h3><span class="muted" id="oneLabel">첫 번째 명찰 · 화면 크기는 실제와 다름</span></div>
   <div class="oneWrap" id="oneWrap"></div>
   <div class="stageHead"><h3>인쇄 용지 미리보기</h3><div class="pager" id="pager"><button onclick="movePage(-1)">‹</button><span id="pageLabel">–</span><button onclick="movePage(1)">›</button></div><span class="muted" id="sheetInfo"></span></div>
   <div id="pages"></div>
@@ -571,31 +571,31 @@ function renderTplGrid(){
   });
   $('tplCur').textContent='현재: '+state.current;
 }
-function saveTemplate(){ state.templates[state.current]=clone(state.tpl); renderTplGrid(); persist(); toast('「'+state.current+'」 틀에 저장했습니다'); }
+function saveTemplate(){ state.templates[state.current]=clone(state.tpl); renderTplGrid(); persist(); toast('「'+state.current+'」 양식에 저장했습니다'); }
 function okName(n){ n=String(n||'').trim().slice(0,60); if(!n||['__proto__','constructor','prototype'].includes(n)) return null; return n; }
-function saveTemplateAs(){ let n=okName(prompt('새 틀 이름', state.current+' (복사)')); if(!n) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=clone(state.tpl); state.current=n; renderTplGrid(); persist(); }
-function renameTemplate(){ const n=okName(prompt('바꿀 이름', state.current)); if(!n||n===state.current) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=state.templates[state.current]; delete state.templates[state.current]; state.current=n; renderTplGrid(); persist(); }
-function deleteTemplate(){ if(Object.keys(state.templates).length<=1) return alert('틀은 하나 이상 있어야 합니다.'); if(!confirm('「'+state.current+'」 틀을 지울까요?')) return; delete state.templates[state.current]; state.current=Object.keys(state.templates)[0]; state.tpl=clone(state.templates[state.current]); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }
+function saveTemplateAs(){ let n=okName(prompt('새 양식 이름', state.current+' (복사)')); if(!n) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 양식이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=clone(state.tpl); state.current=n; renderTplGrid(); persist(); }
+function renameTemplate(){ const n=okName(prompt('바꿀 이름', state.current)); if(!n||n===state.current) return; if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 양식이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=state.templates[state.current]; delete state.templates[state.current]; state.current=n; renderTplGrid(); persist(); }
+function deleteTemplate(){ if(Object.keys(state.templates).length<=1) return alert('양식은 하나 이상 있어야 합니다.'); if(!confirm('「'+state.current+'」 양식을 지울까요?')) return; delete state.templates[state.current]; state.current=Object.keys(state.templates)[0]; state.tpl=clone(state.templates[state.current]); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }
 function exportTemplate(){ const blob=new Blob([JSON.stringify({name:state.current, template:state.tpl},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='명찰틀_'+state.current.replace(/[\\/:*?"<>|]/g,'_')+'.json'; a.click(); }
-function importTemplate(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let t,n; try{ const j=JSON.parse(r.result); t=sanitizeTemplate(j.template||j); n=okName(j.name||f.name.replace(/\.json$/,''))||'가져온 틀'; }catch(e){ alert('틀 파일을 읽지 못했습니다. 이 페이지에서 내보낸 틀 파일만 가져올 수 있습니다.'); return; }
-  if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return;
+function importTemplate(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let t,n; try{ const j=JSON.parse(r.result); t=sanitizeTemplate(j.template||j); n=okName(j.name||f.name.replace(/\.json$/,''))||'가져온 양식'; }catch(e){ alert('양식 파일을 읽지 못했습니다. 이 페이지에서 내보낸 양식 파일만 가져올 수 있습니다.'); return; }
+  if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 양식이 이미 있습니다. 덮어쓸까요?')) return;
   state.templates[n]=t; state.current=n; state.tpl=clone(t); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }; r.readAsText(f); $('tplFile').value=''; }
 /* 전체 백업: 명단·틀·공통 값·열 연결을 파일 하나로 */
 function exportAll(){ const b={kind:'nametag-backup', version:1, saved:new Date().toISOString(), templates:state.templates, current:state.current, tpl:state.tpl, data:state.data, map:state.map, globals:state.globals, headerIndex:state.headerIndex, rawRows, photo:state.photo||null};
   const blob=new Blob([JSON.stringify(b)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='명찰메이커_백업_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
 const MAX_ROWS=20000;
-function headerIndexOf(b){ if(!Number.isInteger(b.headerIndex)||b.headerIndex<-1) throw new Error('머리글 줄 번호가 올바르지 않습니다 (파일이 손상됨)'); return b.headerIndex; }
+function headerIndexOf(b){ if(!Number.isInteger(b.headerIndex)||b.headerIndex<-1) throw new Error('열 제목 행 번호가 올바르지 않습니다 (파일이 손상됨)'); return b.headerIndex; }
 /* 백업 파일을 임시 객체로 전부 검증한다. 하나라도 틀리면 예외 → 기존 상태는 손대지 않는다 */
 function parseBackup(text){
   const b=JSON.parse(text);
   if(!b||typeof b!=='object'||b.kind!=='nametag-backup'||b.version!==1) throw new Error('이 페이지의 백업 파일이 아닙니다');
-  if(!b.templates||typeof b.templates!=='object'||!b.data||typeof b.data!=='object'||!Array.isArray(b.data.cols)||!Array.isArray(b.data.rows)) throw new Error('백업 파일에 명단이나 틀 정보가 없습니다 (파일이 잘렸을 수 있음)');
+  if(!b.templates||typeof b.templates!=='object'||!b.data||typeof b.data!=='object'||!Array.isArray(b.data.cols)||!Array.isArray(b.data.rows)) throw new Error('백업 파일에 명단이나 양식 정보가 없습니다 (파일이 잘렸을 수 있음)');
   const str=(v,max)=>typeof v==='string'? v.slice(0,max||200) : '';
   const tpls={}; Object.keys(b.templates).forEach(n=>{ const nn=okName(n); if(!nn) return; tpls[nn]=sanitizeTemplate(b.templates[n]); });
-  if(!Object.keys(tpls).length) throw new Error('백업 파일에 쓸 수 있는 틀이 없습니다');
-  if(typeof b.current!=='string'||!Object.hasOwn(tpls,b.current)) throw new Error('현재 틀 이름이 틀 목록에 없습니다 (파일이 손상됨)');
+  if(!Object.keys(tpls).length) throw new Error('백업 파일에 쓸 수 있는 양식이 없습니다');
+  if(typeof b.current!=='string'||!Object.hasOwn(tpls,b.current)) throw new Error('현재 양식 이름이 양식 목록에 없습니다 (파일이 손상됨)');
   const current=b.current;
-  let tpl; try{ tpl=sanitizeTemplate(b.tpl); }catch(e){ throw new Error('편집 중이던 틀 정보가 손상됐습니다'); }
+  let tpl; try{ tpl=sanitizeTemplate(b.tpl); }catch(e){ throw new Error('편집 중이던 양식 정보가 손상됐습니다'); }
   if(b.data.rows.length>MAX_ROWS) throw new Error('명단이 '+b.data.rows.length+'명이라 너무 큽니다 (최대 '+MAX_ROWS+'명)');
   if(b.data.cols.length>MAX_COLS || b.data.cols.some(c=>typeof c!=='string'||c.length>MAX_CELL)) throw new Error('열 정보가 올바르지 않습니다 (파일이 손상됨)');
   const cols=b.data.cols.slice();
@@ -608,7 +608,7 @@ function parseBackup(text){
   if(!Array.isArray(b.rawRows)) throw new Error('원본 줄 정보가 없습니다 (파일이 손상됨)');
   const raw=b.rawRows.map((r,i)=>{ if(!Array.isArray(r)||r.length>MAX_COLS) throw new Error((i+1)+'번째 원본 줄 형식이 잘못됐습니다'); return r.map(v=>{ if(typeof v!=='string'||v.length>MAX_CELL||v!==v.trim()) throw new Error((i+1)+'번째 원본 줄에 잘못된 값이 있습니다 (파일이 손상됨)'); return v; }); });
   if(raw.some(r=>!r.some(v=>v))) throw new Error('원본 줄에 빈 줄이 있습니다 (파일이 손상됨)');
-  const hIdx=headerIndexOf(b); if(!(hIdx===-1 || hIdx<raw.length)) throw new Error('머리글 줄 번호가 원본 줄 수를 넘습니다 (파일이 손상됨)');
+  const hIdx=headerIndexOf(b); if(!(hIdx===-1 || hIdx<raw.length)) throw new Error('열 제목 행 번호가 원본 줄 수를 넘습니다 (파일이 손상됨)');
   // 원본 줄 + 머리글 번호로 명단을 똑같은 함수로 다시 만들어, 저장된 열·명단과 한 글자도 다르지 않은지 확인한다
   const rebuilt=raw.length? buildRows(raw,hIdx) : {cols:[],rows:[]};
   if(rebuilt.cols.length!==cols.length) throw new Error('원본 줄의 열 수가 명단과 맞지 않습니다 (파일이 손상됨)');
@@ -621,11 +621,11 @@ function parseBackup(text){
   let photo=null; if(b.photo!=null){ if(typeof b.photo!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.photo)) throw new Error('사진 정보 형식이 잘못됐습니다'); if(b.photo.length>12000000) throw new Error('사진이 너무 커서 불러올 수 없습니다'); photo=b.photo; }
   return {tpls,current,tpl,cols,rows,map,globals,raw,headerIndex,photo};
 }
-function importAll(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let b; try{ b=parseBackup(r.result); }catch(e){ alert('백업을 불러오지 못했습니다: '+e.message+'\n기존 명단과 틀은 그대로 둡니다.'); return; }
+function importAll(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let b; try{ b=parseBackup(r.result); }catch(e){ alert('백업을 불러오지 못했습니다: '+e.message+'\n기존 명단과 양식은 그대로 둡니다.'); return; }
   const bp=(b.map&&b.map['이름'])? b.rows.filter(r=>(r[b.map['이름']]||'').trim()).length : b.rows.length;
-  if(!confirm('지금 화면의 명단·틀을 백업 파일 내용으로 바꿉니다.\n백업 내용: 원본 '+b.rows.length+'줄 (인쇄 '+bp+'명), 틀 '+Object.keys(b.tpls).length+'개'+(b.photo?', 겹쳐 보기 사진 포함':'')+'\n계속할까요?')) return;
+  if(!confirm('지금 화면의 명단·양식을 백업 파일 내용으로 바꿉니다.\n백업 내용: 원본 '+b.rows.length+'줄 (인쇄 '+bp+'명), 양식 '+Object.keys(b.tpls).length+'개'+(b.photo?', 겹쳐 보기 사진 포함':'')+'\n계속할까요?')) return;
   state.templates=b.tpls; state.current=b.current; state.tpl=b.tpl; state.data={cols:b.cols, rows:b.rows}; state.map=b.map; state.globals=b.globals; state.headerIndex=b.headerIndex; rawRows=b.raw; state.photo=b.photo; state.headerConfirmed=false;
-  fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); persist(); toast('백업을 불러왔습니다 (인쇄 '+bp+'명, 틀 '+Object.keys(b.tpls).length+'개)'); }; r.readAsText(f); $('allFile').value=''; }
+  fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); persist(); toast('백업을 불러왔습니다 (인쇄 '+bp+'명, 양식 '+Object.keys(b.tpls).length+'개)'); }; r.readAsText(f); $('allFile').value=''; }
 /* 틀 자료형 검증: 외부 파일·옛 저장분을 안전한 값으로 보정한다 */
 function sanitizeTemplate(t){
   if(!t||typeof t!=='object'||!Array.isArray(t.lines)) throw new Error('bad template');
@@ -643,7 +643,7 @@ function sanitizeTemplate(t){
   if(!out.lines.length) out.lines=[line([part('이름')],{size:36,bold:true})];
   return out;
 }
-function resetPresets(){ Object.assign(state.templates, presets()); renderTplGrid(); persist(); toast('기본 틀 3개를 되살렸습니다'); }
+function resetPresets(){ Object.assign(state.templates, presets()); renderTplGrid(); persist(); toast('기본 양식 복원 완료'); }
 
 /* ---------- 명단 ---------- */
 const HEADER_WORDS=/^(이름|성명|성함|name|수강생|수강생명|참가자|참가자명|직책|직위|직급|직함|직위명|기수|차수|참가차수|회차|회사|회사명|소속|소속명|부서|팀|행사명|행사|과정|과정명|번호|no\.?|순번|연락처|전화|휴대폰|이메일|메모|비고|구분)$/i;
@@ -701,13 +701,13 @@ function renderMap(){
   const box=$('mapCard'); const d=state.data; if(!d.rows.length){ box.innerHTML=''; return; }
   const used=new Set(); state.tpl.lines.forEach(L=>L.parts.forEach(P=>{ if(P.src!=='fixed') used.add(P.src); }));
   const fields=FIELDS.filter(f=>used.has(f)||state.map[f]);
-  const hi=state.headerIndex; const headOpts=['<option value="-1" '+(hi<0?'selected':'')+'>머리글 없음 (첫 줄부터 사람)</option>'].concat(rawRows.slice(0,6).map((r,i)=>`<option value="${i}" ${i===hi?'selected':''}>${i+1}번째 줄: ${esc(r.filter(Boolean).slice(0,4).join(' · ')).slice(0,40)}</option>`)).join('');
+  const hi=state.headerIndex; const headOpts=['<option value="-1" '+(hi<0?'selected':'')+'>열 제목 없음(첫 줄부터 명단)</option>'].concat(rawRows.slice(0,6).map((r,i)=>`<option value="${i}" ${i===hi?'selected':''}>${i+1}번째 줄: ${esc(r.filter(Boolean).slice(0,4).join(' · ')).slice(0,40)}</option>`)).join('');
   const skipped=d.rows.length-printableRows().length;
   let h=`<div class="card"><div class="okbox"><span>✅ ${printableRows().length}명을 읽었습니다</span><span class="muted">열 ${d.cols.length}개</span></div>${skipped>0?`<p class="muted" style="margin:6px 0 0">이름이 비어 있는 ${skipped}줄(번호만 있는 줄 등)은 인쇄하지 않습니다.</p>`:''}
-    <div class="field" style="margin-top:10px"><label>머리글 줄</label><select class="in" onchange="setRows(rawRows,+this.value)">${headOpts}</select></div>
-    <h3 style="margin-top:10px">어느 열이 무엇인지 확인 <span class="sub">틀린 곳만 바꾸세요</span></h3>`;
+    <div class="field" style="margin-top:10px"><label>열 제목 행</label><select class="in" onchange="setRows(rawRows,+this.value)">${headOpts}</select></div>
+    <h3 style="margin-top:10px">이름·기수·직책 열 확인 <span class="sub">연결된 열이 다르면 바꾸세요.</span></h3>`;
   if(!state.map['이름']) h+=`<p class="muted" style="color:var(--danger);margin:0 0 6px">이름 열을 찾지 못했습니다. 아래에서 이름 열을 골라 주세요.</p>`;
-  if(hi<0 && d.cols.length>=2) h+=`<p class="muted" style="color:var(--danger);margin:0 0 6px">머리글(제목 줄)을 찾지 못해 첫 줄부터 사람으로 봅니다. 첫 줄이 제목이면 위에서 「머리글 줄」을 골라 주세요.</p>`;
+  if(hi<0 && d.cols.length>=2) h+=`<p class="muted" style="color:var(--danger);margin:0 0 6px">• 첫 줄부터 명단으로 읽었습니다.<br>• 열 제목이 있으면 「열 제목 행」에서 해당 행을 선택하세요.</p>`;
   fields.forEach(f=>{ const c=state.map[f]||''; const ex=c? d.rows.slice(0,2).map(r=>r[c]).filter(Boolean).join(', ') : '';
     h+=`<div class="mapRow"><span class="k">${f}</span><select class="in" onchange="setMap('${f}',this.value)"><option value="">(없음)</option>${d.cols.map(x=>`<option value="${esc(x)}" ${x===c?'selected':''}>${esc(x)}</option>`).join('')}</select><span class="ex" title="${esc(ex)}">${esc(ex)||'—'}</span></div>`; });
   h+=`</div>`;
@@ -955,7 +955,7 @@ function render(){
   ow.appendChild(one);
   renderPhotoOverlay(ow, one);
   const gt=$('guideTpl'); if(gt) gt.textContent=state.current||'';
-  $('oneLabel').textContent = rows.length? '첫 번째 사람 기준, 실제보다 크게 보여 줍니다' : '예시 이름입니다. 명단을 넣으면 실제 이름으로 바뀝니다';
+  $('oneLabel').textContent = rows.length? '첫 번째 명찰 · 화면 크기는 실제와 다름' : '예시 이름입니다. 명단을 넣으면 실제 이름으로 바뀝니다';
   // 용지
   const bw=Math.max(10,s.w-s.shrink), bh=cardH(t); const frontH=Math.max(10,s.h-s.shrink);
   const fit=(pw,ph)=>({cols:Math.max(0,Math.floor((pw-2*s.margin+s.gap)/(bw+s.gap))), rows:Math.max(0,Math.floor((ph-2*s.margin+s.gap)/(bh+s.gap))), pw, ph});
@@ -971,7 +971,7 @@ function render(){
   const pages=badgePages+stripPages; pageCount=pages;
   $('status').innerHTML = (rows.length? `<b>${rows.length}명</b> · A4 ${badgePages}장${stripPages?` + 띠 ${stripPages}장`:(stackOn?' (띠 포함)':'')}` : '명단을 넣어 주세요') + ` <span id="saveBadge" style="display:none;color:var(--danger);font-weight:700" title="브라우저 저장 공간이 부족합니다">· ⚠ 저장 안 됨</span>`; updateSaveBadge();
   $('sheetInfo').textContent = per? `장당 ${per}개 (${g.cols}×${g.rows}) · 실제 출력 ${bw}×${frontH}mm${bh!==frontH?` (띠·뒷면 포함 ${bw}×${Math.round(bh*10)/10}mm)`:''}` : '';
-  $('szNote').textContent = s.shrink>0 ? `실제로는 여유 줄임 ${s.shrink}mm를 뺀 ${bw}×${frontH}mm로 인쇄됩니다.` : `선택한 ${s.w}×${s.h}mm 그대로 인쇄됩니다. 케이스에 빡빡하면 세부 설정의 「여유 줄임」을 1mm로 두세요.`;
+  $('szNote').textContent = s.shrink>0 ? `너비·높이를 각각 ${s.shrink}mm 줄여 ${bw}×${frontH}mm로 인쇄됩니다.` : `선택한 ${s.w}×${s.h}mm 그대로 인쇄됩니다. 케이스에 빡빡하면 세부 설정의 「명찰 크기 줄이기」를 1mm로 두세요.`;
   $('printSummary').textContent = rows.length? `${rows.length}명 → 명찰 A4 ${badgePages}장${stripPages?` + 상단 띠 ${stripCount}개 A4 ${stripPages}장`:(stackOn?' (윗칸 띠는 명찰 위에 이어서)':'')}이 인쇄됩니다` : '명단이 비어 있습니다';
   const pv=$('pages'); pv.innerHTML='';
   if(!rows.length){ pv.innerHTML='<div class="emptyMsg"><div class="ic">📋</div>왼쪽에서 명단을 넣으면 인쇄될 용지가 여기에 보입니다.</div>'; $('pager').style.visibility='hidden'; return; }
@@ -1032,13 +1032,13 @@ function movePage(d){ if(!pageCount) return; curPage=(curPage+d+pageCount)%pageC
 function looksLikeHeaderRow(r){ // 첫 줄에 이름·기수·영문 이름이 아닌 5자 이상 글자가 있으면 제목이나 머리글일 가능성
   return r.some(v=>v && v.length>=5 && !/^[가-힣]{2,4}$/.test(v) && !/^\d{1,3}\s*기?$/.test(v) && !/^[A-Za-z .'-]{2,}$/.test(v)); }
 function doPrint(){ if(!printableRows().length){ goStep(1); toast('먼저 명단을 넣어 주세요'); return; }
-  if(!state.map['이름']){ goStep(1); alert('이름 열이 연결되지 않았습니다. 명단 단계의 「어느 열이 무엇인지 확인」에서 이름 열을 골라 주세요.'); return; }
+  if(!state.map['이름']){ goStep(1); alert('이름 열이 연결되지 않았습니다. 명단 단계의 「이름·기수·직책 열 확인」에서 이름 열을 골라 주세요.'); return; }
   if(state.headerIndex<0 && !state.headerConfirmed && (state.data.cols.length>=2 || (rawRows.length && looksLikeHeaderRow(rawRows[0])))){
     const firstRow = rawRows.length? rawRows[0] : state.data.cols.map(c=>state.data.rows[0][c]);
     const first=firstRow.filter(Boolean).join(' · ').slice(0,60); const nameCol=state.map['이름']||'(없음)';
-    if(!confirm('머리글(제목 줄)을 찾지 못해 첫 줄부터 사람으로 봅니다.\n\n첫 사람: 「'+first+'」\n이름 열: '+nameCol+'\n\n첫 줄이 사람이 맞으면 「확인」, 제목이나 머리글이면 「취소」를 누르고 명단 단계에서 「머리글 줄」을 고르세요.')){ goStep(1); return; }
+    if(!confirm('열 제목을 찾지 못해 첫 줄부터 사람으로 봅니다.\n\n첫 사람: 「'+first+'」\n이름 열: '+nameCol+'\n\n첫 줄이 사람이 맞으면 「확인」, 열 제목이면 「취소」를 누르고 명단 단계에서 「열 제목 행」을 고르세요.')){ goStep(1); return; }
     state.headerConfirmed=true; persist(); }
-  if(false){ const first=rawRows[0].filter(Boolean).join(' · ').slice(0,60); if(!confirm('첫 줄 「'+first+'」도 사람 한 명으로 인쇄됩니다. 머리글(제목 줄)이라면 「취소」를 누르고 명단 단계에서 「머리글 줄」을 고르세요.\n\n이대로 인쇄할까요?')){ goStep(1); return; } }
+  if(false){ const first=rawRows[0].filter(Boolean).join(' · ').slice(0,60); if(!confirm('첫 줄 「'+first+'」도 사람 한 명으로 인쇄됩니다. 열 제목이라면 「취소」를 누르고 명단 단계에서 「열 제목 행」을 고르세요.\n\n이대로 인쇄할까요?')){ goStep(1); return; } }
   if(!pageCount){ goStep(2); alert('명찰이 종이보다 커서 배치할 수 없습니다. 크기나 종이 여백을 줄여 주세요.'); return; }
   const wraps=[...document.querySelectorAll('.pageWrap')].filter(w=>!w.dataset.built);
   if(wraps.length<=8){ buildAllPages(); window.print(); return; }
@@ -1083,7 +1083,7 @@ const modal = document.createElement('div');
 modal.id = 'photoModal';
 modal.innerHTML = `
 <div class="pmBox">
-  <div class="pmHead"><b>📷 사진으로 틀 만들기</b><span class="pmStep" id="pmStep">1 / 3 · 사진 넣기</span><button class="ibtn" onclick="PhotoTpl.close()">✕</button></div>
+  <div class="pmHead"><b>📷 사진으로 양식 만들기</b><span class="pmStep" id="pmStep">1 / 3 · 사진 넣기</span><button class="ibtn" onclick="PhotoTpl.close()">✕</button></div>
   <div class="pmBody">
     <section class="pmPage active" data-p="1">
       <div class="drop" id="pmDrop"><div class="ic">🪪</div><b>기존 명찰 사진을 여기에 놓기</b><span class="muted">클릭해서 사진을 고릅니다<br>책상(명찰과 다른 색)에 놓고 위에서 찍으면 귀퉁이를 자동으로 잡습니다. 기울어진 사진은 점 네 개를 맞추면 펴 줍니다. 사진은 서버로 보내지 않습니다.</span></div>
@@ -1107,7 +1107,7 @@ modal.innerHTML = `
         <div><div class="muted" style="margin-bottom:6px">펴진 사진</div><canvas id="pmFlat" class="pmFlat"></canvas></div>
         <div id="pmFound"></div>
       </div>
-      <div class="row" style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px"><button class="btn" onclick="PhotoTpl.go(1)">← 다시</button><button class="btn primary" id="pmApply" disabled onclick="PhotoTpl.apply()">틀로 만들기 →</button></div>
+      <div class="row" style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px"><button class="btn" onclick="PhotoTpl.go(1)">← 다시</button><button class="btn primary" id="pmApply" disabled onclick="PhotoTpl.apply()">양식으로 만들기 →</button></div>
     </section>
   </div>
 </div>`;
@@ -1487,8 +1487,8 @@ function apply(){
   // 기본 글자색: 가장 큰 줄 색
   const big=lines.reduce((a,b)=>b.h>(a?a.h:0)?b:a,null); if(big) t.design.text=big.color;
   state.tpl=t; state.photo=flat.toDataURL('image/jpeg',0.85); state.showPhoto=true;   fillSettingsUI(); renderLines(); render(); close(); goStep(2);
-  toast('사진을 바탕으로 틀을 만들었습니다. 오른쪽에서 사진과 겹쳐 보며 다듬으세요.');
-  setTimeout(()=>{ const n=okName(prompt('이 틀의 이름을 정해 주세요', '사진 틀 '+new Date().toLocaleDateString('ko-KR'))); if(n){ if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 틀이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=clone(state.tpl); state.current=n; renderTplGrid(); persist(); } }, 300);
+  toast('사진을 바탕으로 양식을 만들었습니다. 오른쪽에서 사진과 겹쳐 보며 다듬으세요.');
+  setTimeout(()=>{ const n=okName(prompt('이 양식의 이름을 정해 주세요', '사진 양식 '+new Date().toLocaleDateString('ko-KR'))); if(n){ if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 양식이 이미 있습니다. 덮어쓸까요?')) return; state.templates[n]=clone(state.tpl); state.current=n; renderTplGrid(); persist(); } }, 300);
 }
 function lum(h){ const r=parseInt(h.slice(1,3),16)/255,g=parseInt(h.slice(3,5),16)/255,b=parseInt(h.slice(5,7),16)/255; return 0.2126*r+0.7152*g+0.0722*b; }
 
