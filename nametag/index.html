@@ -24,6 +24,15 @@
   .top{height:64px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 20px;gap:20px;flex:none}
   .brand{font-weight:800;font-size:18px;letter-spacing:-.2px;white-space:nowrap}
   .steps{display:flex;gap:6px;margin-left:8px}
+  .todo{display:flex;flex-direction:column;gap:10px;margin:0}
+  .todo .row{display:flex;gap:12px;align-items:flex-start}
+  .todo .n{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+  .todo .t{font-size:16px;font-weight:700;line-height:1.5}
+  .todo .d{font-size:13.5px;color:var(--muted);line-height:1.5}
+  .numcard{display:flex;gap:12px;align-items:flex-start}
+  .numcard .n{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex:none}
+  .numcard .nb{flex:1;min-width:0;display:block}
+  .numcard h3{margin-top:2px}
   .steps button{white-space:nowrap;border:0;background:transparent;padding:8px 14px;border-radius:999px;display:flex;align-items:center;gap:8px;font-weight:600;color:var(--muted);cursor:pointer}
   .steps button .n{width:24px;height:24px;border-radius:50%;background:var(--soft);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
   .steps button.active{background:var(--accent-soft);color:var(--accent)}
@@ -190,9 +199,9 @@
 <header class="top">
   <div class="brand">🪪 명찰 메이커</div>
   <nav class="steps">
-    <button data-step="1" onclick="goStep(1)"><span class="n">1</span>명단</button>
-    <button data-step="2" onclick="goStep(2)"><span class="n">2</span>디자인</button>
-    <button data-step="3" onclick="goStep(3)"><span class="n">3</span>인쇄</button>
+    <button data-step="1" onclick="goStep(1)"><span class="n">1</span>📋 명단 넣기</button>
+    <button data-step="2" onclick="goStep(2)"><span class="n">2</span>🏷️ 띠·일정표</button>
+    <button data-step="3" onclick="goStep(3)"><span class="n">3</span>🖨️ 인쇄</button>
   </nav>
   <div class="status" id="status">명단을 넣어 주세요</div>
   <button class="btn primary big" onclick="doPrint()">🖨 인쇄하기</button>
@@ -204,47 +213,62 @@
 
   <!-- 1단계 명단 -->
   <section data-step="1" class="active">
-    <h2>명단 넣기</h2>
-    <div class="card" style="background:#f7f9ff;border-color:#c7d6f7;padding:12px 14px">
-      <b>이렇게 씁니다</b>
-      <div class="muted" style="margin-top:6px;line-height:1.8">① 아래에 엑셀 명단 파일을 넣습니다 (이름·기수·직책 열이 있으면 자동으로 읽힘)<br>② 「디자인」에서 틀을 확인합니다. 쓰던 양식(대구CEO 명찰) 틀이 목록에 있습니다. 지금 고른 틀: <b id="guideTpl"></b>. 케이스 윗칸 띠는 「상단 띠」, 일정표는 「뒷면 그림」에 넣습니다<br>③ 「인쇄하기」 → A4로 뽑아 선대로 자르고, 뒷면이 있으면 가운데를 접습니다</div>
-    </div>
-    <div class="card">
-      <div class="drop" id="drop"><div class="ic">📄</div><b>엑셀·CSV 파일 끌어다 놓기</b><span class="muted">또는 클릭해서 고르기</span></div>
+    <h2>📋 1. 명단 파일 넣기</h2>
+    <p class="lead">쓰던 엑셀 명단을 그대로 넣으면 됩니다.</p>
+        <div class="card">
+      <div class="drop" id="drop"><div class="ic">📄</div><b>📊 엑셀 파일을 여기에 놓으세요</b><span class="muted">또는 클릭해서 선택</span></div>
       <input type="file" id="xlsFile" accept=".xlsx,.xlsm,.xlsb,.xls,.csv,.tsv,.txt,.ods,.numbers" style="display:none">
       <div class="field" id="sheetRow" style="display:none"><label>시트</label><select class="in" id="sheetSelect"></select></div>
-      <p class="muted" style="margin:10px 0 0">명단은 이 컴퓨터 안에서만 처리됩니다.</p>
     </div>
-    <div class="card">
-      <h3>붙여 넣기 <span class="sub">엑셀 칸을 복사해서</span></h3>
+    <div id="mapCard"></div>
+    <details class="adv"><summary>📎 다른 방법 · 💾 백업</summary><div class="inner">
+    <div class="card" style="border:0;padding:0">
+      <h3>붙여 넣기</h3>
       <textarea class="in full" id="pasteBox" placeholder="엑셀에서 복사한 칸을 붙여 넣으세요.
 이름만 한 줄에 하나씩 넣어도 됩니다."></textarea>
       <div class="ctl" style="margin-top:8px"><button class="btn" onclick="parsePaste()">붙여 넣은 명단 읽기</button><button class="btn ghost danger" onclick="clearData()">명단 지우기</button></div>
       <div class="ctl" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span class="muted">백업</span><button class="btn sm" onclick="exportAll()">⬇ 전체 백업 파일로 저장</button><button class="btn sm" onclick="document.getElementById('allFile').click()">⬆ 백업 불러오기</button><input type="file" id="allFile" accept=".json" style="display:none" onchange="importAll(this.files[0])"></div>
-      <p class="muted" style="margin:6px 0 0">명단·틀·설정을 파일 하나로 저장합니다. 다른 컴퓨터로 옮기거나 저장 공간 경고가 떴을 때 쓰세요.</p>
+      <p class="muted" style="margin:6px 0 0">명단과 틀을 파일 하나로 저장합니다.</p>
     </div>
-    <div id="mapCard"></div>
-    <div class="card">
-      <h3>공통 값 <span class="sub">명단에 없을 때 대신 들어감</span></h3>
+    <div class="card" style="border:0;padding:0">
+      <h3>명단에 없는 값 채우기</h3>
       <div class="field"><label>기수</label><input class="in" id="g기수" placeholder="예: 76"></div>
       <div class="field"><label>행사명</label><input class="in" id="g행사명" placeholder="예: 데일카네기 골프대회"></div>
     </div>
-    <div class="next"><button class="btn primary" onclick="goStep(2)">다음: 디자인 →</button></div>
+    </div></details>
+    <div class="next"><button class="btn primary" onclick="goStep(2)">다음: 🏷️ 띠·일정표 →</button></div>
   </section>
 
   <!-- 2단계 디자인 -->
   <section data-step="2">
-    <h2>디자인</h2>
-    <p class="lead">틀을 고르고, 필요하면 내용과 모양을 바꾸세요. 오른쪽에서 바로 확인됩니다.</p>
-    <div class="card" style="background:linear-gradient(135deg,#eef3ff,#f7f9ff);border-color:#c7d6f7">
-      <h3>기존 명찰이 있으면 <span class="sub">사진 한 장이면 됩니다</span></h3>
-      <p class="muted" style="margin:0 0 10px">쓰던 명찰을 찍어 넣으면 색·띠·글자 크기·글꼴을 읽어 틀의 초안을 만들어 줍니다. 명찰 귀퉁이 네 점만 확인하면 되고, 결과는 사진과 겹쳐 보며 다듬습니다.</p>
-      <button class="btn primary block" onclick="PhotoTpl.open()">📷 사진으로 틀 만들기</button>
-    </div>
-    <div class="card">
-      <h3>틀 고르기 <span class="sub" id="tplCur"></span></h3>
+    <h2>🏷️ 2. 띠·일정표</h2>
+    <p class="lead">행사마다 바뀌는 두 가지입니다. PPT에서 오른쪽 클릭 → 「그림으로 저장」 한 파일을 고르세요.</p>
+        <div class="card numcard">
+      <span class="n">1</span><div class="nb">
+      <h3>🏷️ 윗칸 띠 <span class="sub" id="stripName"></span></h3>
+      <p class="muted" style="margin:0 0 8px">케이스 윗칸에 끼우는 행사 제목입니다.</p>
+      <div class="ctl"><button class="btn sm" onclick="document.getElementById('stripFile').click()">📂 파일 선택</button><button class="btn sm ghost" onclick="setStrip(null)">지우기</button>
+        <input type="file" id="stripFile" accept="image/*" style="display:none">
+        <label class="toggle"><input type="checkbox" id="dStripOn"> 띠 함께 인쇄</label></div>
+      <details class="adv" style="margin-top:8px"><summary>📐 띠 위치·높이</summary><div class="inner">
+      <div class="field" style="margin-top:8px"><label>띠 위치</label><div class="ctl"><select class="in" id="dStripWhere"><option value="stack">명찰 위에 이어서 (추천)</option><option value="pages">따로 모아 인쇄</option><option value="inside">명찰 안에 넣기 (한 칸 케이스)</option></select></div></div>
+      <div class="field" style="margin-top:8px"><label>띠 높이</label><div class="ctl"><input type="number" class="in num" id="dStripH" step="0.5" min="5"> mm <span class="muted">폭은 명찰과 같음</span></div></div>
+      <div class="field"><label>수량</label><div class="ctl"><input type="number" class="in num" id="dStripCount" step="1" min="0"> <span class="muted">0이면 인원수만큼</span></div></div>
+      </div></details>
+    </div></div>
+<div class="card numcard">
+      <span class="n">2</span><div class="nb">
+      <h3>📅 뒷면 일정표 <span class="sub" id="backName"></span></h3>
+      <p class="muted" style="margin:0 0 8px">없으면 비워 두세요. 앞면만 나옵니다.</p>
+      <div class="ctl"><button class="btn sm" onclick="document.getElementById('backFile').click()">📂 파일 선택</button><button class="btn sm ghost" onclick="setBack(null)">지우기</button>
+        <input type="file" id="backFile" accept="image/*" style="display:none">
+        <label class="toggle"><input type="checkbox" id="dBackOn"> 뒷면 함께 인쇄</label></div>
+    </div></div>
+<div class="card">
+      <h3>🎨 틀 <span class="sub" id="tplCur"></span></h3>
+      <p class="muted" style="margin:0 0 8px">쓰던 양식이 기본입니다. 다른 행사면 여기서 바꾸세요.</p>
       <div class="tplGrid" id="tplGrid"></div>
-      <div class="ctl" style="margin-top:10px">
+      <details class="adv" style="margin-top:8px"><summary>💾 틀 저장·관리</summary><div class="inner"><div class="ctl" style="margin-top:10px">
         <button class="btn sm primary" onclick="saveTemplate()">이 틀에 저장</button>
         <button class="btn sm" onclick="saveTemplateAs()">새 틀로 저장</button>
         <button class="btn sm" onclick="renameTemplate()">이름 바꾸기</button>
@@ -255,11 +279,12 @@
         <button class="btn sm ghost" onclick="document.getElementById('tplFile').click()">⬆ 틀 파일 가져오기</button>
         <input type="file" id="tplFile" accept=".json" style="display:none" onchange="importTemplate(this.files[0])">
         <button class="btn sm ghost" onclick="resetPresets()">기본 틀 되살리기</button>
-      </div>
+      </div></div></details>
     </div>
 
+    <details class="adv"><summary>✏️ 모양 바꾸기 <span class="muted" style="font-weight:400">글자·크기·색·로고</span></summary><div class="inner">
     <div class="card">
-      <h3>명찰에 들어갈 내용 <span class="sub">줄 단위</span></h3>
+      <h3>명찰에 들어갈 내용</h3>
       <div id="linesBox"></div>
       <button class="btn block" onclick="addLine()">+ 줄 추가</button>
       <p class="muted" style="margin:8px 0 0">값이 비어 있는 항목은 저절로 빠집니다. 「괄호로 묶기」면 앞 항목이 없을 때 괄호도 함께 빠집니다.</p>
@@ -286,29 +311,20 @@
 
     <div class="card">
       <h3>로고 <span class="sub" id="logoName"></span></h3>
-      <div class="ctl"><button class="btn sm" onclick="document.getElementById('logoFile').click()">그림 넣기</button><button class="btn sm ghost" onclick="setLogo(null)">지우기</button>
+      <div class="ctl"><button class="btn sm" onclick="document.getElementById('logoFile').click()">📂 파일 선택</button><button class="btn sm ghost" onclick="setLogo(null)">지우기</button>
         <input type="file" id="logoFile" accept="image/*" style="display:none"></div>
+      <div class="field"><label>정렬</label><select class="in" id="dLogoAlign"><option value="center">가운데</option><option value="left">왼쪽</option><option value="right">오른쪽</option></select></div>
       <div class="field"><label>위치</label><select class="in" id="dLogoPos"><option value="top">글 위 가운데</option><option value="bottom">글 아래 가운데</option><option value="tl">왼쪽 위 구석</option><option value="tr">오른쪽 위 구석</option></select></div>
       <div class="field"><label>높이</label><div class="ctl"><input type="number" class="in num" id="dLogoH" step="0.5" min="2"> mm</div></div>
     </div>
 
-    <div class="card">
-      <h3>상단 띠 <span class="sub" id="stripName"></span></h3>
-      <p class="muted" style="margin:0 0 8px">명찰 케이스 윗칸에 끼우는 띠(행사 제목 그림)입니다. 넣으면 명찰 뒤에 띠만 모아 같은 폭으로 격자 인쇄합니다. 자르기만 하면 됩니다.</p>
-      <div class="ctl"><button class="btn sm" onclick="document.getElementById('stripFile').click()">그림 넣기</button><button class="btn sm ghost" onclick="setStrip(null)">지우기</button>
-        <input type="file" id="stripFile" accept="image/*" style="display:none">
-        <label class="toggle"><input type="checkbox" id="dStripOn"> 띠 함께 인쇄</label></div>
-      <div class="field" style="margin-top:8px"><label>띠 높이</label><div class="ctl"><input type="number" class="in num" id="dStripH" step="0.5" min="5"> mm <span class="muted">폭은 명찰과 같음</span></div></div>
-      <div class="field"><label>수량</label><div class="ctl"><input type="number" class="in num" id="dStripCount" step="1" min="0"> <span class="muted">0이면 인원수만큼</span></div></div>
+<div class="card" style="background:linear-gradient(135deg,#eef3ff,#f7f9ff);border-color:#c7d6f7">
+      <h3>새 디자인이 필요할 때 <span class="sub">사진 한 장이면 됩니다</span></h3>
+      <p class="muted" style="margin:0 0 10px">명찰 사진을 넣으면 비슷한 틀을 만들어 줍니다.</p>
+      <button class="btn primary block" onclick="PhotoTpl.open()">📷 사진으로 틀 만들기</button>
     </div>
-    <div class="card">
-      <h3>뒷면 그림 <span class="sub" id="backName"></span></h3>
-      <p class="muted" style="margin:0 0 8px">일정표 같은 그림을 넣으면 앞면 위에 거꾸로 붙어 인쇄됩니다. 자른 뒤 가운데를 접으면 양면 명찰이 됩니다.</p>
-      <div class="ctl"><button class="btn sm" onclick="document.getElementById('backFile').click()">그림 넣기</button><button class="btn sm ghost" onclick="setBack(null)">지우기</button>
-        <input type="file" id="backFile" accept="image/*" style="display:none">
-        <label class="toggle"><input type="checkbox" id="dBackOn"> 뒷면 함께 인쇄</label></div>
-    </div>
-    <details class="adv"><summary>세부 설정</summary><div class="inner">
+    </div></details>
+            <details class="adv"><summary>⚙️ 세부 설정</summary><div class="inner">
       <div class="field"><label>세로 위치</label><div class="seg" id="valignSeg"></div></div>
       <div class="field"><label>안쪽 여백</label><div class="ctl"><input type="number" class="in num" id="dPad" step="0.5" min="0"> mm</div></div>
       <div class="field"><label>줄 간격</label><div class="ctl"><input type="number" class="in num" id="dLineGap" step="0.5" min="0"> mm</div></div>
@@ -317,33 +333,32 @@
       <div class="field"><label>종이 여백</label><div class="ctl"><input type="number" class="in num" id="szMargin" step="0.5" min="0"> mm</div></div>
       <div class="field"><label>종이 방향</label><div class="seg" id="orientSeg"></div></div>
     </div></details>
-    <div class="next"><button class="btn primary" onclick="goStep(3)">다음: 인쇄 →</button></div>
+    <div class="next"><button class="btn primary" onclick="goStep(3)">다음: 🖨️ 인쇄 →</button></div>
   </section>
 
   <!-- 3단계 인쇄 -->
   <section data-step="3">
-    <h2>인쇄</h2>
-    <p class="lead">아래 세 가지만 확인하고 인쇄 버튼을 누르세요.</p>
+    <h2>🖨️ 3. 인쇄</h2>
     <div class="card">
-      <h3>자르는 선</h3>
+      <div class="todo">
+        <div class="row"><span class="n">1</span><div><div class="t">🖨️ 아래 「지금 인쇄하기」를 누르세요</div><div class="d">A4 가로로 나옵니다. 종이는 두꺼운 A4(180g 이상)가 좋습니다.</div></div></div>
+        <div class="row"><span class="n">2</span><div><div class="t">⚙️ 인쇄 창에서 두 가지를 맞추세요</div><div class="d">배율 <b>100%</b> (「페이지에 맞춤」 아님) · 여백 <b>없음</b></div></div></div>
+        <div class="row"><span class="n">3</span><div><div class="t">✂️ 실선을 따라 자르고, 📄 점선에서 접으세요</div><div class="d">한 장에 곧은 선 6개입니다. 재단기면 여러 장을 겹쳐 한 번에 자릅니다.</div></div></div>
+      </div>
+    </div>
+    <details class="adv"><summary>📐 자르는 선 · 인쇄 위치 <span class="muted" style="font-weight:400">보통은 손대지 않습니다</span></summary><div class="inner">
+<div class="card" style="border:0;padding:0"><h3>자르는 선</h3>
       <div class="seg" id="cutSeg"></div>
       <label class="toggle" style="margin-top:10px"><input type="checkbox" id="cutBorder"> 명찰마다 가는 테두리 선</label>
-      <p class="muted" style="margin:8px 0 0">「끝까지 이어진 선」이면 종이 여러 장을 겹쳐 놓고 재단기로 한 번에 자를 수 있습니다.</p>
+      <p class="muted" style="margin:8px 0 0">그대로 두면 됩니다. 재단기로 여러 장을 한 번에 자를 수 있습니다.</p>
     </div>
-    <div class="card">
-      <h3>인쇄 위치 미세 조정 <span class="sub">첫 장을 뽑아 본 뒤</span></h3>
+<div class="card" style="border:0;padding:0;margin-top:10px"><h3>인쇄 위치 조정 <span class="sub">첫 장이 밀려 나왔을 때만</span></h3><div class="card" style="border:0;padding:0">
+      
       <div class="field"><label>좌우</label><div class="ctl"><input type="number" class="in num" id="offX" step="0.5"> mm <span class="muted">오른쪽으로 밀렸으면 − 값</span></div></div>
       <div class="field"><label>위아래</label><div class="ctl"><input type="number" class="in num" id="offY" step="0.5"> mm <span class="muted">아래로 밀렸으면 − 값</span></div></div>
     </div>
-    <div class="card">
-      <h3>인쇄 창에서 확인할 것</h3>
-      <div class="check"><span class="ic">📐</span><div><b>배율 100% (실제 크기)</b><span class="muted">「페이지에 맞춤」이면 치수가 틀어집니다.</span></div></div>
-      <div class="check"><span class="ic">📄</span><div><b>여백: 없음</b><span class="muted">용지 크기는 A4 그대로 둡니다.</span></div></div>
-      <div class="check"><span class="ic">🧾</span><div><b>종이는 180~220g 두꺼운 A4</b><span class="muted">케이스 안에서 휘지 않습니다.</span></div></div>
-      <div class="check"><span class="ic">💾</span><div><b>파일로 남기려면 「대상: PDF로 저장」</b><span class="muted">같은 인쇄 창에서 고를 수 있습니다.</span></div></div>
-      <div class="check"><span class="ic">🌐</span><div><b>인터넷이 필요한 기능</b><span class="muted">엑셀 파일 읽기, 사진 글자 읽기, 웹 글꼴. 붙여 넣기·CSV·인쇄는 인터넷 없이도 됩니다.</span></div></div>
-    </div>
-    <button class="btn primary big block" onclick="doPrint()">🖨 지금 인쇄하기</button>
+    </div></details>
+    <button class="btn primary big block" onclick="doPrint()">🖨️ 지금 인쇄하기</button>
     <p class="muted" style="text-align:center;margin-top:10px" id="printSummary"></p>
   </section>
 </aside>
@@ -372,7 +387,7 @@ const FONTS = [
 ];
 const JOINS = [['space','띄어쓰기'],['paren','괄호 ( )'],['dot','가운뎃점 ·'],['slash','빗금 /'],['none','붙이기']];
 const FIELDS = ['이름','직책','기수','회사','직함','행사명','기타'];
-const DEMO = {이름:'차상근', 직책:'대구총동문회장', 기수:'73', 회사:'(주)오토몽', 직함:'대표', 행사명:'데일카네기 골프대회', 기타:''};
+const DEMO = {이름:'홍길동', 직책:'총동문회장', 기수:'73', 회사:'(주)오토몽', 직함:'대표', 행사명:'데일카네기 골프대회', 기타:''};
 
 const DC_LOGO='data:image/png;base64,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';
 function line(parts, o){ return Object.assign({parts, join:'space', size:14, bold:false, color:'', spacing:0, align:'center', maxChars:0}, o); }
@@ -382,7 +397,7 @@ function baseTemplate(){
     lines:[],
     size:{preset:'90x55', w:90, h:55, shrink:0, gap:0, margin:8, orient:'auto'},
     cut:{style:'full', border:false, offX:0, offY:0},
-    design:{font:'noto', text:'#111111', band:'none', bandColor:'#2457d6', bandH:6, bandInset:0, back:null, backOn:false, strip:null, stripOn:false, stripH:25, stripCount:0, bg:'#ffffff', valign:'center', pad:3, lineGap:2, logo:null, logoPos:'top', logoH:8}
+    design:{font:'noto', text:'#111111', band:'none', bandColor:'#2457d6', bandH:6, bandInset:0, back:null, backOn:false, strip:null, stripOn:false, stripWhere:'stack', stripRatio:0, stripH:25, stripCount:0, bg:'#ffffff', valign:'center', pad:3, lineGap:2, logo:null, logoPos:'top', logoAlign:'center', logoH:8}
   };
 }
 function presets(){
@@ -398,9 +413,13 @@ function presets(){
   d.design.bg='#1e56b8'; d.design.text='#ffffff';
   const e = baseTemplate();
   e.size={preset:'102x77', w:102, h:77, shrink:0, gap:0, margin:8, orient:'auto'};
-  e.lines = [ line([part('직책'), part('기수',{suffix:'기'})], {join:'paren', size:21, bold:true, align:'left'}), line([part('이름')], {size:60, bold:true, spacing:0.3, maxChars:4, align:'left'}) ];
-  e.design.logo=DC_LOGO; e.design.logoPos='top'; e.design.logoH=16; e.design.valign='flex-start'; e.design.pad=6; e.design.lineGap=4;
-  return {'대구CEO 총동문회 명찰 (쓰던 양식)':e, '카네기 코스: 파란 바탕 흰 글씨 (80기 영상 참고)':d, '기본: 직책 (기수) / 이름':a, '골프대회: 행사명 / 이름 / 회사 직함':b, '이름만 크게':c};
+  e.lines = [ line([part('직책'), part('기수',{suffix:'기'})], {join:'paren', size:21, bold:true, align:'left'}), line([part('이름')], {size:65, bold:true, spacing:0.25, maxChars:3, align:'left'}) ];
+  e.design.logo=DC_LOGO; e.design.logoPos='top'; e.design.logoAlign='right'; e.design.logoH=16.2; e.design.valign='flex-start'; e.design.pad=8; e.design.lineGap=3;
+  const f = baseTemplate(); // 한 칸 케이스용: 받은 PPT 앞면 그대로 (로고 47.5×16.2mm 위, 직책 21pt, 이름 65pt 글자 띄움), 띠·접기 없음
+  f.size={preset:'102x77',w:102,h:77,shrink:0,gap:0,margin:8,orient:'auto'};
+  f.lines=[ line([part('직책'), part('기수',{suffix:'기'})], {join:'paren', size:21, bold:true, align:'left'}), line([part('이름')], {size:65, bold:true, spacing:0.25, maxChars:3, align:'left'}) ];
+  f.design.logo=DC_LOGO; f.design.logoPos='top'; f.design.logoAlign='right'; f.design.logoH=16.2; f.design.valign='flex-start'; f.design.pad=8; f.design.lineGap=3; f.design.stripWhere='inside';
+  return {'대구CEO 총동문회 명찰 (쓰던 양식)':e, '대구CEO 1단 명찰 (받은 양식 그대로, 한 칸 케이스)':f, '카네기 코스: 파란 바탕 흰 글씨 (80기 영상 참고)':d, '기본: 직책 (기수) / 이름':a, '골프대회: 행사명 / 이름 / 회사 직함':b, '이름만 크게':c};
 }
 
 /* ---------- 상태 ---------- */
@@ -424,7 +443,7 @@ async function load(){
     return; }
   applyLoaded(got); loadDone=true;
 }
-const NEW_PRESETS=['대구CEO 총동문회 명찰 (쓰던 양식)']; // 나중에 추가된 기본 틀: 기존 저장본에도 한 번만 넣는다 (지운 뒤에는 다시 넣지 않음)
+const NEW_PRESETS=['대구CEO 총동문회 명찰 (쓰던 양식)','대구CEO 1단 명찰 (받은 양식 그대로, 한 칸 케이스)']; // 나중에 추가된 기본 틀: 기존 저장본에도 한 번만 넣는다 (지운 뒤에는 다시 넣지 않음)
 function addNewPresets(){ state.presetsAdded=Array.isArray(state.presetsAdded)? state.presetsAdded.filter(x=>typeof x==='string').slice(0,50) : [];
   const P=presets(); NEW_PRESETS.forEach(k=>{ if(state.presetsAdded.includes(k)) return; if(!(k in state.templates) && P[k]) state.templates=Object.assign({[k]:P[k]}, state.templates); state.presetsAdded.push(k); }); }
 function applyLoaded(got){
@@ -564,7 +583,7 @@ function sanitizeTemplate(t){
   const out=baseTemplate();
   out.size={preset:one(S.preset,SIZES.map(x=>x[0]),'custom'), w:num(S.w,20,200,90), h:num(S.h,15,200,55), shrink:num(S.shrink,0,5,0), gap:num(S.gap,0,20,0), margin:num(S.margin,0,30,8), orient:one(S.orient,['auto','portrait','landscape'],'auto')};
   out.cut={style:one(C.style,['full','mark','none'],'full'), border:!!C.border, offX:num(C.offX,-20,20,0), offY:num(C.offY,-20,20,0)};
-  out.design={font:one(D.font,FONTS.map(f=>f[0]),'noto'), text:col(D.text,'#111111'), band:one(D.band,['none','top','left','bottom'],'none'), bandColor:col(D.bandColor,'#2457d6'), bandH:num(D.bandH,0,40,6), bandInset:num(D.bandInset,0,20,0), bg:col(D.bg,'#ffffff'), valign:one(D.valign,['center','flex-start','flex-end'],'center'), pad:num(D.pad,0,30,3), lineGap:num(D.lineGap,0,30,2), logo:(typeof D.logo==='string'&&/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=]+$/.test(D.logo)&&D.logo.length<3000000)?D.logo:null, logoPos:one(D.logoPos,['top','bottom','tl','tr'],'top'), logoH:num(D.logoH,2,50,8), back:(typeof D.back==='string'&&/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(D.back)&&D.back.length<4000000)?D.back:null, backOn:!!D.backOn, strip:(typeof D.strip==='string'&&/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(D.strip)&&D.strip.length<4000000)?D.strip:null, stripOn:!!D.stripOn, stripH:num(D.stripH,5,80,25), stripCount:num(D.stripCount,0,5000,0)};
+  out.design={font:one(D.font,FONTS.map(f=>f[0]),'noto'), text:col(D.text,'#111111'), band:one(D.band,['none','top','left','bottom'],'none'), bandColor:col(D.bandColor,'#2457d6'), bandH:num(D.bandH,0,40,6), bandInset:num(D.bandInset,0,20,0), bg:col(D.bg,'#ffffff'), valign:one(D.valign,['center','flex-start','flex-end'],'center'), pad:num(D.pad,0,30,3), lineGap:num(D.lineGap,0,30,2), logo:(typeof D.logo==='string'&&/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=]+$/.test(D.logo)&&D.logo.length<3000000)?D.logo:null, logoPos:one(D.logoPos,['top','bottom','tl','tr'],'top'), logoAlign:one(D.logoAlign,['center','left','right'],'center'), logoH:num(D.logoH,2,50,8), back:(typeof D.back==='string'&&/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(D.back)&&D.back.length<4000000)?D.back:null, backOn:!!D.backOn, stripWhere:one(D.stripWhere==='beside'?'stack':D.stripWhere,['stack','pages','inside'], D.stripInside?'inside':'stack'), stripRatio:num(D.stripRatio,0.2,30,0), strip:(typeof D.strip==='string'&&/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(D.strip)&&D.strip.length<4000000)?D.strip:null, stripOn:!!D.stripOn, stripH:num(D.stripH,5,80,25), stripCount:num(D.stripCount,0,5000,0)};
   out.lines=t.lines.slice(0,12).map(L=>{ L=L&&typeof L==='object'?L:{}; const parts=(Array.isArray(L.parts)?L.parts:[]).slice(0,8).map(P=>{ P=P&&typeof P==='object'?P:{}; const src=P.src==='fixed'?'fixed':(FIELDS.includes(P.src)?P.src:'이름'); return {src, text:str(P.text,100), prefix:str(P.prefix,20), suffix:str(P.suffix,20)}; });
     return {parts: parts.length?parts:[part('이름')], join:one(L.join,JOINS.map(j=>j[0]),'space'), size:num(L.size,4,200,14), bold:!!L.bold, color:(L.color?col(L.color,''):''), spacing:num(L.spacing,0,2,0), align:one(L.align,['left','center','right'],'center'), maxChars:num(L.maxChars,0,40,0)}; });
   if(!out.lines.length) out.lines=[line([part('이름')],{size:36,bold:true})];
@@ -774,9 +793,9 @@ function fillSettingsUI(){
   $('szW').value=s.w; $('szH').value=s.h; $('szShrink').value=s.shrink; $('szGap').value=s.gap; $('szMargin').value=s.margin;
   $('cutBorder').checked=c.border; $('offX').value=c.offX; $('offY').value=c.offY;
   const fl=$('fontList'); fl.innerHTML='';
-  FONTS.forEach(f=>{ const b=document.createElement('button'); b.className='fontOpt'+(d.font===f[0]?' on':''); b.innerHTML=`<div class="sm" style="font-family:${f[2]}">차상근</div><div class="nm">${f[1]}</div>`; b.onclick=()=>{ d.font=f[0]; fillSettingsUI(); render(); }; fl.appendChild(b); });
-  $('dText').value=d.text; $('dBandColor').value=d.bandColor; $('dBandH').value=d.bandH; $('dBandInset').value=d.bandInset||0; $('dBg').value=d.bg; $('dPad').value=d.pad; $('dLineGap').value=d.lineGap; $('dLogoPos').value=d.logoPos; $('dLogoH').value=d.logoH;
-  $('logoName').textContent = d.logo? '로고 있음' : '없음'; $('backName').textContent = d.back? '그림 있음' : '없음'; $('dBackOn').checked=!!(d.back&&d.backOn); $('stripName').textContent = d.strip? '그림 있음' : '없음'; $('dStripOn').checked=!!(d.strip&&d.stripOn); $('dStripH').value=d.stripH||25; $('dStripCount').value=d.stripCount||0;
+  FONTS.forEach(f=>{ const b=document.createElement('button'); b.className='fontOpt'+(d.font===f[0]?' on':''); b.innerHTML=`<div class="sm" style="font-family:${f[2]}">홍길동</div><div class="nm">${f[1]}</div>`; b.onclick=()=>{ d.font=f[0]; fillSettingsUI(); render(); }; fl.appendChild(b); });
+  $('dText').value=d.text; $('dBandColor').value=d.bandColor; $('dBandH').value=d.bandH; $('dBandInset').value=d.bandInset||0; $('dBg').value=d.bg; $('dPad').value=d.pad; $('dLineGap').value=d.lineGap; $('dLogoPos').value=d.logoPos; $('dLogoAlign').value=d.logoAlign||'center'; $('dLogoH').value=d.logoH;
+  $('logoName').textContent = d.logo? '로고 있음' : '없음'; $('backName').textContent = d.back? '파일 있음' : '없음'; $('dBackOn').checked=!!(d.back&&d.backOn); $('stripName').textContent = d.strip? '파일 있음' : '없음'; $('dStripOn').checked=!!(d.strip&&d.stripOn); $('dStripH').value=d.stripH||25; $('dStripCount').value=d.stripCount||0; $('dStripWhere').value=d.stripWhere||'stack';
   seg('bandSeg',[['none','없음'],['top','위'],['left','왼쪽'],['bottom','아래']],()=>d.band,v=>d.band=v);
   seg('valignSeg',[['center','가운데'],['flex-start','위쪽'],['flex-end','아래쪽']],()=>d.valign,v=>d.valign=v);
   seg('orientSeg',[['auto','자동'],['portrait','세로'],['landscape','가로']],()=>s.orient,v=>s.orient=v);
@@ -794,31 +813,37 @@ function bind(id, path, type){
 }
 bind('szW','size.w'); bind('szH','size.h'); bind('szShrink','size.shrink'); bind('szGap','size.gap'); bind('szMargin','size.margin');
 bind('cutBorder','cut.border','change'); bind('offX','cut.offX'); bind('offY','cut.offY');
-bind('dText','design.text'); bind('dBandColor','design.bandColor'); bind('dBandH','design.bandH'); bind('dBandInset','design.bandInset'); bind('dBg','design.bg'); bind('dPad','design.pad'); bind('dLineGap','design.lineGap'); bind('dLogoPos','design.logoPos','change'); bind('dLogoH','design.logoH');
+bind('dLogoAlign','design.logoAlign'); bind('dText','design.text'); bind('dBandColor','design.bandColor'); bind('dBandH','design.bandH'); bind('dBandInset','design.bandInset'); bind('dBg','design.bg'); bind('dPad','design.pad'); bind('dLineGap','design.lineGap'); bind('dLogoPos','design.logoPos','change'); bind('dLogoH','design.logoH');
 $('logoFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>setLogo(r.result); r.readAsDataURL(f); e.target.value=''; };
 $('backFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const im=new Image(); const url=URL.createObjectURL(f); im.onload=()=>{ URL.revokeObjectURL(url); // 긴 변 1400px로 줄여 JPEG로 보관 (저장 용량)
     const k=Math.min(1,1400/Math.max(im.width,im.height)); const c=document.createElement('canvas'); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(im,0,0,c.width,c.height); setBack(c.toDataURL('image/jpeg',0.88)); }; im.onerror=()=>{ URL.revokeObjectURL(url); alert('그림 파일을 읽지 못했습니다.'); }; im.src=url; e.target.value=''; };
-$('stripFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const im=new Image(); const url=URL.createObjectURL(f); im.onload=()=>{ URL.revokeObjectURL(url); const k=Math.min(1,1600/Math.max(im.width,im.height)); const c=document.createElement('canvas'); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(im,0,0,c.width,c.height); setStrip(c.toDataURL('image/jpeg',0.9)); }; im.onerror=()=>{ URL.revokeObjectURL(url); alert('그림 파일을 읽지 못했습니다.'); }; im.src=url; e.target.value=''; };
-$('dStripOn').onchange=e=>{ state.tpl.design.stripOn=e.target.checked; if(e.target.checked&&!state.tpl.design.strip){ e.target.checked=false; state.tpl.design.stripOn=false; toast('먼저 「그림 넣기」로 띠 그림을 넣어 주세요'); } render(); };
-function setStrip(v){ state.tpl.design.strip=v; state.tpl.design.stripOn=!!v; $('stripName').textContent=v?'그림 있음':'없음'; $('dStripOn').checked=!!v; render(); }
+$('stripFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const im=new Image(); const url=URL.createObjectURL(f); im.onload=()=>{ URL.revokeObjectURL(url); const k=Math.min(1,1600/Math.max(im.width,im.height)); const c=document.createElement('canvas'); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(im,0,0,c.width,c.height); state.tpl.design.stripRatio=Math.round(c.width/c.height*100)/100; setStrip(c.toDataURL('image/jpeg',0.9)); }; im.onerror=()=>{ URL.revokeObjectURL(url); alert('그림 파일을 읽지 못했습니다.'); }; im.src=url; e.target.value=''; };
+$('dStripOn').onchange=e=>{ state.tpl.design.stripOn=e.target.checked; if(e.target.checked&&!state.tpl.design.strip){ e.target.checked=false; state.tpl.design.stripOn=false; toast('먼저 「파일 선택」으로 띠 그림을 넣어 주세요'); } render(); };
+$('dStripWhere').onchange=e=>{ state.tpl.design.stripWhere=e.target.value; render(); };
+function setStrip(v){ state.tpl.design.strip=v; state.tpl.design.stripOn=!!v; $('stripName').textContent=v?'파일 있음':'없음'; $('dStripOn').checked=!!v; render(); }
 bind('dStripH','design.stripH'); bind('dStripCount','design.stripCount');
-$('dBackOn').onchange=e=>{ state.tpl.design.backOn=e.target.checked; if(e.target.checked&&!state.tpl.design.back){ e.target.checked=false; state.tpl.design.backOn=false; toast('먼저 「그림 넣기」로 뒷면 그림을 넣어 주세요'); } render(); };
-function setBack(v){ state.tpl.design.back=v; state.tpl.design.backOn=!!v; $('backName').textContent=v?'그림 있음':'없음'; $('dBackOn').checked=!!v; render(); }
+$('dBackOn').onchange=e=>{ state.tpl.design.backOn=e.target.checked; if(e.target.checked&&!state.tpl.design.back){ e.target.checked=false; state.tpl.design.backOn=false; toast('먼저 「파일 선택」으로 뒷면 그림을 넣어 주세요'); } render(); };
+function setBack(v){ state.tpl.design.back=v; state.tpl.design.backOn=!!v; $('backName').textContent=v?'파일 있음':'없음'; $('dBackOn').checked=!!v; render(); }
 function setLogo(v){ state.tpl.design.logo=v; $('logoName').textContent=v?'로고 있음':'없음'; render(); }
 
 /* ---------- 명찰 한 장 만들기 ---------- */
-function cardH(t){ const s=t.size, d=t.design; const bh=Math.max(10,s.h-s.shrink); return (d.back&&d.backOn)? bh*2 : bh; }
+function stackH(t){ const d=t.design; if(!(d.strip&&d.stripOn&&d.stripWhere==='stack')) return 0; const bw=Math.max(10,t.size.w-t.size.shrink); return d.stripRatio? Math.min(d.stripH, bw/d.stripRatio) : d.stripH; } // 명찰 위에 이어 붙는 띠 높이
+function cardH(t){ const s=t.size, d=t.design; const bh=Math.max(10,s.h-s.shrink); return ((d.back&&d.backOn)? bh*2 : bh) + stackH(t); }
 /* 뒷면이 켜져 있으면: 위쪽에 뒷면 그림을 거꾸로, 아래쪽에 앞면. 인쇄 후 가운데를 접으면 양면 명찰이 된다 */
 function makeBadge(row, t){
-  const d=t.design; const front=makeFront(row,t);
-  if(!(d.back&&d.backOn)) return front;
-  const s=t.size; const bw=Math.max(10,s.w-s.shrink), bh=Math.max(10,s.h-s.shrink);
-  const card=document.createElement('div'); card.className='badge card2'; card.style.cssText=`width:${bw}mm;height:${bh*2}mm;background:#fff;display:block;${t.cut.border?'outline:0.2mm solid #9ca3af;outline-offset:-0.2mm;':''}`;
-  const back=document.createElement('div'); back.style.cssText=`position:absolute;left:0;top:0;width:${bw}mm;height:${bh}mm;overflow:hidden;background:#fff`;
-  const im=document.createElement('img'); im.src=d.back; im.style.cssText='width:100%;height:100%;object-fit:contain;transform:rotate(180deg);display:block'; back.appendChild(im);
-  const fold=document.createElement('div'); fold.style.cssText=`position:absolute;left:0;top:${bh}mm;width:100%;height:0;border-top:0.2mm dashed #b0b4bb;z-index:2`;
-  front.style.position='absolute'; front.style.left='0'; front.style.top=bh+'mm'; front.style.outline='none'; // 테두리는 바깥 카드(양면 전체)에
-  card.appendChild(back); card.appendChild(front); card.appendChild(fold); return card;
+  const d=t.design; const front=makeFront(row,t); const sh=stackH(t); const hasBack=!!(d.back&&d.backOn);
+  if(!hasBack&&!sh) return front;
+  const s=t.size; const bw=Math.max(10,s.w-s.shrink), bh=Math.max(10,s.h-s.shrink); const total=sh+(hasBack?bh*2:bh);
+  const card=document.createElement('div'); card.className='badge card2'; card.style.cssText=`width:${bw}mm;height:${total}mm;background:#fff;display:block;${t.cut.border?'outline:0.2mm solid #9ca3af;outline-offset:-0.2mm;':''}`;
+  if(sh){ // 윗칸 띠: 명찰과 같은 폭으로 맨 위에. 띠와 명찰 사이는 실선(자르는 선)
+    const st=document.createElement('div'); st.style.cssText=`position:absolute;left:0;top:0;width:${bw}mm;height:${sh}mm;overflow:hidden;background:#fff`;
+    const si=document.createElement('img'); si.src=d.strip; si.style.cssText='width:100%;height:100%;object-fit:cover;display:block'; st.appendChild(si); card.appendChild(st);
+    const cutLn=document.createElement('div'); cutLn.style.cssText=`position:absolute;left:0;top:${sh}mm;width:100%;height:0;border-top:0.2mm solid #9ca3af;z-index:2`; card.appendChild(cutLn); }
+  if(hasBack){ const back=document.createElement('div'); back.style.cssText=`position:absolute;left:0;top:${sh}mm;width:${bw}mm;height:${bh}mm;overflow:hidden;background:#fff`;
+    const im=document.createElement('img'); im.src=d.back; im.style.cssText='width:100%;height:100%;object-fit:contain;transform:rotate(180deg);display:block'; back.appendChild(im); card.appendChild(back);
+    const fold=document.createElement('div'); fold.style.cssText=`position:absolute;left:0;top:${sh+bh}mm;width:100%;height:0;border-top:0.2mm dashed #b0b4bb;z-index:2`; card.appendChild(fold); }
+  front.style.position='absolute'; front.style.left='0'; front.style.top=(sh+(hasBack?bh:0))+'mm'; front.style.outline='none'; // 테두리는 바깥 카드 전체에
+  card.appendChild(front); return card;
 }
 const _mc=document.createElement('canvas').getContext('2d');
 function fitSize(txt,size,font,bold,spacing,availMm){ // 실제 글꼴로 폭을 재서 칸을 넘으면 글자 크기를 줄인다 (글자 띄움 포함)
@@ -837,9 +862,15 @@ function makeFront(row, t){
   if(d.band!=='none'){ const band=document.createElement('div'); const ins=d.bandInset||0; // 들여쓰기는 띠가 붙는 쪽 가장자리에서만 띄운다 (띠 길이는 그대로 전체)
     const mg=d.band==='left'?`margin-left:${ins}mm`:d.band==='top'?`margin-top:${ins}mm`:`margin-bottom:${ins}mm`;
     band.style.cssText=`background:${d.bandColor};flex:none;${mg};${d.band==='left'?`width:${d.bandH}mm;height:100%`:`height:${d.bandH}mm;width:100%`}`; b.appendChild(band); }
+  if(d.strip&&d.stripOn&&d.stripWhere==='inside'){ // 한 칸 케이스: 행사 제목 띠를 명찰 위쪽에 붙여 한 장으로 인쇄
+    const sh=(d.strip&&d.stripRatio)? Math.min(d.stripH, bw/d.stripRatio) : d.stripH; // 그림이면 비율대로, 잘리지 않게
+    const sb=document.createElement('div'); sb.style.cssText=`flex:none;width:100%;height:${sh}mm;overflow:hidden;background:${d.bandColor};display:flex;align-items:center;justify-content:center`;
+    if(d.strip){ const im=document.createElement('img'); im.src=d.strip; im.style.cssText='width:100%;height:100%;object-fit:cover;display:block'; sb.appendChild(im); }
+    else { const tx=document.createElement('div'); const et=val(row,'행사명'); tx.textContent=et; const fs=fitSize(et, Math.max(6,d.stripH*0.42*72/25.4), font, true, 0, bw-4); tx.style.cssText=`color:#fff;font-weight:700;font-size:${fs}pt;white-space:nowrap;padding:0 2mm;line-height:1.2`; sb.appendChild(tx); }
+    b.insertBefore(sb, b.firstChild); }
   const content=document.createElement('div'); content.className='content';
   content.style.cssText=`justify-content:${d.valign};padding:${d.pad}mm;gap:${d.lineGap}mm;position:relative`;
-  const logo=(pos)=>{ if(!d.logo||d.logoPos!==pos) return null; const im=document.createElement('img'); im.src=d.logo; im.style.cssText=`height:${d.logoH}mm;width:auto;max-width:90%;object-fit:contain;flex:none`; return im; };
+  const logo=(pos)=>{ if(!d.logo||d.logoPos!==pos) return null; const im=document.createElement('img'); im.src=d.logo; im.style.cssText=`height:${d.logoH}mm;width:auto;max-width:90%;object-fit:contain;flex:none;align-self:${d.logoAlign==='left'?'flex-start':d.logoAlign==='right'?'flex-end':'center'}`; return im; };
   const lt=logo('top'); if(lt) content.appendChild(lt);
   t.lines.forEach(L=>{
     const txt=lineText(row,L); if(!txt) return;
@@ -866,7 +897,7 @@ function render(){
   const ow=$('oneWrap'); ow.innerHTML='';
   const one=makeBadge(sampleRow(), t); one.classList.add('oneBadge'); one.style.position='relative'; // absolute(뒷면·접는 선)가 이 안에 머물도록
   const availW=ow.clientWidth-48; const bwpx=(s.w-s.shrink)*MM; one.style.zoom=Math.max(0.4, Math.min(2.2, availW/bwpx));
-  if(t.design.strip&&t.design.stripOn){ const st=document.createElement('div'); st.className='oneBadge'; st.style.cssText=`width:${(s.w-s.shrink)}mm;height:${t.design.stripH}mm;overflow:hidden;background:#fff;margin-bottom:6mm;zoom:${one.style.zoom}`; const im=document.createElement('img'); im.src=t.design.strip; im.style.cssText='width:100%;height:100%;object-fit:cover;display:block'; st.appendChild(im); ow.appendChild(st); ow.style.flexDirection='column'; ow.style.alignItems='center'; } else { ow.style.flexDirection=''; ow.style.alignItems=''; }
+  if(t.design.strip&&t.design.stripOn&&t.design.stripWhere!=='inside'){ const st=document.createElement('div'); st.className='oneBadge'; st.style.cssText=`width:${(s.w-s.shrink)}mm;height:${t.design.stripH}mm;overflow:hidden;background:#fff;margin-bottom:6mm;zoom:${one.style.zoom}`; const im=document.createElement('img'); im.src=t.design.strip; im.style.cssText='width:100%;height:100%;object-fit:cover;display:block'; st.appendChild(im); ow.appendChild(st); ow.style.flexDirection='column'; ow.style.alignItems='center'; } else { ow.style.flexDirection=''; ow.style.alignItems=''; }
   ow.appendChild(one);
   renderPhotoOverlay(ow, one);
   const gt=$('guideTpl'); if(gt) gt.textContent=state.current||'';
@@ -879,14 +910,15 @@ function render(){
   $('pageStyle').textContent=`@page{size:A4 ${g.pw>g.ph?'landscape':'portrait'};margin:0}`;
   const per=g.cols*g.rows; const badgePages=per? Math.ceil(rows.length/per):0;
   // 상단 띠(케이스 윗칸): 같은 그림을 인원수(또는 지정 수량)만큼 격자로
-  const d0=t.design; const stripOn=!!(d0.strip&&d0.stripOn&&rows.length); const stripH=stripOn? d0.stripH : 0;
-  const sg = stripOn? {cols:Math.max(0,Math.floor((g.pw-2*s.margin+s.gap)/(bw+s.gap))), rows:Math.max(0,Math.floor((g.ph-2*s.margin+s.gap)/(stripH+s.gap)))} : {cols:0,rows:0};
-  const sper=sg.cols*sg.rows; const stripCount=stripOn? (d0.stripCount||rows.length) : 0; const stripPages=sper? Math.ceil(stripCount/sper) : 0;
+  const d0=t.design; const stripOn=!!(d0.strip&&d0.stripOn&&d0.stripWhere!=='inside'&&rows.length); const stripH=stripOn? d0.stripH : 0;
+  const beside=null; const stackOn=stripOn&&d0.stripWhere==='stack';
+  const sg = (stripOn&&!stackOn)? {cols:Math.max(0,Math.floor((g.pw-2*s.margin+s.gap)/(bw+s.gap))), rows:Math.max(0,Math.floor((g.ph-2*s.margin+s.gap)/(stripH+s.gap)))} : {cols:0,rows:0};
+  const sper=sg.cols*sg.rows; const stripCount=(stripOn&&!stackOn)? (d0.stripCount||rows.length) : 0; const stripPages=sper? Math.ceil(stripCount/sper) : 0;
   const pages=badgePages+stripPages; pageCount=pages;
-  $('status').innerHTML = (rows.length? `<b>${rows.length}명</b> · A4 ${badgePages}장${stripPages?` + 띠 ${stripPages}장`:''}` : '명단을 넣어 주세요') + ` <span id="saveBadge" style="display:none;color:var(--danger);font-weight:700" title="브라우저 저장 공간이 부족합니다">· ⚠ 저장 안 됨</span>`; updateSaveBadge();
+  $('status').innerHTML = (rows.length? `<b>${rows.length}명</b> · A4 ${badgePages}장${stripPages?` + 띠 ${stripPages}장`:(stackOn?' (띠 포함)':'')}` : '명단을 넣어 주세요') + ` <span id="saveBadge" style="display:none;color:var(--danger);font-weight:700" title="브라우저 저장 공간이 부족합니다">· ⚠ 저장 안 됨</span>`; updateSaveBadge();
   $('sheetInfo').textContent = per? `장당 ${per}개 (${g.cols}×${g.rows}) · 실제 출력 ${bw}×${frontH}mm${bh!==frontH?` (뒷면 포함 ${bw}×${bh}mm, 접는 선 있음)`:''}` : '';
   $('szNote').textContent = s.shrink>0 ? `실제로는 여유 줄임 ${s.shrink}mm를 뺀 ${bw}×${frontH}mm로 인쇄됩니다.` : `선택한 ${s.w}×${s.h}mm 그대로 인쇄됩니다. 케이스에 빡빡하면 세부 설정의 「여유 줄임」을 1mm로 두세요.`;
-  $('printSummary').textContent = rows.length? `${rows.length}명 → 명찰 A4 ${badgePages}장${stripPages?` + 상단 띠 ${stripCount}개 A4 ${stripPages}장`:''}이 인쇄됩니다` : '명단이 비어 있습니다';
+  $('printSummary').textContent = rows.length? `${rows.length}명 → 명찰 A4 ${badgePages}장${stripPages?` + 상단 띠 ${stripCount}개 A4 ${stripPages}장`:(stackOn?' (윗칸 띠는 명찰 위에 이어서)':'')}이 인쇄됩니다` : '명단이 비어 있습니다';
   const pv=$('pages'); pv.innerHTML='';
   if(!rows.length){ pv.innerHTML='<div class="emptyMsg"><div class="ic">📋</div>왼쪽에서 명단을 넣으면 인쇄될 용지가 여기에 보입니다.</div>'; $('pager').style.visibility='hidden'; return; }
   if(!per){ pv.innerHTML='<div class="emptyMsg">명찰이 종이보다 큽니다. 크기나 여백을 줄여 주세요.</div>'; $('pager').style.visibility='hidden'; return; }
@@ -895,7 +927,7 @@ function render(){
   const x0=(g.pw-gridW)/2+c.offX, y0=(g.ph-gridH)/2+c.offY;
   const scale=Math.min(1,(pv.clientWidth-16)/(g.pw*MM));
   const sgridW=sg.cols*bw+Math.max(0,sg.cols-1)*s.gap, sgridH=sg.rows*stripH+Math.max(0,sg.rows-1)*s.gap; const sx0=(g.pw-sgridW)/2+c.offX, sy0=(g.ph-sgridH)/2+c.offY;
-  pageBuild={t,s,c,rows,g,per,bw,bh,x0,y0,scale,pages,badgePages,stripOn,stripH,sg,sper,stripCount,sx0,sy0}; renderSeq++;
+  pageBuild={t,s,c,rows,g,per,bw,bh,x0,y0,scale,pages,badgePages,stripOn,stripH,sg,sper,stripCount,sx0,sy0,sh:stackH(t)}; renderSeq++;
   for(let p=0;p<pages;p++){ const wrap=document.createElement('div'); wrap.className='pageWrap'; wrap.style.width=g.pw+'mm'; wrap.style.height=g.ph+'mm'; wrap.style.zoom=scale; wrap.dataset.p=p; pv.appendChild(wrap); }
   if(curPage>=pages) curPage=0; showPage();
   persist();
@@ -911,7 +943,7 @@ function renderPhotoOverlay(ow, b){
 let pageBuild=null, renderSeq=0;
 function buildPage(wrap){
   if(!pageBuild||wrap.dataset.built) return; wrap.dataset.built='1';
-  const {t,s,c,rows,g,per,bw,bh,x0,y0,pages,badgePages,stripOn,stripH,sg,sper,stripCount,sx0,sy0}=pageBuild; const p=+wrap.dataset.p;
+  const {t,s,c,rows,g,per,bw,bh,x0,y0,pages,badgePages,stripOn,stripH,sg,sper,stripCount,sx0,sy0,sh}=pageBuild; const p=+wrap.dataset.p;
   if(p>=badgePages){ // 상단 띠 페이지
     const q=p-badgePages; const page=document.createElement('div'); page.className='page'; page.style.width=g.pw+'mm'; page.style.height=g.ph+'mm';
     if(c.style==='full'){ const xs=new Set(), ys=new Set(); for(let i=0;i<sg.cols;i++){ xs.add(sx0+i*(bw+s.gap)); xs.add(sx0+i*(bw+s.gap)+bw); } for(let j=0;j<sg.rows;j++){ ys.add(sy0+j*(stripH+s.gap)); ys.add(sy0+j*(stripH+s.gap)+stripH); }
@@ -925,7 +957,7 @@ function buildPage(wrap){
     if(c.style==='full'){
       const xs=new Set(), ys=new Set();
       for(let i=0;i<g.cols;i++){ xs.add(x0+i*(bw+s.gap)); xs.add(x0+i*(bw+s.gap)+bw); }
-      for(let j=0;j<g.rows;j++){ ys.add(y0+j*(bh+s.gap)); ys.add(y0+j*(bh+s.gap)+bh); }
+      for(let j=0;j<g.rows;j++){ ys.add(y0+j*(bh+s.gap)); ys.add(y0+j*(bh+s.gap)+bh); if(sh) ys.add(y0+j*(bh+s.gap)+sh); } // 띠와 명찰 사이도 한 줄로 자른다
       xs.forEach(x=>{ const e=document.createElement('div'); e.className='cut cutV'; e.style.left=x+'mm'; page.appendChild(e); });
       ys.forEach(y=>{ const e=document.createElement('div'); e.className='cut cutH'; e.style.top=y+'mm'; page.appendChild(e); });
     }
@@ -933,7 +965,7 @@ function buildPage(wrap){
       const r=rows[p*per+i]; if(!r) break;
       const col=i%g.cols, row=Math.floor(i/g.cols);
       const x=x0+col*(bw+s.gap), y=y0+row*(bh+s.gap);
-      if(c.style==='mark'){ [[x,y],[x+bw,y],[x,y+bh],[x+bw,y+bh]].forEach(([mx,my])=>{ const h=document.createElement('div'); h.className='mark'; h.style.cssText=`left:${mx-3}mm;top:${my}mm;width:6mm;height:0.2mm`; page.appendChild(h); const v=document.createElement('div'); v.className='mark'; v.style.cssText=`left:${mx}mm;top:${my-3}mm;width:0.2mm;height:6mm`; page.appendChild(v); }); }
+      if(c.style==='mark'){ [[x,y],[x+bw,y],[x,y+bh],[x+bw,y+bh]].concat(sh?[[x,y+sh],[x+bw,y+sh]]:[]).forEach(([mx,my])=>{ const h=document.createElement('div'); h.className='mark'; h.style.cssText=`left:${mx-3}mm;top:${my}mm;width:6mm;height:0.2mm`; page.appendChild(h); const v=document.createElement('div'); v.className='mark'; v.style.cssText=`left:${mx}mm;top:${my-3}mm;width:0.2mm;height:6mm`; page.appendChild(v); }); }
       const b=makeBadge(r,t); b.style.left=x+'mm'; b.style.top=y+'mm'; page.appendChild(b);
     }
     const no=document.createElement('div'); no.className='pageNo'; no.textContent=`${p+1} / ${pages}`; page.appendChild(no);
