@@ -501,6 +501,12 @@ async function load(){
 const NEW_PRESETS=['대구CEO 총동문회 명찰 (쓰던 양식)','대구CEO 1단 명찰 (받은 양식 그대로, 한 칸 케이스)']; // 나중에 추가된 기본 틀: 기존 저장본에도 한 번만 넣는다 (지운 뒤에는 다시 넣지 않음)
 function addNewPresets(){ state.presetsAdded=Array.isArray(state.presetsAdded)? state.presetsAdded.filter(x=>typeof x==='string').slice(0,50) : [];
   const P=presets(); NEW_PRESETS.forEach(k=>{ if(state.presetsAdded.includes(k)) return; if(!(k in state.templates) && P[k]) state.templates=Object.assign({[k]:P[k]}, state.templates); state.presetsAdded.push(k); }); }
+// 기존 저장본의 현재 명찰에 띠를 한 번 켠다. 이후 사용자가 끈 값은 그대로 둔다.
+function migrateStripOn(){
+  if(state.stripOnMigrated===true) return;
+  state.tpl.design.stripOn=true;
+  state.stripOnMigrated=true;
+}
 function applyLoaded(got){
   if(got && got.main){ state=Object.assign(state, got.main); state.photo=(typeof got.photo==='string')? got.photo : null; rawRows=Array.isArray(state.rawRows)? state.rawRows.filter(r=>Array.isArray(r)).map(r=>r.map(v=>typeof v==='string'?v:'')) : []; delete state.rawRows; }
   else { firstRun=!localStorage.getItem('nametag.v2'); // 처음 여는 사람에게는 사용법을 먼저 보여 준다
@@ -519,6 +525,7 @@ function applyLoaded(got){
   if(!state.templates[state.current]) state.current=Object.keys(state.templates)[0];
   try{ state.tpl=sanitizeTemplate(state.tpl); }catch(e){ state.tpl=clone(state.templates[state.current]); }
   addNewPresets();
+  migrateStripOn();
   if(typeof state.photo!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(state.photo)) state.photo=null;
   migrateColumns();
 }
@@ -582,7 +589,7 @@ function importTemplate(f){ if(!f) return; const r=new FileReader(); r.onload=()
   if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 양식이 이미 있습니다. 덮어쓸까요?')) return;
   state.templates[n]=t; state.current=n; state.tpl=clone(t); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }; r.readAsText(f); $('tplFile').value=''; }
 /* 전체 백업: 명단·틀·공통 값·열 연결을 파일 하나로 */
-function exportAll(){ const b={kind:'nametag-backup', version:1, saved:new Date().toISOString(), templates:state.templates, current:state.current, tpl:state.tpl, data:state.data, map:state.map, globals:state.globals, headerIndex:state.headerIndex, rawRows, photo:state.photo||null};
+function exportAll(){ const b={kind:'nametag-backup', version:1, saved:new Date().toISOString(), stripOnMigrated:state.stripOnMigrated===true, templates:state.templates, current:state.current, tpl:state.tpl, data:state.data, map:state.map, globals:state.globals, headerIndex:state.headerIndex, rawRows, photo:state.photo||null};
   const blob=new Blob([JSON.stringify(b)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='명찰메이커_백업_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
 const MAX_ROWS=20000;
 function headerIndexOf(b){ if(!Number.isInteger(b.headerIndex)||b.headerIndex<-1) throw new Error('열 제목 행 번호가 올바르지 않습니다 (파일이 손상됨)'); return b.headerIndex; }
@@ -620,12 +627,13 @@ function parseBackup(text){
   if(raw.length>MAX_ROWS+10) throw new Error('원본 줄이 너무 많습니다');
   const headerIndex=hIdx;
   let photo=null; if(b.photo!=null){ if(typeof b.photo!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.photo)) throw new Error('사진 정보 형식이 잘못됐습니다'); if(b.photo.length>12000000) throw new Error('사진이 너무 커서 불러올 수 없습니다'); photo=b.photo; }
-  return {tpls,current,tpl,cols,rows,map,globals,raw,headerIndex,photo};
+  return {tpls,current,tpl,cols,rows,map,globals,raw,headerIndex,photo,stripOnMigrated:b.stripOnMigrated===true};
 }
 function importAll(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let b; try{ b=parseBackup(r.result); }catch(e){ alert('백업을 불러오지 못했습니다: '+e.message+'\n기존 명단과 양식은 그대로 둡니다.'); return; }
   const bp=(b.map&&b.map['이름'])? b.rows.filter(r=>(r[b.map['이름']]||'').trim()).length : b.rows.length;
   if(!confirm('지금 화면의 명단·양식을 백업 파일 내용으로 바꿉니다.\n백업 내용: 원본 '+b.rows.length+'줄 (인쇄 '+bp+'명), 양식 '+Object.keys(b.tpls).length+'개'+(b.photo?', 겹쳐 보기 사진 포함':'')+'\n계속할까요?')) return;
-  state.templates=b.tpls; state.current=b.current; state.tpl=b.tpl; state.data={cols:b.cols, rows:b.rows}; state.map=b.map; state.globals=b.globals; state.headerIndex=b.headerIndex; rawRows=b.raw; state.photo=b.photo; state.headerConfirmed=false;
+  state.templates=b.tpls; state.current=b.current; state.tpl=b.tpl; state.data={cols:b.cols, rows:b.rows}; state.map=b.map; state.globals=b.globals; state.headerIndex=b.headerIndex; rawRows=b.raw; state.photo=b.photo; state.headerConfirmed=false; state.stripOnMigrated=b.stripOnMigrated;
+  migrateStripOn();
   fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); persist(); toast('백업을 불러왔습니다 (인쇄 '+bp+'명, 양식 '+Object.keys(b.tpls).length+'개)'); }; r.readAsText(f); $('allFile').value=''; }
 /* 틀 자료형 검증: 외부 파일·옛 저장분을 안전한 값으로 보정한다 */
 function sanitizeTemplate(t){
