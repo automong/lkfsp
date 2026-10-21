@@ -24,6 +24,21 @@
   .top{height:64px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 20px;gap:20px;flex:none}
   .brand{font-weight:800;font-size:18px;letter-spacing:-.2px;white-space:nowrap}
   .steps{display:flex;gap:6px;margin-left:8px}
+  #guide{position:fixed;inset:0;background:rgba(17,24,39,.72);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+  #guide.on{display:flex}
+  #guide .box{background:#fff;border-radius:18px;width:min(1040px,96vw);max-height:94vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  #guide .head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line)}
+  #guide .head b{font-size:18px}
+  #guide .slide{display:none;padding:18px 24px 6px;flex-direction:column;gap:12px;overflow:auto}
+  #guide .slide.on{display:flex}
+  #guide .slide .t{font-size:22px;font-weight:800;display:flex;align-items:center;gap:12px}
+  #guide .slide .t .n{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+  #guide .slide .d{font-size:16px;color:#374151;line-height:1.7}
+  #guide .slide img,#guide .slide svg{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;display:block;background:#fff}
+  #guide .foot{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--line)}
+  #guide .dots{display:flex;gap:8px}
+  #guide .dots i{width:10px;height:10px;border-radius:50%;background:#d1d5db;display:block}
+  #guide .dots i.on{background:var(--accent)}
   .todo{display:flex;flex-direction:column;gap:10px;margin:0}
   .todo .row{display:flex;gap:12px;align-items:flex-start}
   .todo .n{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
@@ -174,7 +189,7 @@
 
   @media print{
     body{display:block;height:auto;overflow:visible;background:#fff;min-width:0;width:auto}
-    .top,.side,.oneWrap,.stageHead,.emptyMsg,#ovBar,#photoModal,.toast,#bootShade{display:none !important}
+    .top,.side,.oneWrap,.stageHead,.emptyMsg,#ovBar,#photoModal,.toast,#bootShade,#guide{display:none !important}
     .stage{padding:0;overflow:visible}
     .pageWrap{display:block !important;margin:0;box-shadow:none;zoom:1 !important;page-break-after:always;break-after:page}
     .pageWrap:last-child{page-break-after:auto;break-after:auto}
@@ -204,8 +219,47 @@
     <button data-step="3" onclick="goStep(3)"><span class="n">3</span>🖨️ 인쇄</button>
   </nav>
   <div class="status" id="status">명단을 넣어 주세요</div>
+  <button class="btn" onclick="Guide.open(0)" style="margin-right:8px">❓ 사용법</button>
   <button class="btn primary big" onclick="doPrint()">🖨 인쇄하기</button>
 </header>
+
+<div id="guide" onclick="if(event.target===this)Guide.close()">
+  <div class="box">
+    <div class="head"><b>❓ 사용법 · 5장</b><button class="btn sm ghost" onclick="Guide.close()">닫기 ✕</button></div>
+    <div class="slide" data-i="0"><div class="t"><span class="n">1</span>📋 엑셀 명단 파일을 넣습니다</div><div class="d">쓰던 엑셀을 그대로 끌어다 놓습니다. 이름·기수·직책 열은 저절로 찾습니다.</div><img src="guide/1.jpg" alt=""></div>
+    <div class="slide" data-i="1"><div class="t"><span class="n">2</span>🏷️ 띠와 📅 일정표 파일을 고릅니다</div><div class="d">행사마다 바뀌는 두 가지입니다. PPT에서 그림을 오른쪽 클릭 → 「그림으로 저장」 한 파일을 「📂 파일 선택」으로 넣습니다. 오른쪽에서 바로 확인됩니다.</div><img src="guide/2.jpg" alt=""></div>
+    <div class="slide" data-i="2"><div class="t"><span class="n">3</span>🖨️ 인쇄합니다</div><div class="d">「지금 인쇄하기」를 누르고, 인쇄 창에서 <b>배율 100%</b>, <b>여백 없음</b>만 확인합니다. A4 가로, 한 장에 두 사람 몫이 나옵니다.</div><img src="guide/3.jpg" alt=""></div>
+    <div class="slide" data-i="3"><div class="t"><span class="n">4</span>✂️ 실선 6개를 자르고, 점선에서 접습니다</div><div class="d">세로 3번, 가로 3번. 띠는 맨 위에 붙어 나오므로 같이 잘립니다. 가운데 점선은 자르지 말고 접습니다.</div>
+      <svg viewBox="0 0 900 420"><rect x="0" y="0" width="900" height="420" fill="#fff"/>
+        <g transform="translate(60,30)"><rect x="0" y="0" width="420" height="297" fill="#fff" stroke="#333" stroke-width="2"/>
+          <g fill="#e8eefc" stroke="#2457d6" stroke-width="2"><rect x="66" y="21" width="144" height="35"/><rect x="210" y="21" width="144" height="35"/><rect x="66" y="56" width="144" height="109"/><rect x="210" y="56" width="144" height="109"/><rect x="66" y="165" width="144" height="109"/><rect x="210" y="165" width="144" height="109"/></g>
+          <g font-size="14" font-family="sans-serif" text-anchor="middle" fill="#1f2937"><text x="138" y="44">띠</text><text x="282" y="44">띠</text><text x="138" y="115">일정표(뒤)</text><text x="282" y="115">일정표(뒤)</text><text x="138" y="224" font-weight="700">이 름(앞)</text><text x="282" y="224" font-weight="700">이 름(앞)</text></g>
+          <line x1="66" y1="165" x2="354" y2="165" stroke="#15803d" stroke-width="2" stroke-dasharray="7 5"/>
+          <g stroke="#d9480f" stroke-width="3"><line x1="66" y1="0" x2="66" y2="297"/><line x1="210" y1="0" x2="210" y2="297"/><line x1="354" y1="0" x2="354" y2="297"/><line x1="0" y1="21" x2="420" y2="21"/><line x1="0" y1="56" x2="420" y2="56"/><line x1="0" y1="274" x2="420" y2="274"/></g>
+          <g font-size="15" font-weight="800" fill="#d9480f" font-family="sans-serif"><text x="60" y="-6">1</text><text x="204" y="-6">2</text><text x="348" y="-6">3</text><text x="428" y="26">4</text><text x="428" y="61">5</text><text x="428" y="279">6</text></g>
+        </g>
+        <g transform="translate(560,40)" font-family="sans-serif">
+          <text x="0" y="20" font-size="20" font-weight="800" fill="#d9480f">빨간 실선 6개 = 자르기</text>
+          <text x="0" y="50" font-size="15" fill="#374151">세로 1·2·3, 가로 4·5·6</text>
+          <text x="0" y="74" font-size="15" fill="#374151">끝에서 끝까지 곧게 → 재단기에 여러 장 겹쳐도 됨</text>
+          <text x="0" y="120" font-size="20" font-weight="800" fill="#15803d">초록 점선 = 접기</text>
+          <text x="0" y="150" font-size="15" fill="#374151">위쪽(일정표)을 뒤로 접으면</text>
+          <text x="0" y="174" font-size="15" fill="#374151">앞은 이름, 뒤는 일정표가 바로 보입니다</text>
+          <text x="0" y="220" font-size="20" font-weight="800" fill="#1f2937">한 장 = 두 사람 몫</text>
+          <text x="0" y="250" font-size="15" fill="#374151">띠 2개 + 양면 명찰 2개</text>
+          <text x="0" y="274" font-size="15" fill="#374151">215명이면 A4 108장</text>
+        </g></svg></div>
+    <div class="slide" data-i="4"><div class="t"><span class="n">5</span>🪪 케이스에 넣습니다</div><div class="d">위 칸에 띠, 아래 칸에 접은 명찰을 넣으면 끝입니다.</div>
+      <svg viewBox="0 0 900 420"><rect width="900" height="420" fill="#fff"/>
+        <g transform="translate(330,30)"><rect x="0" y="0" width="240" height="330" rx="14" fill="#f3f4f6" stroke="#4b5563" stroke-width="3"/>
+          <rect x="18" y="18" width="204" height="52" fill="#1b2a4a"/><text x="120" y="50" font-size="15" fill="#fff" text-anchor="middle" font-family="sans-serif" font-weight="700">행사 제목 띠</text>
+          <rect x="18" y="86" width="204" height="154" fill="#fff" stroke="#2457d6" stroke-width="3"/>
+          <text x="40" y="128" font-size="13" fill="#374151" font-family="sans-serif">16기</text><text x="40" y="190" font-size="40" font-weight="900" font-family="sans-serif">홍 길 동</text>
+          <text x="120" y="300" font-size="15" text-anchor="middle" fill="#374151" font-family="sans-serif">위 칸: 띠 · 아래 칸: 접은 명찰</text>
+        </g></svg></div>
+    <div class="foot"><button class="btn" onclick="Guide.go(-1)">‹ 이전</button><div class="dots"></div><button class="btn primary" onclick="Guide.go(1)">다음 ›</button></div>
+  </div>
+</div>
 
 <div id="bootShade" aria-live="polite" style="position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:60;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted)">저장된 내용을 불러오는 중…</div>
 <div class="body">
@@ -448,7 +502,7 @@ function addNewPresets(){ state.presetsAdded=Array.isArray(state.presetsAdded)? 
   const P=presets(); NEW_PRESETS.forEach(k=>{ if(state.presetsAdded.includes(k)) return; if(!(k in state.templates) && P[k]) state.templates=Object.assign({[k]:P[k]}, state.templates); state.presetsAdded.push(k); }); }
 function applyLoaded(got){
   if(got && got.main){ state=Object.assign(state, got.main); state.photo=(typeof got.photo==='string')? got.photo : null; rawRows=Array.isArray(state.rawRows)? state.rawRows.filter(r=>Array.isArray(r)).map(r=>r.map(v=>typeof v==='string'?v:'')) : []; delete state.rawRows; }
-  else { // 옛 저장본(localStorage) 이어받기: 한 번만
+  else { firstRun=!localStorage.getItem('nametag.v2'); // 처음 여는 사람에게는 사용법을 먼저 보여 준다
     try{ const s=JSON.parse(localStorage.getItem('nametag.v2')||'null'); if(s) state=Object.assign(state,s); }catch(e){}
     try{ const ph=localStorage.getItem('nametag.photo'); const oldPhoto=state.photo;
       if(ph){ const i=ph.indexOf('|'); const ver=ph.slice(0,i), data=ph.slice(i+1); state.photo = (i>0 && ver===state.saveVer)? data : null; }
@@ -896,8 +950,8 @@ function render(){
   // 한 장 미리보기
   const ow=$('oneWrap'); ow.innerHTML='';
   const one=makeBadge(sampleRow(), t); one.classList.add('oneBadge'); one.style.position='relative'; // absolute(뒷면·접는 선)가 이 안에 머물도록
-  const availW=ow.clientWidth-48; const bwpx=(s.w-s.shrink)*MM; one.style.zoom=Math.max(0.4, Math.min(2.2, availW/bwpx));
-  if(t.design.strip&&t.design.stripOn&&t.design.stripWhere!=='inside'){ const st=document.createElement('div'); st.className='oneBadge'; st.style.cssText=`width:${(s.w-s.shrink)}mm;height:${t.design.stripH}mm;overflow:hidden;background:#fff;margin-bottom:6mm;zoom:${one.style.zoom}`; const im=document.createElement('img'); im.src=t.design.strip; im.style.cssText='width:100%;height:100%;object-fit:cover;display:block'; st.appendChild(im); ow.appendChild(st); ow.style.flexDirection='column'; ow.style.alignItems='center'; } else { ow.style.flexDirection=''; ow.style.alignItems=''; }
+  const availW=ow.clientWidth-48, availH=Math.max(240, window.innerHeight*0.62); const bwpx=(s.w-s.shrink)*MM, bhpx=cardH(t)*MM; one.style.zoom=Math.max(0.4, Math.min(2.2, availW/bwpx, availH/bhpx));
+  if(t.design.strip&&t.design.stripOn&&t.design.stripWhere==='pages'){ const st=document.createElement('div'); st.className='oneBadge'; st.style.cssText=`width:${(s.w-s.shrink)}mm;height:${t.design.stripH}mm;overflow:hidden;background:#fff;margin-bottom:6mm;zoom:${one.style.zoom}`; const im=document.createElement('img'); im.src=t.design.strip; im.style.cssText='width:100%;height:100%;object-fit:cover;display:block'; st.appendChild(im); ow.appendChild(st); ow.style.flexDirection='column'; ow.style.alignItems='center'; } else { ow.style.flexDirection=''; ow.style.alignItems=''; }
   ow.appendChild(one);
   renderPhotoOverlay(ow, one);
   const gt=$('guideTpl'); if(gt) gt.textContent=state.current||'';
@@ -916,7 +970,7 @@ function render(){
   const sper=sg.cols*sg.rows; const stripCount=(stripOn&&!stackOn)? (d0.stripCount||rows.length) : 0; const stripPages=sper? Math.ceil(stripCount/sper) : 0;
   const pages=badgePages+stripPages; pageCount=pages;
   $('status').innerHTML = (rows.length? `<b>${rows.length}명</b> · A4 ${badgePages}장${stripPages?` + 띠 ${stripPages}장`:(stackOn?' (띠 포함)':'')}` : '명단을 넣어 주세요') + ` <span id="saveBadge" style="display:none;color:var(--danger);font-weight:700" title="브라우저 저장 공간이 부족합니다">· ⚠ 저장 안 됨</span>`; updateSaveBadge();
-  $('sheetInfo').textContent = per? `장당 ${per}개 (${g.cols}×${g.rows}) · 실제 출력 ${bw}×${frontH}mm${bh!==frontH?` (뒷면 포함 ${bw}×${bh}mm, 접는 선 있음)`:''}` : '';
+  $('sheetInfo').textContent = per? `장당 ${per}개 (${g.cols}×${g.rows}) · 실제 출력 ${bw}×${frontH}mm${bh!==frontH?` (띠·뒷면 포함 ${bw}×${Math.round(bh*10)/10}mm)`:''}` : '';
   $('szNote').textContent = s.shrink>0 ? `실제로는 여유 줄임 ${s.shrink}mm를 뺀 ${bw}×${frontH}mm로 인쇄됩니다.` : `선택한 ${s.w}×${s.h}mm 그대로 인쇄됩니다. 케이스에 빡빡하면 세부 설정의 「여유 줄임」을 1mm로 두세요.`;
   $('printSummary').textContent = rows.length? `${rows.length}명 → 명찰 A4 ${badgePages}장${stripPages?` + 상단 띠 ${stripCount}개 A4 ${stripPages}장`:(stackOn?' (윗칸 띠는 명찰 위에 이어서)':'')}이 인쇄됩니다` : '명단이 비어 있습니다';
   const pv=$('pages'); pv.innerHTML='';
@@ -1007,7 +1061,16 @@ const loadPromise=load().catch(e=>{ console.error(e); noSave=true; saveFailed=tr
 // 10초 넘게 읽히지 않으면 「저장본 없이 시작」을 고를 수 있게 한다. 고르면 이번 세션은 저장하지 않는다(기존 저장본 보호)
 const noSaveStart=new Promise(res=>{ setTimeout(()=>{ if(loadDone) return; const sh=$('bootShade'); if(!sh) return; sh.innerHTML='<div style="text-align:center"><div style="margin-bottom:12px">저장된 내용을 읽는 데 시간이 걸립니다…</div><button class="btn" id="noSaveBtn">저장본 없이 시작 (이번에는 저장되지 않음)</button></div>'; $('noSaveBtn').onclick=()=>{ noSave=true; res('nosave'); }; }, 10000); });
 const loadWithTimeout=Promise.race([ loadPromise, noSaveStart ]).then(v=>{ if(v==='nosave'){ saveFailed=true; toast('저장본 없이 시작했습니다. 이번 세션은 저장되지 않으니 필요하면 「전체 백업 파일로 저장」을 쓰세요', 6000); } });
-loadWithTimeout.then(()=>{ document.querySelector('.top').inert=false; document.querySelector('.body').inert=false; if(!state.templates||!Object.keys(state.templates).length) state.templates=presets(); if(!state.tpl) state.tpl=clone(state.templates[Object.keys(state.templates)[0]]); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1); const sh=$('bootShade'); if(sh) sh.remove(); bootDone=true; });
+
+const Guide={ i:0, n:5,
+  open(i){ this.i=i||0; $('guide').classList.add('on'); this.show(); },
+  close(){ $('guide').classList.remove('on'); },
+  go(d){ this.i=Math.max(0,Math.min(this.n-1,this.i+d)); this.show(); },
+  show(){ document.querySelectorAll('#guide .slide').forEach(e=>e.classList.toggle('on',+e.dataset.i===this.i)); const dots=document.querySelector('#guide .dots'); dots.innerHTML=''; for(let k=0;k<this.n;k++){ const d=document.createElement('i'); if(k===this.i) d.className='on'; d.onclick=()=>{ this.i=k; this.show(); }; dots.appendChild(d); }
+    document.querySelector('#guide .foot .btn.primary').textContent = this.i===this.n-1? '시작하기 ✓' : '다음 ›'; document.querySelector('#guide .foot .btn.primary').onclick=()=>{ this.i===this.n-1? this.close() : this.go(1); }; } };
+document.addEventListener('keydown',e=>{ if(!$('guide').classList.contains('on')) return; if(e.key==='Escape') Guide.close(); if(e.key==='ArrowRight') Guide.go(1); if(e.key==='ArrowLeft') Guide.go(-1); });
+let firstRun=false;
+loadWithTimeout.then(()=>{ document.querySelector('.top').inert=false; document.querySelector('.body').inert=false; if(!state.templates||!Object.keys(state.templates).length) state.templates=presets(); if(!state.tpl) state.tpl=clone(state.templates[Object.keys(state.templates)[0]]); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1); const sh=$('bootShade'); if(sh) sh.remove(); bootDone=true; if(firstRun && !noSave) setTimeout(()=>Guide.open(0),200); });
 </script>
 <script>
 /* ===== 사진으로 틀 만들기 (기기 안에서만 처리, 외부 전송 없음) ===== */
