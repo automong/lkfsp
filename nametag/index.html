@@ -382,7 +382,7 @@
       <div class="field"><label>세로 위치</label><div class="seg" id="valignSeg"></div></div>
       <div class="field"><label>안쪽 여백</label><div class="ctl"><input type="number" class="in num" id="dPad" step="0.5" min="0"> mm</div></div>
       <div class="field"><label>줄 간격</label><div class="ctl"><input type="number" class="in num" id="dLineGap" step="0.5" min="0"> mm</div></div>
-      <div class="field"><label>명찰 크기 줄이기</label><div class="ctl"><input type="number" class="in num" id="szShrink" step="0.5" min="0"> mm <span class="muted">너비·높이를 각각 입력한 값만큼 줄입니다.(mm)</span></div></div>
+      <div class="field"><label>명찰 크기 줄이기</label><div class="ctl"><input type="number" class="in num" id="szShrink" step="0.5" min="0"> mm <span class="muted">너비·높이를 각각 입력한 값만큼 줄입니다.</span></div></div>
       <div class="field"><label>명찰 사이</label><div class="ctl"><input type="number" class="in num" id="szGap" step="0.5" min="0"> mm <span class="muted">0이면 붙여서 한 번에 자름</span></div></div>
       <div class="field"><label>종이 여백</label><div class="ctl"><input type="number" class="in num" id="szMargin" step="0.5" min="0"> mm</div></div>
       <div class="field"><label>종이 방향</label><div class="seg" id="orientSeg"></div></div>
@@ -468,6 +468,7 @@ function presets(){
   const e = baseTemplate();
   e.size={preset:'102x77', w:102, h:77, shrink:0, gap:0, margin:8, orient:'auto'};
   e.lines = [ line([part('직책'), part('기수',{suffix:'기'})], {join:'paren', size:21, bold:true, align:'left'}), line([part('이름')], {size:65, bold:true, spacing:0.25, maxChars:3, align:'left'}) ];
+  e.design.stripOn=true; // 그림이 없으면 화면 미리보기에 행사 제목 띠 표시 (인쇄는 그림이 있을 때만)
   e.design.logo=DC_LOGO; e.design.logoPos='top'; e.design.logoAlign='right'; e.design.logoH=16.2; e.design.valign='flex-start'; e.design.pad=8; e.design.lineGap=3;
   const f = baseTemplate(); // 한 칸 케이스용: 받은 PPT 앞면 그대로 (로고 47.5×16.2mm 위, 직책 21pt, 이름 65pt 글자 띄움), 띠·접기 없음
   f.size={preset:'102x77',w:102,h:77,shrink:0,gap:0,margin:8,orient:'auto'};
@@ -849,7 +850,7 @@ function fillSettingsUI(){
   const fl=$('fontList'); fl.innerHTML='';
   FONTS.forEach(f=>{ const b=document.createElement('button'); b.className='fontOpt'+(d.font===f[0]?' on':''); b.innerHTML=`<div class="sm" style="font-family:${f[2]}">홍길동</div><div class="nm">${f[1]}</div>`; b.onclick=()=>{ d.font=f[0]; fillSettingsUI(); render(); }; fl.appendChild(b); });
   $('dText').value=d.text; $('dBandColor').value=d.bandColor; $('dBandH').value=d.bandH; $('dBandInset').value=d.bandInset||0; $('dBg').value=d.bg; $('dPad').value=d.pad; $('dLineGap').value=d.lineGap; $('dLogoPos').value=d.logoPos; $('dLogoAlign').value=d.logoAlign||'center'; $('dLogoH').value=d.logoH;
-  $('logoName').textContent = d.logo? '로고 있음' : '없음'; $('backName').textContent = d.back? '파일 있음' : '없음'; $('dBackOn').checked=!!(d.back&&d.backOn); $('stripName').textContent = d.strip? '파일 있음' : '없음'; $('dStripOn').checked=!!(d.strip&&d.stripOn); $('dStripH').value=d.stripH||25; $('dStripCount').value=d.stripCount||0; $('dStripWhere').value=d.stripWhere||'stack';
+  $('logoName').textContent = d.logo? '로고 있음' : '없음'; $('backName').textContent = d.back? '파일 있음' : '없음'; $('dBackOn').checked=!!(d.back&&d.backOn); $('stripName').textContent = d.strip? '파일 있음' : '없음'; $('dStripOn').checked=!!d.stripOn; $('dStripH').value=d.stripH||25; $('dStripCount').value=d.stripCount||0; $('dStripWhere').value=d.stripWhere||'stack';
   seg('bandSeg',[['none','없음'],['top','위'],['left','왼쪽'],['bottom','아래']],()=>d.band,v=>d.band=v);
   seg('valignSeg',[['center','가운데'],['flex-start','위쪽'],['flex-end','아래쪽']],()=>d.valign,v=>d.valign=v);
   seg('orientSeg',[['auto','자동'],['portrait','세로'],['landscape','가로']],()=>s.orient,v=>s.orient=v);
@@ -872,7 +873,7 @@ $('logoFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=ne
 $('backFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const im=new Image(); const url=URL.createObjectURL(f); im.onload=()=>{ URL.revokeObjectURL(url); // 긴 변 1400px로 줄여 JPEG로 보관 (저장 용량)
     const k=Math.min(1,1400/Math.max(im.width,im.height)); const c=document.createElement('canvas'); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(im,0,0,c.width,c.height); setBack(c.toDataURL('image/jpeg',0.88)); }; im.onerror=()=>{ URL.revokeObjectURL(url); alert('그림 파일을 읽지 못했습니다.'); }; im.src=url; e.target.value=''; };
 $('stripFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const im=new Image(); const url=URL.createObjectURL(f); im.onload=()=>{ URL.revokeObjectURL(url); const k=Math.min(1,1600/Math.max(im.width,im.height)); const c=document.createElement('canvas'); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(im,0,0,c.width,c.height); state.tpl.design.stripRatio=Math.round(c.width/c.height*100)/100; setStrip(c.toDataURL('image/jpeg',0.9)); }; im.onerror=()=>{ URL.revokeObjectURL(url); alert('그림 파일을 읽지 못했습니다.'); }; im.src=url; e.target.value=''; };
-$('dStripOn').onchange=e=>{ state.tpl.design.stripOn=e.target.checked; if(e.target.checked&&!state.tpl.design.strip){ e.target.checked=false; state.tpl.design.stripOn=false; toast('먼저 「파일 선택」으로 띠 그림을 넣어 주세요'); } render(); };
+$('dStripOn').onchange=e=>{ state.tpl.design.stripOn=e.target.checked; render(); };
 $('dStripWhere').onchange=e=>{ state.tpl.design.stripWhere=e.target.value; render(); };
 function setStrip(v){ state.tpl.design.strip=v; state.tpl.design.stripOn=!!v; $('stripName').textContent=v?'파일 있음':'없음'; $('dStripOn').checked=!!v; render(); }
 bind('dStripH','design.stripH'); bind('dStripCount','design.stripCount');
@@ -949,11 +950,27 @@ function render(){
   const rows=printableRows();
   // 한 장 미리보기
   const ow=$('oneWrap'); ow.innerHTML='';
-  const one=makeBadge(sampleRow(), t); one.classList.add('oneBadge'); one.style.position='relative'; // absolute(뒷면·접는 선)가 이 안에 머물도록
-  const availW=ow.clientWidth-48, availH=Math.max(240, window.innerHeight*0.62); const bwpx=(s.w-s.shrink)*MM, bhpx=cardH(t)*MM; one.style.zoom=Math.max(0.4, Math.min(2.2, availW/bwpx, availH/bhpx));
-  if(t.design.strip&&t.design.stripOn&&t.design.stripWhere==='pages'){ const st=document.createElement('div'); st.className='oneBadge'; st.style.cssText=`width:${(s.w-s.shrink)}mm;height:${t.design.stripH}mm;overflow:hidden;background:#fff;margin-bottom:6mm;zoom:${one.style.zoom}`; const im=document.createElement('img'); im.src=t.design.strip; im.style.cssText='width:100%;height:100%;object-fit:cover;display:block'; st.appendChild(im); ow.appendChild(st); ow.style.flexDirection='column'; ow.style.alignItems='center'; } else { ow.style.flexDirection=''; ow.style.alignItems=''; }
+  const row=sampleRow(), d=t.design;
+  const bwPreview=Math.max(10,s.w-s.shrink), bhPreview=Math.max(10,s.h-s.shrink);
+  // 화면은 케이스에 끼운 모습. 인쇄용 makeBadge·cardH와 치수 계산은 그대로 둔다.
+  const frontTpl=clone(t); frontTpl.design.stripOn=false;
+  const front=makeFront(row,frontTpl); front.style.position='relative';
+  const one=document.createElement('div'); one.className='oneBadge';
+  one.style.cssText='display:flex;flex-direction:column;gap:3mm;padding:3mm;background:#edf0f4;border:0.3mm solid #cbd2db;border-radius:3mm;position:relative';
+  const sh=d.stripOn? (d.strip&&d.stripRatio? Math.min(d.stripH,bwPreview/d.stripRatio) : d.stripH) : 0;
+  if(sh){
+    const st=document.createElement('div'); st.className='previewStrip';
+    st.style.cssText=`width:${bwPreview}mm;height:${sh}mm;flex:none;overflow:hidden;background:#1b2a4a;display:flex;align-items:center;justify-content:center`;
+    if(d.strip){ const im=document.createElement('img'); im.src=d.strip; im.style.cssText='width:100%;height:100%;object-fit:cover;display:block'; st.appendChild(im); }
+    else { const tx=document.createElement('div'); tx.textContent=(row?val(row,'행사명'):state.globals['행사명'])||'2026 데일카네기 대구CEO 총동문회 체육대회'; tx.style.cssText='color:#fff;font-family:Pretendard,sans-serif;font-weight:700;font-size:14pt;text-align:center;line-height:1.4;padding:0 4mm;overflow-wrap:anywhere'; st.appendChild(tx); }
+    one.appendChild(st);
+  }
+  one.appendChild(front);
+  const availW=ow.clientWidth-48, availH=Math.max(240,window.innerHeight*0.62);
+  one.style.zoom=Math.max(0.4,Math.min(2.2,availW/((bwPreview+6.6)*MM),availH/((bhPreview+sh+(sh?3:0)+6.6)*MM)));
+  if(!sh){ one.style.padding='0'; one.style.border='0'; one.style.background='transparent'; }
   ow.appendChild(one);
-  renderPhotoOverlay(ow, one);
+  renderPhotoOverlay(ow,front);
   const gt=$('guideTpl'); if(gt) gt.textContent=state.current||'';
   $('oneLabel').textContent = rows.length? '첫 번째 명찰 · 화면 크기는 실제와 다름' : '예시 이름입니다. 명단을 넣으면 실제 이름으로 바뀝니다';
   // 용지
