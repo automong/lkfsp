@@ -29,7 +29,8 @@
   #guide .box{background:#fff;border-radius:18px;width:min(1040px,96vw);max-height:94vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}
   #guide .head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line)}
   #guide .head b{font-size:18px}
-  #guide .slide{display:none;padding:18px 24px 6px;flex-direction:column;gap:12px;overflow:auto}
+  #guide .slide{display:none;padding:8px;min-height:0;flex-direction:column;overflow:auto}
+  #guide .slide img{max-height:calc(94vh - 138px);object-fit:contain;border:0}
   #guide .slide.on{display:flex}
   #guide .slide .t{font-size:22px;font-weight:800;display:flex;align-items:center;gap:12px}
   #guide .slide .t .n{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex:none}
@@ -225,38 +226,11 @@
 
 <div id="guide" onclick="if(event.target===this)Guide.close()">
   <div class="box">
-    <div class="head"><b>❓ 사용법 · 5장</b><button class="btn sm ghost" onclick="Guide.close()">닫기 ✕</button></div>
-    <div class="slide" data-i="0"><div class="t"><span class="n">1</span>📋 엑셀 명단 파일을 넣습니다</div><div class="d">쓰던 엑셀을 그대로 끌어다 놓습니다.<br>• 명단을 넣은 뒤 이름·기수·직책 열을 확인하세요.</div><img src="guide/1.jpg" alt=""></div>
-    <div class="slide" data-i="1"><div class="t"><span class="n">2</span>🏷️ 띠와 📅 일정표 파일을 고릅니다</div><div class="d">① PPT 그림을 오른쪽 클릭 → 「그림으로 저장」<br>② 띠·일정표 각각 「📂 파일 선택」<br>③ 미리보기 확인</div><img src="guide/2.jpg" alt=""></div>
-    <div class="slide" data-i="2"><div class="t"><span class="n">3</span>🖨️ 인쇄합니다</div><div class="d">「지금 인쇄하기」를 누르고 인쇄 설정을 확인하세요.<br>• 용지: A4<br>• 방향: 미리보기와 같게<br>• 배율: <b>100%</b> · 여백: <b>없음</b><br>띠·일정표를 넣은 기본 배치는 한 장에 두 사람 몫입니다.</div><img src="guide/3.jpg" alt=""></div>
-    <div class="slide" data-i="3"><div class="t"><span class="n">4</span>✂️ 실선 6개를 자르고, 점선에서 접습니다</div><div class="d">세로 3번, 가로 3번. 띠는 맨 위에 붙어 나오므로 같이 잘립니다. 가운데 점선은 자르지 말고 접습니다.</div>
-      <svg viewBox="0 0 900 420"><rect x="0" y="0" width="900" height="420" fill="#fff"/>
-        <g transform="translate(60,30)"><rect x="0" y="0" width="420" height="297" fill="#fff" stroke="#333" stroke-width="2"/>
-          <g fill="#e8eefc" stroke="#2457d6" stroke-width="2"><rect x="66" y="21" width="144" height="35"/><rect x="210" y="21" width="144" height="35"/><rect x="66" y="56" width="144" height="109"/><rect x="210" y="56" width="144" height="109"/><rect x="66" y="165" width="144" height="109"/><rect x="210" y="165" width="144" height="109"/></g>
-          <g font-size="14" font-family="sans-serif" text-anchor="middle" fill="#1f2937"><text x="138" y="44">띠</text><text x="282" y="44">띠</text><text x="138" y="115">일정표(뒤)</text><text x="282" y="115">일정표(뒤)</text><text x="138" y="224" font-weight="700">이 름(앞)</text><text x="282" y="224" font-weight="700">이 름(앞)</text></g>
-          <line x1="66" y1="165" x2="354" y2="165" stroke="#15803d" stroke-width="2" stroke-dasharray="7 5"/>
-          <g stroke="#d9480f" stroke-width="3"><line x1="66" y1="0" x2="66" y2="297"/><line x1="210" y1="0" x2="210" y2="297"/><line x1="354" y1="0" x2="354" y2="297"/><line x1="0" y1="21" x2="420" y2="21"/><line x1="0" y1="56" x2="420" y2="56"/><line x1="0" y1="274" x2="420" y2="274"/></g>
-          <g font-size="15" font-weight="800" fill="#d9480f" font-family="sans-serif"><text x="60" y="-6">1</text><text x="204" y="-6">2</text><text x="348" y="-6">3</text><text x="428" y="26">4</text><text x="428" y="61">5</text><text x="428" y="279">6</text></g>
-        </g>
-        <g transform="translate(560,40)" font-family="sans-serif">
-          <text x="0" y="20" font-size="20" font-weight="800" fill="#d9480f">빨간 실선 6개 = 자르기</text>
-          <text x="0" y="50" font-size="15" fill="#374151">세로 1·2·3, 가로 4·5·6</text>
-          <text x="0" y="74" font-size="15" fill="#374151">끝에서 끝까지 곧게 → 재단기에 여러 장 겹쳐도 됨</text>
-          <text x="0" y="120" font-size="20" font-weight="800" fill="#15803d">초록 점선 = 접기</text>
-          <text x="0" y="150" font-size="15" fill="#374151">위쪽(일정표)을 뒤로 접으면</text>
-          <text x="0" y="174" font-size="15" fill="#374151">앞은 이름, 뒤는 일정표가 바로 보입니다</text>
-          <text x="0" y="220" font-size="20" font-weight="800" fill="#1f2937">한 장 = 두 사람 몫</text>
-          <text x="0" y="250" font-size="15" fill="#374151">띠 2개 + 양면 명찰 2개</text>
-          <text x="0" y="274" font-size="15" fill="#374151">215명이면 A4 108장</text>
-        </g></svg></div>
-    <div class="slide" data-i="4"><div class="t"><span class="n">5</span>🪪 케이스에 넣습니다</div><div class="d">위 칸에 띠, 아래 칸에 접은 명찰을 넣으면 끝입니다.</div>
-      <svg viewBox="0 0 900 420"><rect width="900" height="420" fill="#fff"/>
-        <g transform="translate(330,30)"><rect x="0" y="0" width="240" height="330" rx="14" fill="#f3f4f6" stroke="#4b5563" stroke-width="3"/>
-          <rect x="18" y="18" width="204" height="52" fill="#1b2a4a"/><text x="120" y="50" font-size="15" fill="#fff" text-anchor="middle" font-family="sans-serif" font-weight="700">행사 제목 띠</text>
-          <rect x="18" y="86" width="204" height="154" fill="#fff" stroke="#2457d6" stroke-width="3"/>
-          <text x="40" y="128" font-size="13" fill="#374151" font-family="sans-serif">16기</text><text x="40" y="190" font-size="40" font-weight="900" font-family="sans-serif">홍 길 동</text>
-          <text x="120" y="300" font-size="15" text-anchor="middle" fill="#374151" font-family="sans-serif">위 칸: 띠 · 아래 칸: 접은 명찰</text>
-        </g></svg></div>
+    <div class="head"><b>❓ 사용법 · 4장</b><button class="btn sm ghost" onclick="Guide.close()">닫기 ✕</button></div>
+    <div class="slide" data-i="0"><img src="guide/step-1.png" alt="1. 명단을 넣어요"></div>
+    <div class="slide" data-i="1"><img src="guide/step-2.png" alt="2. 띠·일정표 넣어요"></div>
+    <div class="slide" data-i="2"><img src="guide/step-3.png" alt="3. 100%로 인쇄해요"></div>
+    <div class="slide" data-i="3"><img src="guide/step-4.png" alt="4. 자르고 접어요"></div>
     <div class="foot"><button class="btn" onclick="Guide.go(-1)">‹ 이전</button><div class="dots"></div><button class="btn primary" onclick="Guide.go(1)">다음 ›</button></div>
   </div>
 </div>
@@ -430,6 +404,7 @@
 const MM = 96/25.4;
 const SIZES = [['102x77',102,77,'대구CEO 명찰','쓰던 양식'],['90x55',90,55,'명함형',''],['100x70',100,70,'중형',''],['110x75',110,75,'대형',''],['custom',0,0,'직접 입력','']];
 const FONTS = [
+  ['hyheadline',"HY헤드라인M · 없으면 도현","'HY헤드라인M','HYHeadLine M','Nametag HY Local','Do Hyeon',sans-serif"],
   ['noto',"본고딕","'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif"],
   ['pretendard',"프리텐다드","Pretendard,'Apple SD Gothic Neo','Malgun Gothic',sans-serif"],
   ['nanum',"나눔고딕","'Nanum Gothic',sans-serif"],
@@ -468,12 +443,15 @@ function presets(){
   const e = baseTemplate();
   e.size={preset:'102x77', w:102, h:77, shrink:0, gap:0, margin:8, orient:'auto'};
   e.lines = [ line([part('직책'), part('기수',{suffix:'기'})], {join:'paren', size:21, bold:true, align:'left'}), line([part('이름')], {size:65, bold:true, spacing:0.25, maxChars:3, align:'left'}) ];
+  e.design.layout='ppt2026'; e.design.font='hyheadline'; e.design.text='#000000';
+  e.lines.forEach(L=>{ L.bold=false; L.spacing=0; });
   e.design.stripOn=true; // 그림이 없으면 화면 미리보기에 행사 제목 띠 표시 (인쇄는 그림이 있을 때만)
-  e.design.logo=DC_LOGO; e.design.logoPos='top'; e.design.logoAlign='right'; e.design.logoH=16.2; e.design.valign='flex-start'; e.design.pad=8; e.design.lineGap=3;
+  e.design.logo=DC_LOGO; e.design.logoPos='top'; e.design.logoAlign='right'; e.design.logoH=16.22; e.design.valign='flex-start'; e.design.pad=9.8; e.design.lineGap=3;
   const f = baseTemplate(); // 한 칸 케이스용: 받은 PPT 앞면 그대로 (로고 47.5×16.2mm 위, 직책 21pt, 이름 65pt 글자 띄움), 띠·접기 없음
   f.size={preset:'102x77',w:102,h:77,shrink:0,gap:0,margin:8,orient:'auto'};
   f.lines=[ line([part('직책'), part('기수',{suffix:'기'})], {join:'paren', size:21, bold:true, align:'left'}), line([part('이름')], {size:65, bold:true, spacing:0.25, maxChars:3, align:'left'}) ];
   f.design.logo=DC_LOGO; f.design.logoPos='top'; f.design.logoAlign='right'; f.design.logoH=16.2; f.design.valign='flex-start'; f.design.pad=8; f.design.lineGap=3; f.design.stripWhere='inside';
+  f.lines=clone(e.lines); f.design=Object.assign({},e.design,{stripOn:false,stripWhere:'inside'});
   return {'대구CEO 총동문회 명찰 (쓰던 양식)':e, '대구CEO 1단 명찰 (받은 양식 그대로, 한 칸 케이스)':f, '카네기 코스: 파란 바탕 흰 글씨 (80기 영상 참고)':d, '기본: 직책 (기수) / 이름':a, '골프대회: 행사명 / 이름 / 회사 직함':b, '이름만 크게':c};
 }
 
@@ -507,6 +485,24 @@ function migrateStripOn(){
   state.tpl.design.stripOn=true;
   state.stripOnMigrated=true;
 }
+// 원본 양식으로 한 번만 이관한다. 명단·그림을 보존하고, 이후 사용자가 고른 틀은 존중한다.
+function migrateOriginalTemplate(){
+  if(state.pptLayoutMigrated===true) return;
+  const previous=state.tpl, P=presets(), key=NEW_PRESETS[0];
+  const preserve=(label,t)=>{
+    if(!t || t.design.layout==='ppt2026') return;
+    const stem=(label||'양식').slice(0,40)+' (이관 전)'; let name=stem, n=2;
+    while(Object.hasOwn(state.templates,name)) name=stem+' '+n++;
+    state.templates[name]=clone(t);
+  };
+  // 교체되는 저장 양식과 저장 전 편집본을 각각 보관한다.
+  NEW_PRESETS.forEach(k=>{ preserve(k,state.templates[k]); state.templates[k]=clone(P[k]); });
+  preserve(state.current,previous);
+  state.current=key; state.tpl=clone(P[key]);
+  if(previous) ['back','backOn','strip','stripOn','stripWhere','stripRatio','stripH','stripCount'].forEach(k=>{ state.tpl.design[k]=previous.design[k]; });
+  state.templates[key]=clone(state.tpl);
+  state.pptLayoutMigrated=true;
+}
 function applyLoaded(got){
   if(got && got.main){ state=Object.assign(state, got.main); state.photo=(typeof got.photo==='string')? got.photo : null; rawRows=Array.isArray(state.rawRows)? state.rawRows.filter(r=>Array.isArray(r)).map(r=>r.map(v=>typeof v==='string'?v:'')) : []; delete state.rawRows; }
   else { firstRun=!localStorage.getItem('nametag.v2'); // 처음 여는 사람에게는 사용법을 먼저 보여 준다
@@ -526,6 +522,7 @@ function applyLoaded(got){
   try{ state.tpl=sanitizeTemplate(state.tpl); }catch(e){ state.tpl=clone(state.templates[state.current]); }
   addNewPresets();
   migrateStripOn();
+  migrateOriginalTemplate();
   if(typeof state.photo!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(state.photo)) state.photo=null;
   migrateColumns();
 }
@@ -589,7 +586,7 @@ function importTemplate(f){ if(!f) return; const r=new FileReader(); r.onload=()
   if(Object.hasOwn(state.templates,n) && !confirm('「'+n+'」 양식이 이미 있습니다. 덮어쓸까요?')) return;
   state.templates[n]=t; state.current=n; state.tpl=clone(t); fillSettingsUI(); renderLines(); renderTplGrid(); render(); persist(); }; r.readAsText(f); $('tplFile').value=''; }
 /* 전체 백업: 명단·틀·공통 값·열 연결을 파일 하나로 */
-function exportAll(){ const b={kind:'nametag-backup', version:1, saved:new Date().toISOString(), stripOnMigrated:state.stripOnMigrated===true, templates:state.templates, current:state.current, tpl:state.tpl, data:state.data, map:state.map, globals:state.globals, headerIndex:state.headerIndex, rawRows, photo:state.photo||null};
+function exportAll(){ const b={kind:'nametag-backup', version:1, saved:new Date().toISOString(), stripOnMigrated:state.stripOnMigrated===true, pptLayoutMigrated:state.pptLayoutMigrated===true, templates:state.templates, current:state.current, tpl:state.tpl, data:state.data, map:state.map, globals:state.globals, headerIndex:state.headerIndex, rawRows, photo:state.photo||null};
   const blob=new Blob([JSON.stringify(b)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='명찰메이커_백업_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
 const MAX_ROWS=20000;
 function headerIndexOf(b){ if(!Number.isInteger(b.headerIndex)||b.headerIndex<-1) throw new Error('열 제목 행 번호가 올바르지 않습니다 (파일이 손상됨)'); return b.headerIndex; }
@@ -627,13 +624,14 @@ function parseBackup(text){
   if(raw.length>MAX_ROWS+10) throw new Error('원본 줄이 너무 많습니다');
   const headerIndex=hIdx;
   let photo=null; if(b.photo!=null){ if(typeof b.photo!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.photo)) throw new Error('사진 정보 형식이 잘못됐습니다'); if(b.photo.length>12000000) throw new Error('사진이 너무 커서 불러올 수 없습니다'); photo=b.photo; }
-  return {tpls,current,tpl,cols,rows,map,globals,raw,headerIndex,photo,stripOnMigrated:b.stripOnMigrated===true};
+  return {tpls,current,tpl,cols,rows,map,globals,raw,headerIndex,photo,stripOnMigrated:b.stripOnMigrated===true,pptLayoutMigrated:b.pptLayoutMigrated===true};
 }
 function importAll(f){ if(!f) return; const r=new FileReader(); r.onload=()=>{ let b; try{ b=parseBackup(r.result); }catch(e){ alert('백업을 불러오지 못했습니다: '+e.message+'\n기존 명단과 양식은 그대로 둡니다.'); return; }
   const bp=(b.map&&b.map['이름'])? b.rows.filter(r=>(r[b.map['이름']]||'').trim()).length : b.rows.length;
   if(!confirm('지금 화면의 명단·양식을 백업 파일 내용으로 바꿉니다.\n백업 내용: 원본 '+b.rows.length+'줄 (인쇄 '+bp+'명), 양식 '+Object.keys(b.tpls).length+'개'+(b.photo?', 겹쳐 보기 사진 포함':'')+'\n계속할까요?')) return;
-  state.templates=b.tpls; state.current=b.current; state.tpl=b.tpl; state.data={cols:b.cols, rows:b.rows}; state.map=b.map; state.globals=b.globals; state.headerIndex=b.headerIndex; rawRows=b.raw; state.photo=b.photo; state.headerConfirmed=false; state.stripOnMigrated=b.stripOnMigrated;
+  state.templates=b.tpls; state.current=b.current; state.tpl=b.tpl; state.data={cols:b.cols, rows:b.rows}; state.map=b.map; state.globals=b.globals; state.headerIndex=b.headerIndex; rawRows=b.raw; state.photo=b.photo; state.headerConfirmed=false; state.stripOnMigrated=b.stripOnMigrated; state.pptLayoutMigrated=b.pptLayoutMigrated;
   migrateStripOn();
+  migrateOriginalTemplate();
   fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); persist(); toast('백업을 불러왔습니다 (인쇄 '+bp+'명, 양식 '+Object.keys(b.tpls).length+'개)'); }; r.readAsText(f); $('allFile').value=''; }
 /* 틀 자료형 검증: 외부 파일·옛 저장분을 안전한 값으로 보정한다 */
 function sanitizeTemplate(t){
@@ -647,6 +645,7 @@ function sanitizeTemplate(t){
   out.size={preset:one(S.preset,SIZES.map(x=>x[0]),'custom'), w:num(S.w,20,200,90), h:num(S.h,15,200,55), shrink:num(S.shrink,0,5,0), gap:num(S.gap,0,20,0), margin:num(S.margin,0,30,8), orient:one(S.orient,['auto','portrait','landscape'],'auto')};
   out.cut={style:one(C.style,['full','mark','none'],'full'), border:!!C.border, offX:num(C.offX,-20,20,0), offY:num(C.offY,-20,20,0)};
   out.design={font:one(D.font,FONTS.map(f=>f[0]),'noto'), text:col(D.text,'#111111'), band:one(D.band,['none','top','left','bottom'],'none'), bandColor:col(D.bandColor,'#2457d6'), bandH:num(D.bandH,0,40,6), bandInset:num(D.bandInset,0,20,0), bg:col(D.bg,'#ffffff'), valign:one(D.valign,['center','flex-start','flex-end'],'center'), pad:num(D.pad,0,30,3), lineGap:num(D.lineGap,0,30,2), logo:(typeof D.logo==='string'&&/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=]+$/.test(D.logo)&&D.logo.length<3000000)?D.logo:null, logoPos:one(D.logoPos,['top','bottom','tl','tr'],'top'), logoAlign:one(D.logoAlign,['center','left','right'],'center'), logoH:num(D.logoH,2,50,8), back:(typeof D.back==='string'&&/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(D.back)&&D.back.length<4000000)?D.back:null, backOn:!!D.backOn, stripWhere:one(D.stripWhere==='beside'?'stack':D.stripWhere,['stack','pages','inside'], D.stripInside?'inside':'stack'), stripRatio:num(D.stripRatio,0.2,30,0), strip:(typeof D.strip==='string'&&/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(D.strip)&&D.strip.length<4000000)?D.strip:null, stripOn:!!D.stripOn, stripH:num(D.stripH,5,80,25), stripCount:num(D.stripCount,0,5000,0)};
+  out.design.layout=one(D.layout,['ppt2026'],'');
   out.lines=t.lines.slice(0,12).map(L=>{ L=L&&typeof L==='object'?L:{}; const parts=(Array.isArray(L.parts)?L.parts:[]).slice(0,8).map(P=>{ P=P&&typeof P==='object'?P:{}; const src=P.src==='fixed'?'fixed':(FIELDS.includes(P.src)?P.src:'이름'); return {src, text:str(P.text,100), prefix:str(P.prefix,20), suffix:str(P.suffix,20)}; });
     return {parts: parts.length?parts:[part('이름')], join:one(L.join,JOINS.map(j=>j[0]),'space'), size:num(L.size,4,200,14), bold:!!L.bold, color:(L.color?col(L.color,''):''), spacing:num(L.spacing,0,2,0), align:one(L.align,['left','center','right'],'center'), maxChars:num(L.maxChars,0,40,0)}; });
   if(!out.lines.length) out.lines=[line([part('이름')],{size:36,bold:true})];
@@ -893,8 +892,8 @@ function setLogo(v){ state.tpl.design.logo=v; $('logoName').textContent=v?'로�
 function stackH(t){ const d=t.design; if(!(d.strip&&d.stripOn&&d.stripWhere==='stack')) return 0; const bw=Math.max(10,t.size.w-t.size.shrink); return d.stripRatio? Math.min(d.stripH, bw/d.stripRatio) : d.stripH; } // 명찰 위에 이어 붙는 띠 높이
 function cardH(t){ const s=t.size, d=t.design; const bh=Math.max(10,s.h-s.shrink); return ((d.back&&d.backOn)? bh*2 : bh) + stackH(t); }
 /* 뒷면이 켜져 있으면: 위쪽에 뒷면 그림을 거꾸로, 아래쪽에 앞면. 인쇄 후 가운데를 접으면 양면 명찰이 된다 */
-function makeBadge(row, t){
-  const d=t.design; const front=makeFront(row,t); const sh=stackH(t); const hasBack=!!(d.back&&d.backOn);
+function makeBadge(row, t, column=0){
+  const d=t.design; const front=makeFront(row,t,column); const sh=stackH(t); const hasBack=!!(d.back&&d.backOn);
   if(!hasBack&&!sh) return front;
   const s=t.size; const bw=Math.max(10,s.w-s.shrink), bh=Math.max(10,s.h-s.shrink); const total=sh+(hasBack?bh*2:bh);
   const card=document.createElement('div'); card.className='badge card2'; card.style.cssText=`width:${bw}mm;height:${total}mm;background:#fff;display:block;${t.cut.border?'outline:0.2mm solid #9ca3af;outline-offset:-0.2mm;':''}`;
@@ -903,7 +902,11 @@ function makeBadge(row, t){
     const si=document.createElement('img'); si.src=d.strip; si.style.cssText='width:100%;height:100%;object-fit:cover;display:block'; st.appendChild(si); card.appendChild(st);
     const cutLn=document.createElement('div'); cutLn.style.cssText=`position:absolute;left:0;top:${sh}mm;width:100%;height:0;border-top:0.2mm solid #9ca3af;z-index:2`; card.appendChild(cutLn); }
   if(hasBack){ const back=document.createElement('div'); back.style.cssText=`position:absolute;left:0;top:${sh}mm;width:${bw}mm;height:${bh}mm;overflow:hidden;background:#fff`;
-    const im=document.createElement('img'); im.src=d.back; im.style.cssText='width:100%;height:100%;object-fit:contain;transform:rotate(180deg);display:block'; back.appendChild(im); card.appendChild(back);
+    const im=document.createElement('img'); im.src=d.back; im.style.cssText='width:100%;height:100%;object-fit:contain;transform:rotate(180deg);display:block';
+    if(d.layout==='ppt2026'){ const r=column%2?{x:1.98,y:.89,w:98.03,h:75.53}:{x:1.99,y:.66,w:98.02,h:75.59}; im.className='pptBack'; im.style.cssText=`position:absolute;left:${r.x/102*100}%;top:${r.y/77*100}%;width:${r.w/102*100}%;height:${r.h/77*100}%;object-fit:fill;display:block`;
+      const source=d.back; im.style.transform=scheduleRotations.get(source)||'rotate(180deg)';
+      im.onload=()=>{ const rotation=isOriginalSchedule(im)?'none':'rotate(180deg)'; if(scheduleRotations.size>4) scheduleRotations.clear(); scheduleRotations.set(source,rotation); im.style.transform=rotation; }; }
+    back.appendChild(im); card.appendChild(back);
     const fold=document.createElement('div'); fold.style.cssText=`position:absolute;left:0;top:${sh+bh}mm;width:100%;height:0;border-top:0.2mm dashed #b0b4bb;z-index:2`; card.appendChild(fold); }
   front.style.position='absolute'; front.style.left='0'; front.style.top=(sh+(hasBack?bh:0))+'mm'; front.style.outline='none'; // 테두리는 바깥 카드 전체에
   card.appendChild(front); return card;
@@ -914,10 +917,75 @@ function fitSize(txt,size,font,bold,spacing,availMm){ // 실제 글꼴로 폭을
   for(let i=0;i<4;i++){ _mc.font=`${bold?700:400} ${size}pt ${font}`; let w; try{ w=_mc.measureText(txt).width; }catch(e){ return size; }
     const px=size*96/72; w+= (spacing||0)*px*txt.length; const avail=availMm*MM; if(w<=avail) break; size=Math.max(6, size*avail/w*0.995); }
   return Math.round(size*10)/10; }
-function makeFront(row, t){
+// Original PPT page 1, millimetres from the 102 × 77 cut rectangle.
+// The bitmap logo has white margins: its box y=5.47 puts visible ink at y=8.20.
+const PPT_COLUMNS=[{textX:9.8,logoX:45.11,logoW:47.45},{textX:10.63,logoX:44.98,logoW:47.49}];
+const scheduleRotations=new Map();
+function hasHyFont(font){
+  _mc.font=`400 21pt ${font}`; const width=_mc.measureText('가나다123').width;
+  _mc.font='400 21pt "Do Hyeon"';
+  return Math.abs(width-_mc.measureText('가나다123').width)>.1;
+}
+function isOriginalSchedule(im){
+  const c=document.createElement('canvas'); c.width=c.height=8; const g=c.getContext('2d'); g.drawImage(im,0,0,8,8);
+  const pixels=g.getImageData(0,0,8,8).data, ref=[202,189,176,200,188,177,197,184,172,199,187,172,207,195,180,214,202,190,204,192,182,204,191,181,218,205,192,206,196,188,201,191,183,195,186,176,194,186,177,233,222,213,231,221,212,223,211,200,220,206,192,218,207,197,206,196,187,199,189,181,186,178,171,221,211,202,227,216,205,226,211,197,238,223,206,244,231,219,237,226,215,219,210,200,213,204,193,218,208,197,207,196,187,221,207,192,233,218,201,228,216,205,218,208,198,205,195,185,206,196,186,213,203,194,217,207,199,226,213,198,221,207,194,202,193,183,187,178,170,177,169,161,187,179,170,236,225,214,242,231,222,234,221,208,235,221,209,243,232,220,216,208,199,194,188,181,196,189,182,221,212,203,221,211,202,219,206,193,228,215,203,240,228,217,239,228,218,231,221,211,217,208,199,211,203,194,192,184,177,201,189,178];
+  let error=0, turned=0; for(let i=0;i<ref.length;i++){
+    const v=pixels[Math.floor(i/3)*4+i%3];
+    error+=Math.abs(v-ref[i]); turned+=Math.abs(v-ref[(63-Math.floor(i/3))*3+i%3]);
+  }
+  return error/ref.length<12 && error<turned*.7;
+}
+function makePptFront(row,t,column){
+  const d=t.design,s=t.size,g=PPT_COLUMNS[column%2], NS='http://www.w3.org/2000/svg';
+  const font=(FONTS.find(f=>f[0]===d.font)||FONTS.find(f=>f[0]==='noto'))[2];
+  const b=document.createElement('div'); b.className='badge pptFront';
+  b.style.cssText=`width:${Math.max(10,s.w-s.shrink)}mm;height:${Math.max(10,s.h-s.shrink)}mm;background:${d.bg};display:block;${t.cut.border?'outline:0.2mm solid #9ca3af;outline-offset:-0.2mm;':''}`;
+  const svg=document.createElementNS(NS,'svg'); svg.setAttribute('viewBox','0 0 102 77'); svg.setAttribute('preserveAspectRatio','none'); svg.style.cssText='width:100%;height:100%;display:block;overflow:hidden';
+  const add=(tag,attrs)=>{ const e=document.createElementNS(NS,tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); svg.appendChild(e); return e; };
+  const padDelta=d.pad-9.8;
+  if(d.logo){ const w=g.logoW*d.logoH/16.22; const x=d.logoAlign==='left'?d.pad:d.logoAlign==='center'?(102-w)/2:g.logoX+g.logoW-w-padDelta;
+    add('image',{href:d.logo,x,y:d.logoPos==='bottom'?77-5.47-d.logoH:5.47+padDelta,width:w,height:d.logoH,preserveAspectRatio:'none',class:'pptLogo'}); }
+  t.lines.forEach((L,i)=>{
+    let txt=lineText(row,L); if(!txt) return;
+    // 원본 명단 끝의 초청 인원은 기수 칸에 직함이 들어 있다.
+    // PPT처럼 직책이 있으면 직책만, 없으면 해당 직함을 그대로 쓴다.
+    if(i===0 && L.join==='paren' && L.parts.length===2 && L.parts[0].src==='직책' && L.parts[1].src==='기수'){
+      const cohort=val(row,'기수');
+      if(cohort && !/^\d+\s*기?$/.test(cohort)) txt=partText(row,L.parts[0])||cohort;
+    }
+    const raw=txt; if(i===1&&L.parts.length===1&&L.parts[0].src==='이름') txt=Array.from(txt.replace(/\s+/g,'')).join(' ');
+    let size=L.size; if(L.maxChars>0&&Array.from(raw.replace(/\s+/g,'')).length>L.maxChars) size*=L.maxChars/Array.from(raw.replace(/\s+/g,'')).length;
+    const x=g.textX+padDelta, avail=Math.max(4,102-x-7.3), spacing=(L.spacing||0)*size*25.4/72-.01*25.4/72;
+    size=fitSize(txt,size,font,L.bold,L.spacing||0,avail);
+    // Rendered PPT reference, not the earlier glyph-table baseline estimate.
+    const y=(i===0?33.87:65.1+(i-1)*14)+(i?d.lineGap-3:0)+padDelta;
+    const e=add('text',{x:L.align==='center'?51:L.align==='right'?102-d.pad:x,y,'font-size':size*25.4/72,'font-weight':L.bold?700:400,'font-family':font,fill:L.color||d.text,'letter-spacing':spacing,'text-anchor':L.align==='center'?'middle':L.align==='right'?'end':'start',class:'ln pptLine'});
+    e.style.whiteSpace='pre'; e.textContent=txt;
+    // Do Hyeon has smaller glyphs at the same point size. Match the reference
+    // line's dimensions using measured ink bounds; no HY font file is shipped.
+    if(d.font==='hyheadline' && !hasHyFont(font) && /^[가-힣0-9 ()]+$/.test(txt) && !L.bold){
+      const em=size*25.4/72, chars=Array.from(txt);
+      _mc.font=`400 ${size}pt ${font}`; const m=_mc.measureText(txt);
+      const iw=(m.actualBoundingBoxLeft+m.actualBoundingBoxRight)/MM;
+      const ih=(m.actualBoundingBoxAscent+m.actualBoundingBoxDescent)/MM;
+      const advance=chars.reduce((a,c)=>a+(/[가-힣]/.test(c)?1:/[0-9]/.test(c)?.583:c===' '?.333:c==='('?.291:.294),0)*em;
+      const targetW=Math.min(avail,advance-(i?.15:.19)*em+(chars.length-1)*spacing);
+      if(iw>0 && ih>0 && targetW>0){
+        const sx=targetW/iw, sy=(i?.96:.965)*em/ih;
+        const inkX=L.align==='center'?(102-targetW)/2:L.align==='right'?102-d.pad-targetW:x+(i?.075:.11)*em;
+        const inkY=y-(i?.84:.846)*em;
+        e.setAttribute('x','0'); e.setAttribute('y','0'); e.setAttribute('text-anchor','start'); e.setAttribute('letter-spacing','0');
+        e.setAttribute('transform',`translate(${inkX+m.actualBoundingBoxLeft/MM*sx} ${inkY+m.actualBoundingBoxAscent/MM*sy}) scale(${sx} ${sy})`);
+      }
+    }
+  });
+  b.appendChild(svg); return b;
+}
+function makeFront(row, t, column=0){
+  if(t.design.layout==='ppt2026' && t.size.w===102 && t.size.h===77 && t.design.band==='none' && t.design.valign==='flex-start' && !(t.design.strip&&t.design.stripOn&&t.design.stripWhere==='inside') && t.lines.length===2 && t.lines[0].parts[0]?.src==='직책' && t.lines[1].parts.length===1 && t.lines[1].parts[0].src==='이름') return makePptFront(row,t,column);
   const s=t.size, c=t.cut, d=t.design;
   const bw=Math.max(10,s.w-s.shrink), bh=Math.max(10,s.h-s.shrink);
-  const font=(FONTS.find(f=>f[0]===d.font)||FONTS[0])[2];
+  const font=(FONTS.find(f=>f[0]===d.font)||FONTS.find(f=>f[0]==='noto'))[2];
   const b=document.createElement('div'); b.className='badge';
   b.style.cssText=`width:${bw}mm;height:${bh}mm;background:${d.bg};font-family:${font};color:${d.text};${c.border?'outline:0.2mm solid #9ca3af;outline-offset:-0.2mm;':''}`;
   if(d.band==='left') b.style.flexDirection='row';
@@ -970,7 +1038,7 @@ function render(){
     const st=document.createElement('div'); st.className='previewStrip';
     st.style.cssText=`width:${bwPreview}mm;height:${sh}mm;flex:none;overflow:hidden;background:#1b2a4a;display:flex;align-items:center;justify-content:center`;
     if(d.strip){ const im=document.createElement('img'); im.src=d.strip; im.style.cssText='width:100%;height:100%;object-fit:cover;display:block'; st.appendChild(im); }
-    else { const tx=document.createElement('div'); tx.textContent=(row?val(row,'행사명'):state.globals['행사명'])||'2026 데일카네기 대구CEO 총동문회 체육대회'; tx.style.cssText='color:#fff;font-family:Pretendard,sans-serif;font-weight:700;font-size:14pt;text-align:center;line-height:1.4;padding:0 4mm;overflow-wrap:anywhere'; st.appendChild(tx); }
+    else { const tx=document.createElement('div'); tx.textContent=(row?val(row,'행사명'):state.globals['행사명'])||'2026 데일카네기 대구CEO 총동문회 체육대회'; const fs=fitSize(tx.textContent,14,'Pretendard,sans-serif',true,0,bwPreview-8); tx.style.cssText=`color:#fff;font-family:Pretendard,sans-serif;font-weight:700;font-size:${fs}pt;text-align:center;line-height:1.4;padding:0 4mm;white-space:nowrap`;  st.appendChild(tx); }
     one.appendChild(st);
   }
   one.appendChild(front);
@@ -1045,7 +1113,7 @@ function buildPage(wrap){
       const col=i%g.cols, row=Math.floor(i/g.cols);
       const x=x0+col*(bw+s.gap), y=y0+row*(bh+s.gap);
       if(c.style==='mark'){ [[x,y],[x+bw,y],[x,y+bh],[x+bw,y+bh]].concat(sh?[[x,y+sh],[x+bw,y+sh]]:[]).forEach(([mx,my])=>{ const h=document.createElement('div'); h.className='mark'; h.style.cssText=`left:${mx-3}mm;top:${my}mm;width:6mm;height:0.2mm`; page.appendChild(h); const v=document.createElement('div'); v.className='mark'; v.style.cssText=`left:${mx}mm;top:${my-3}mm;width:0.2mm;height:6mm`; page.appendChild(v); }); }
-      const b=makeBadge(r,t); b.style.left=x+'mm'; b.style.top=y+'mm'; page.appendChild(b);
+      const b=makeBadge(r,t,col); b.style.left=x+'mm'; b.style.top=y+'mm'; page.appendChild(b);
     }
     const no=document.createElement('div'); no.className='pageNo'; no.textContent=`${p+1} / ${pages}`; page.appendChild(no);
     wrap.appendChild(page);
@@ -1065,12 +1133,19 @@ function doPrint(){ if(!printableRows().length){ goStep(1); toast('먼저 명단
     state.headerConfirmed=true; persist(); }
   if(false){ const first=rawRows[0].filter(Boolean).join(' · ').slice(0,60); if(!confirm('첫 줄 「'+first+'」도 사람 한 명으로 인쇄됩니다. 열 제목이라면 「취소」를 누르고 명단 단계에서 「열 제목 행」을 고르세요.\n\n이대로 인쇄할까요?')){ goStep(1); return; } }
   if(!pageCount){ goStep(2); alert('명찰이 종이보다 커서 배치할 수 없습니다. 크기나 종이 여백을 줄여 주세요.'); return; }
+  const printSeq=renderSeq;
+  const printReady=async()=>{
+    await document.fonts.ready;
+    await Promise.all([...document.querySelectorAll('#pages img')].map(im=>im.complete?Promise.resolve():new Promise(r=>{im.addEventListener('load',r,{once:true});im.addEventListener('error',r,{once:true});})));
+    if(printSeq!==renderSeq){ toast('인쇄 준비 중에 내용이 바뀌었습니다. 다시 인쇄해 주세요.'); return; }
+    window.print();
+  };
   const wraps=[...document.querySelectorAll('.pageWrap')].filter(w=>!w.dataset.built);
-  if(wraps.length<=8){ buildAllPages(); window.print(); return; }
+  if(wraps.length<=8){ buildAllPages(); printReady(); return; }
   // 장수가 많으면 5장씩 나눠 만들어 화면이 멈추지 않게 하고, 다 만든 뒤 인쇄 창을 연다
   const t=toast('인쇄 준비 중… 0 / '+wraps.length+'장', 60000); let i=0; const seq=renderSeq, nRows=state.data.rows.length;
   const step=()=>{ if(seq!==renderSeq || nRows!==state.data.rows.length || wraps.some(w=>!w.isConnected)){ t.remove(); toast('인쇄 준비 중에 내용이 바뀌어 인쇄를 취소했습니다. 다시 「인쇄하기」를 눌러 주세요.', 3000); return; }
-    const end=Math.min(i+5,wraps.length); for(;i<end;i++) buildPage(wraps[i]); t.textContent='인쇄 준비 중… '+i+' / '+wraps.length+'장'; if(i<wraps.length) setTimeout(step,0); else { t.remove(); window.print(); } };
+    const end=Math.min(i+5,wraps.length); for(;i<end;i++) buildPage(wraps[i]); t.textContent='인쇄 준비 중… '+i+' / '+wraps.length+'장'; if(i<wraps.length) setTimeout(step,0); else { t.remove(); printReady(); } };
   setTimeout(step,0); }
 
 /* ---------- 기타 ---------- */
@@ -1087,7 +1162,7 @@ const loadPromise=load().catch(e=>{ console.error(e); noSave=true; saveFailed=tr
 const noSaveStart=new Promise(res=>{ setTimeout(()=>{ if(loadDone) return; const sh=$('bootShade'); if(!sh) return; sh.innerHTML='<div style="text-align:center"><div style="margin-bottom:12px">저장된 내용을 읽는 데 시간이 걸립니다…</div><button class="btn" id="noSaveBtn">저장본 없이 시작 (이번에는 저장되지 않음)</button></div>'; $('noSaveBtn').onclick=()=>{ noSave=true; res('nosave'); }; }, 10000); });
 const loadWithTimeout=Promise.race([ loadPromise, noSaveStart ]).then(v=>{ if(v==='nosave'){ saveFailed=true; toast('저장본 없이 시작했습니다. 이번 세션은 저장되지 않으니 필요하면 「전체 백업 파일로 저장」을 쓰세요', 6000); } });
 
-const Guide={ i:0, n:5,
+const Guide={ i:0, n:4,
   open(i){ this.i=i||0; $('guide').classList.add('on'); this.show(); },
   close(){ $('guide').classList.remove('on'); },
   go(d){ this.i=Math.max(0,Math.min(this.n-1,this.i+d)); this.show(); },
@@ -1095,7 +1170,7 @@ const Guide={ i:0, n:5,
     document.querySelector('#guide .foot .btn.primary').textContent = this.i===this.n-1? '시작하기 ✓' : '다음 ›'; document.querySelector('#guide .foot .btn.primary').onclick=()=>{ this.i===this.n-1? this.close() : this.go(1); }; } };
 document.addEventListener('keydown',e=>{ if(!$('guide').classList.contains('on')) return; if(e.key==='Escape') Guide.close(); if(e.key==='ArrowRight') Guide.go(1); if(e.key==='ArrowLeft') Guide.go(-1); });
 let firstRun=false;
-loadWithTimeout.then(()=>{ document.querySelector('.top').inert=false; document.querySelector('.body').inert=false; if(!state.templates||!Object.keys(state.templates).length) state.templates=presets(); if(!state.tpl) state.tpl=clone(state.templates[Object.keys(state.templates)[0]]); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1); const sh=$('bootShade'); if(sh) sh.remove(); bootDone=true; if(firstRun && !noSave) setTimeout(()=>Guide.open(0),200); });
+loadWithTimeout.then(async()=>{ await Promise.allSettled([document.fonts.load('21pt "Nametag HY Local"'),document.fonts.load('65pt "Do Hyeon"'),document.fonts.load('14pt Pretendard')]); document.querySelector('.top').inert=false; document.querySelector('.body').inert=false; if(!state.templates||!Object.keys(state.templates).length) state.templates=presets(); if(!state.tpl) state.tpl=clone(state.templates[Object.keys(state.templates)[0]]); fillSettingsUI(); renderMap(); renderLines(); renderTplGrid(); render(); goStep(state.step||1); const sh=$('bootShade'); if(sh) sh.remove(); bootDone=true; if(firstRun && !noSave) setTimeout(()=>Guide.open(0),200); });
 </script>
 <script>
 /* ===== 사진으로 틀 만들기 (기기 안에서만 처리, 외부 전송 없음) ===== */
