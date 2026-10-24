@@ -212,6 +212,37 @@
     .field{grid-template-columns:1fr}
   }
 </style>
+<style>
+  /* 화면의 알림과 축소 배치만 적용한다. 인쇄 규칙과 실제 mm 치수는 그대로 둔다. */
+  .screenNotice{display:none}
+  @media screen{
+    .screenNotice{display:flex;align-items:baseline;gap:10px;flex:none;padding:6px 20px;border-bottom:1px solid #f2d68a;background:#fff8e3;color:#785614;font-size:13px;line-height:1.5}
+    .screenNotice b{white-space:nowrap;flex:none}
+    .screenNotice[data-font="original"]{background:#eef8f0;border-color:#cce7d2;color:#236137}
+    .screenNotice[data-font="selected"]{background:#eef2f7;border-color:#d9e0e9;color:#374151}
+    .screenNotice span{min-width:0}
+  }
+  @media screen and (min-width:761px){
+    body{height:100dvh}
+    .body{min-width:0}
+    .side{min-height:0;overscroll-behavior:contain}
+    .stage{display:grid;grid-template-areas:"one-head" "overlay" "one" "sheet-head" "paper";grid-template-rows:auto auto minmax(0,.7fr) auto minmax(0,1fr);gap:8px;min-width:0;min-height:0;overflow:hidden;padding:12px 16px}
+    #oneHeading{grid-area:one-head}
+    #ovBar{grid-area:overlay;margin:0}
+    #oneWrap{grid-area:one}
+    #sheetHeading{grid-area:sheet-head}
+    #pages{grid-area:paper}
+    .stageHead{min-width:0;gap:8px;margin:0}
+    .stageHead .muted{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pager{flex:none}
+    .oneWrap{min-width:0;min-height:0;overflow:hidden;padding:10px;margin:0}
+    .oneBadge{flex:none}
+    #pages{min-width:0;min-height:0;overflow:hidden;padding:6px 8px}
+    .pageWrap{margin:0 auto}
+    .emptyMsg{padding:12px;font-size:14px}
+    .emptyMsg .ic{font-size:28px}
+  }
+</style>
 <style id="pageStyle">@page{size:A4 portrait;margin:0}</style>
 </head>
 <body>
@@ -226,6 +257,9 @@
   <button class="btn" onclick="Guide.open(0)" style="margin-right:8px">❓ 사용법</button>
   <button class="btn primary big" onclick="doPrint()">🖨 인쇄하기</button>
 </header>
+<div class="screenNotice" id="fontNotice" data-font="fallback" role="status">
+  <b>📢 알림</b><span id="printFontStatus"></span>
+</div>
 
 <div id="guide" onclick="if(event.target===this)Guide.close()">
   <div class="box">
@@ -395,7 +429,6 @@
       <div class="field"><label>위아래</label><div class="ctl"><input type="number" class="in num" id="offY" step="0.5"> mm <span class="muted">아래로 밀렸으면 − 값</span></div></div>
     </div>
     </div></details>
-    <p class="muted" id="printFontStatus" role="status"></p>
     <button class="btn primary big block" onclick="doPrint()">🖨️ 지금 인쇄하기</button>
     <button class="btn big block" id="pptDownload" style="margin-top:8px" onclick="downloadPpt()">📥 PPT로 받기</button>
     <p class="muted" id="pptDownloadStatus" role="status" style="margin:8px 0 0;text-align:center">원본 PPT 양식 · 2명/장 · 띠는 뒤쪽</p>
@@ -404,9 +437,9 @@
 </aside>
 
 <main class="stage">
-  <div class="stageHead"><h3>명찰 한 장</h3><span class="muted" id="oneLabel">첫 번째 명찰 · 화면 크기는 실제와 다름</span></div>
+  <div class="stageHead" id="oneHeading"><h3>명찰 한 장</h3><span class="muted" id="oneLabel">첫 번째 명찰 · 화면 크기는 실제와 다름</span></div>
   <div class="oneWrap" id="oneWrap"></div>
-  <div class="stageHead"><h3>인쇄 용지 미리보기</h3><div class="pager" id="pager"><button onclick="movePage(-1)">‹</button><span id="pageLabel">–</span><button onclick="movePage(1)">›</button></div><span class="muted" id="sheetInfo"></span></div>
+  <div class="stageHead" id="sheetHeading"><h3>인쇄 용지 미리보기</h3><div class="pager" id="pager"><button onclick="movePage(-1)">‹</button><span id="pageLabel">–</span><button onclick="movePage(1)">›</button></div><span class="muted" id="sheetInfo"></span></div>
   <div id="pages"></div>
 </main>
 </div>
@@ -947,10 +980,9 @@ function fitOriginalSize(text,size,tracking,availMm){
 }
 function printFontMessage(t){
   const chosen=FONTS.find(f=>f[0]===t.design.font)||FONTS.find(f=>f[0]==='noto');
-  if(chosen[0]!=='hyheadline')return chosen[1]+' 글꼴로 인쇄합니다.';
-  if(hasHyFont(chosen[2]))return '원본 글꼴(HY헤드라인M)로 인쇄합니다.';
-  return '이 컴퓨터에는 원본 글꼴(HY헤드라인M)이 없어 도현으로 인쇄합니다.'+
-    (t.design.layout==='ppt2026'?' 글자 크기와 위치를 원본에 맞춰 보정합니다.':'');
+  if(chosen[0]!=='hyheadline')return '선택한 '+chosen[1]+' 글꼴로 인쇄됩니다.';
+  if(hasHyFont(chosen[2]))return '✅ 이 컴퓨터에는 원본 글꼴이 있어 원본과 똑같이 인쇄됩니다';
+  return '원본 양식과 같게 인쇄하려면 한글(한컴오피스)이 있는 컴퓨터에서 열어 주세요. 한글이 없어도 인쇄되지만 글씨체가 조금 다릅니다.';
 }
 function isOriginalSchedule(im){
   const c=document.createElement('canvas'); c.width=c.height=8; const g=c.getContext('2d'); g.drawImage(im,0,0,8,8);
@@ -1049,6 +1081,8 @@ function render(){
   persist();
   const t=state.tpl, s=t.size, c=t.cut;
   const rows=printableRows();
+  $('printFontStatus').textContent=printFontMessage(t);
+  $('fontNotice').dataset.font=t.design.font!=='hyheadline'?'selected':hasHyFont(FONTS.find(f=>f[0]==='hyheadline')[2])?'original':'fallback';
   // 한 장 미리보기
   const ow=$('oneWrap'); ow.innerHTML='';
   const row=sampleRow(), d=t.design;
@@ -1067,11 +1101,12 @@ function render(){
     one.appendChild(st);
   }
   one.appendChild(front);
-  const availW=ow.clientWidth-48, availH=Math.max(240,window.innerHeight*0.62);
-  one.style.zoom=Math.max(0.4,Math.min(2.2,availW/((bwPreview+6.6)*MM),availH/((bhPreview+sh+(sh?3:0)+6.6)*MM)));
+  const desktop=window.matchMedia('screen and (min-width:761px)').matches;
   if(!sh){ one.style.padding='0'; one.style.border='0'; one.style.background='transparent'; }
   ow.appendChild(one);
   renderPhotoOverlay(ow,front);
+  const availW=ow.clientWidth-(desktop?20:48), availH=desktop?ow.clientHeight-20:Math.max(240,window.innerHeight*0.62);
+  one.style.zoom=Math.max(0.01,Math.min(2.2,availW/((bwPreview+6.6)*MM),availH/((bhPreview+sh+(sh?3:0)+6.6)*MM)));
   const gt=$('guideTpl'); if(gt) gt.textContent=state.current||'';
   $('oneLabel').textContent = rows.length? '첫 번째 명찰 · 화면 크기는 실제와 다름' : '예시 이름입니다. 명단을 넣으면 실제 이름으로 바뀝니다';
   // 용지
@@ -1091,14 +1126,13 @@ function render(){
   $('sheetInfo').textContent = per? `장당 ${per}개 (${g.cols}×${g.rows}) · 실제 출력 ${bw}×${frontH}mm${bh!==frontH?` (띠·뒷면 포함 ${bw}×${Math.round(bh*10)/10}mm)`:''}` : '';
   $('szNote').textContent = s.shrink>0 ? `너비·높이를 각각 ${s.shrink}mm 줄여 ${bw}×${frontH}mm로 인쇄됩니다.` : `선택한 ${s.w}×${s.h}mm 그대로 인쇄됩니다. 케이스에 빡빡하면 세부 설정의 「명찰 크기 줄이기」를 1mm로 두세요.`;
   $('printSummary').textContent = rows.length? `${rows.length}명 → 명찰 A4 ${badgePages}장${stripPages?` + 상단 띠 ${stripCount}개 A4 ${stripPages}장`:(stackOn?' (윗칸 띠는 명찰 위에 이어서)':'')}이 인쇄됩니다` : '명단이 비어 있습니다';
-  $('printFontStatus').textContent=printFontMessage(t);
   const pv=$('pages'); pv.innerHTML='';
   if(!rows.length){ pv.innerHTML='<div class="emptyMsg"><div class="ic">📋</div>왼쪽에서 명단을 넣으면 인쇄될 용지가 여기에 보입니다.</div>'; $('pager').style.visibility='hidden'; return; }
   if(!per){ pv.innerHTML='<div class="emptyMsg">명찰이 종이보다 큽니다. 크기나 여백을 줄여 주세요.</div>'; $('pager').style.visibility='hidden'; return; }
   $('pager').style.visibility='visible';
   const gridW=g.cols*bw+(g.cols-1)*s.gap, gridH=g.rows*bh+(g.rows-1)*s.gap;
   const x0=(g.pw-gridW)/2+c.offX, y0=(g.ph-gridH)/2+c.offY;
-  const scale=Math.min(1,(pv.clientWidth-16)/(g.pw*MM));
+  const scale=Math.max(.01,Math.min(1,(pv.clientWidth-16)/(g.pw*MM),desktop?(pv.clientHeight-12)/(g.ph*MM):Infinity));
   const sgridW=sg.cols*bw+Math.max(0,sg.cols-1)*s.gap, sgridH=sg.rows*stripH+Math.max(0,sg.rows-1)*s.gap; const sx0=(g.pw-sgridW)/2+c.offX, sy0=(g.ph-sgridH)/2+c.offY;
   pageBuild={t,s,c,rows,g,per,bw,bh,x0,y0,scale,pages,badgePages,stripOn,stripH,sg,sper,stripCount,sx0,sy0,sh:stackH(t)}; renderSeq++;
   for(let p=0;p<pages;p++){ const wrap=document.createElement('div'); wrap.className='pageWrap'; wrap.style.width=g.pw+'mm'; wrap.style.height=g.ph+'mm'; wrap.style.zoom=scale; wrap.dataset.p=p; pv.appendChild(wrap); }
