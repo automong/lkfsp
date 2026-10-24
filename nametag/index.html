@@ -9,6 +9,9 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' data:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
 <script src="lib/xlsx.full.min.js"></script>
 <script src="lib/tesseract.min.js"></script>
+<script src="lib/pptx-template.js"></script>
+<script src="lib/pptx.js"></script>
+<script src="lib/hy-metrics.js"></script>
 <style>
   :root{
     --bg:#f4f5f7; --card:#fff; --line:#e4e6ea; --line2:#cfd3d9; --text:#1a1d21; --muted:#6b7280; --soft:#f0f2f5;
@@ -227,10 +230,10 @@
 <div id="guide" onclick="if(event.target===this)Guide.close()">
   <div class="box">
     <div class="head"><b>❓ 사용법 · 4장</b><button class="btn sm ghost" onclick="Guide.close()">닫기 ✕</button></div>
-    <div class="slide" data-i="0"><img src="guide/step-1.png" alt="1. 명단을 넣어요"></div>
-    <div class="slide" data-i="1"><img src="guide/step-2.png" alt="2. 띠·일정표 넣어요"></div>
-    <div class="slide" data-i="2"><img src="guide/step-3.png" alt="3. 100%로 인쇄해요"></div>
-    <div class="slide" data-i="3"><img src="guide/step-4.png" alt="4. 자르고 접어요"></div>
+    <div class="slide" data-i="0"><img src="guide/step-1.svg" alt="1. 명단을 넣어요"></div>
+    <div class="slide" data-i="1"><img src="guide/step-2.svg" alt="2. PPT 파일을 넣어요"></div>
+    <div class="slide" data-i="2"><img src="guide/step-3.svg" alt="3. PPT로 받거나 100%로 인쇄해요"></div>
+    <div class="slide" data-i="3"><img src="guide/step-4.svg" alt="4. 자르고 접어요"></div>
     <div class="foot"><button class="btn" onclick="Guide.go(-1)">‹ 이전</button><div class="dots"></div><button class="btn primary" onclick="Guide.go(1)">다음 ›</button></div>
   </div>
 </div>
@@ -270,7 +273,13 @@
   <!-- 2단계 디자인 -->
   <section data-step="2">
     <h2>🏷️ 2. 띠·일정표</h2>
-    <p class="lead">• PPT 그림: 오른쪽 클릭 → 「그림으로 저장」<br>• 아래에서 띠·일정표 파일을 각각 선택하세요.</p>
+    <p class="lead">쓰던 PPT를 넣으면 띠·일정표를 찾아 넣습니다.</p>
+    <div class="card" id="pptDrop">
+      <h3>📊 PPT 파일 넣기</h3>
+      <button class="btn" id="pptPick" onclick="document.getElementById('pptFile').click()">📂 PPT 파일 선택</button>
+      <input type="file" id="pptFile" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" style="display:none">
+      <p class="muted" id="pptStatus" role="status" style="margin:8px 0 0">PPTX 파일을 여기에 놓아도 됩니다.</p>
+    </div>
         <div class="card numcard">
       <span class="n">1</span><div class="nb">
       <h3>🏷️ 윗칸 띠 <span class="sub" id="stripName"></span></h3>
@@ -386,7 +395,10 @@
       <div class="field"><label>위아래</label><div class="ctl"><input type="number" class="in num" id="offY" step="0.5"> mm <span class="muted">아래로 밀렸으면 − 값</span></div></div>
     </div>
     </div></details>
+    <p class="muted" id="printFontStatus" role="status"></p>
     <button class="btn primary big block" onclick="doPrint()">🖨️ 지금 인쇄하기</button>
+    <button class="btn big block" id="pptDownload" style="margin-top:8px" onclick="downloadPpt()">📥 PPT로 받기</button>
+    <p class="muted" id="pptDownloadStatus" role="status" style="margin:8px 0 0;text-align:center">원본 PPT 양식 · 2명/장 · 띠는 뒤쪽</p>
     <p class="muted" style="text-align:center;margin-top:10px" id="printSummary"></p>
   </section>
 </aside>
@@ -646,6 +658,7 @@ function sanitizeTemplate(t){
   out.cut={style:one(C.style,['full','mark','none'],'full'), border:!!C.border, offX:num(C.offX,-20,20,0), offY:num(C.offY,-20,20,0)};
   out.design={font:one(D.font,FONTS.map(f=>f[0]),'noto'), text:col(D.text,'#111111'), band:one(D.band,['none','top','left','bottom'],'none'), bandColor:col(D.bandColor,'#2457d6'), bandH:num(D.bandH,0,40,6), bandInset:num(D.bandInset,0,20,0), bg:col(D.bg,'#ffffff'), valign:one(D.valign,['center','flex-start','flex-end'],'center'), pad:num(D.pad,0,30,3), lineGap:num(D.lineGap,0,30,2), logo:(typeof D.logo==='string'&&/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=]+$/.test(D.logo)&&D.logo.length<3000000)?D.logo:null, logoPos:one(D.logoPos,['top','bottom','tl','tr'],'top'), logoAlign:one(D.logoAlign,['center','left','right'],'center'), logoH:num(D.logoH,2,50,8), back:(typeof D.back==='string'&&/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(D.back)&&D.back.length<4000000)?D.back:null, backOn:!!D.backOn, stripWhere:one(D.stripWhere==='beside'?'stack':D.stripWhere,['stack','pages','inside'], D.stripInside?'inside':'stack'), stripRatio:num(D.stripRatio,0.2,30,0), strip:(typeof D.strip==='string'&&/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(D.strip)&&D.strip.length<4000000)?D.strip:null, stripOn:!!D.stripOn, stripH:num(D.stripH,5,80,25), stripCount:num(D.stripCount,0,5000,0)};
   out.design.layout=one(D.layout,['ppt2026'],'');
+  out.design.backPrinted=D.backPrinted===true;
   out.lines=t.lines.slice(0,12).map(L=>{ L=L&&typeof L==='object'?L:{}; const parts=(Array.isArray(L.parts)?L.parts:[]).slice(0,8).map(P=>{ P=P&&typeof P==='object'?P:{}; const src=P.src==='fixed'?'fixed':(FIELDS.includes(P.src)?P.src:'이름'); return {src, text:str(P.text,100), prefix:str(P.prefix,20), suffix:str(P.suffix,20)}; });
     return {parts: parts.length?parts:[part('이름')], join:one(L.join,JOINS.map(j=>j[0]),'space'), size:num(L.size,4,200,14), bold:!!L.bold, color:(L.color?col(L.color,''):''), spacing:num(L.spacing,0,2,0), align:one(L.align,['left','center','right'],'center'), maxChars:num(L.maxChars,0,40,0)}; });
   if(!out.lines.length) out.lines=[line([part('이름')],{size:36,bold:true})];
@@ -885,7 +898,7 @@ $('dStripWhere').onchange=e=>{ state.tpl.design.stripWhere=e.target.value; rende
 function setStrip(v){ state.tpl.design.strip=v; state.tpl.design.stripOn=!!v; $('stripName').textContent=v?'파일 있음':'없음'; $('dStripOn').checked=!!v; render(); }
 bind('dStripH','design.stripH'); bind('dStripCount','design.stripCount');
 $('dBackOn').onchange=e=>{ state.tpl.design.backOn=e.target.checked; if(e.target.checked&&!state.tpl.design.back){ e.target.checked=false; state.tpl.design.backOn=false; toast('먼저 「파일 선택」으로 뒷면 그림을 넣어 주세요'); } render(); };
-function setBack(v){ state.tpl.design.back=v; state.tpl.design.backOn=!!v; $('backName').textContent=v?'파일 있음':'없음'; $('dBackOn').checked=!!v; render(); }
+function setBack(v){ state.tpl.design.back=v; state.tpl.design.backOn=!!v; state.tpl.design.backPrinted=false; $('backName').textContent=v?'파일 있음':'없음'; $('dBackOn').checked=!!v; render(); }
 function setLogo(v){ state.tpl.design.logo=v; $('logoName').textContent=v?'로고 있음':'없음'; render(); }
 
 /* ---------- 명찰 한 장 만들기 ---------- */
@@ -902,10 +915,10 @@ function makeBadge(row, t, column=0){
     const si=document.createElement('img'); si.src=d.strip; si.style.cssText='width:100%;height:100%;object-fit:cover;display:block'; st.appendChild(si); card.appendChild(st);
     const cutLn=document.createElement('div'); cutLn.style.cssText=`position:absolute;left:0;top:${sh}mm;width:100%;height:0;border-top:0.2mm solid #9ca3af;z-index:2`; card.appendChild(cutLn); }
   if(hasBack){ const back=document.createElement('div'); back.style.cssText=`position:absolute;left:0;top:${sh}mm;width:${bw}mm;height:${bh}mm;overflow:hidden;background:#fff`;
-    const im=document.createElement('img'); im.src=d.back; im.style.cssText='width:100%;height:100%;object-fit:contain;transform:rotate(180deg);display:block';
+    const im=document.createElement('img'); im.src=d.back; im.style.cssText='width:100%;height:100%;object-fit:contain;display:block'; im.style.transform=d.backPrinted?'none':'rotate(180deg)';
     if(d.layout==='ppt2026'){ const r=column%2?{x:1.98,y:.89,w:98.03,h:75.53}:{x:1.99,y:.66,w:98.02,h:75.59}; im.className='pptBack'; im.style.cssText=`position:absolute;left:${r.x/102*100}%;top:${r.y/77*100}%;width:${r.w/102*100}%;height:${r.h/77*100}%;object-fit:fill;display:block`;
-      const source=d.back; im.style.transform=scheduleRotations.get(source)||'rotate(180deg)';
-      im.onload=()=>{ const rotation=isOriginalSchedule(im)?'none':'rotate(180deg)'; if(scheduleRotations.size>4) scheduleRotations.clear(); scheduleRotations.set(source,rotation); im.style.transform=rotation; }; }
+      const source=d.back; im.style.transform=d.backPrinted?'none':scheduleRotations.get(source)||'rotate(180deg)';
+      if(!d.backPrinted) im.onload=()=>{ const rotation=isOriginalSchedule(im)?'none':'rotate(180deg)'; if(scheduleRotations.size>4) scheduleRotations.clear(); scheduleRotations.set(source,rotation); im.style.transform=rotation; }; }
     back.appendChild(im); card.appendChild(back);
     const fold=document.createElement('div'); fold.style.cssText=`position:absolute;left:0;top:${sh+bh}mm;width:100%;height:0;border-top:0.2mm dashed #b0b4bb;z-index:2`; card.appendChild(fold); }
   front.style.position='absolute'; front.style.left='0'; front.style.top=(sh+(hasBack?bh:0))+'mm'; front.style.outline='none'; // 테두리는 바깥 카드 전체에
@@ -925,6 +938,19 @@ function hasHyFont(font){
   _mc.font=`400 21pt ${font}`; const width=_mc.measureText('가나다123').width;
   _mc.font='400 21pt "Do Hyeon"';
   return Math.abs(width-_mc.measureText('가나다123').width)>.1;
+}
+function fitOriginalSize(text,size,tracking,availMm){
+  const m=NametagHyMetrics.measure(text,size*25.4/72,(tracking||0)*size*25.4/72-.01*25.4/72);
+  if(!m)return fitSize(text,size,FONTS.find(f=>f[0]==='hyheadline')[2],false,tracking,availMm);
+  const width=Math.max(m.advance,m.right)-Math.min(0,m.left);
+  return Math.floor(Math.min(size,width>availMm?size*availMm/width*.995:size)*10)/10;
+}
+function printFontMessage(t){
+  const chosen=FONTS.find(f=>f[0]===t.design.font)||FONTS.find(f=>f[0]==='noto');
+  if(chosen[0]!=='hyheadline')return chosen[1]+' 글꼴로 인쇄합니다.';
+  if(hasHyFont(chosen[2]))return '원본 글꼴(HY헤드라인M)로 인쇄합니다.';
+  return '이 컴퓨터에는 원본 글꼴(HY헤드라인M)이 없어 도현으로 인쇄합니다.'+
+    (t.design.layout==='ppt2026'?' 글자 크기와 위치를 원본에 맞춰 보정합니다.':'');
 }
 function isOriginalSchedule(im){
   const c=document.createElement('canvas'); c.width=c.height=8; const g=c.getContext('2d'); g.drawImage(im,0,0,8,8);
@@ -955,25 +981,24 @@ function makePptFront(row,t,column){
     }
     const raw=txt; if(i===1&&L.parts.length===1&&L.parts[0].src==='이름') txt=Array.from(txt.replace(/\s+/g,'')).join(' ');
     let size=L.size; if(L.maxChars>0&&Array.from(raw.replace(/\s+/g,'')).length>L.maxChars) size*=L.maxChars/Array.from(raw.replace(/\s+/g,'')).length;
-    const x=g.textX+padDelta, avail=Math.max(4,102-x-7.3), spacing=(L.spacing||0)*size*25.4/72-.01*25.4/72;
-    size=fitSize(txt,size,font,L.bold,L.spacing||0,avail);
+    const x=g.textX+padDelta, avail=Math.max(4,102-x-7.3);
+    size=d.font==='hyheadline'&&!L.bold?fitOriginalSize(txt,size,L.spacing||0,avail):fitSize(txt,size,font,L.bold,L.spacing||0,avail);
+    const spacing=(L.spacing||0)*size*25.4/72-.01*25.4/72;
     // Rendered PPT reference, not the earlier glyph-table baseline estimate.
     const y=(i===0?33.87:65.1+(i-1)*14)+(i?d.lineGap-3:0)+padDelta;
     const e=add('text',{x:L.align==='center'?51:L.align==='right'?102-d.pad:x,y,'font-size':size*25.4/72,'font-weight':L.bold?700:400,'font-family':font,fill:L.color||d.text,'letter-spacing':spacing,'text-anchor':L.align==='center'?'middle':L.align==='right'?'end':'start',class:'ln pptLine'});
     e.style.whiteSpace='pre'; e.textContent=txt;
-    // Do Hyeon has smaller glyphs at the same point size. Match the reference
-    // line's dimensions using measured ink bounds; no HY font file is shipped.
-    if(d.font==='hyheadline' && !hasHyFont(font) && /^[가-힣0-9 ()]+$/.test(txt) && !L.bold){
-      const em=size*25.4/72, chars=Array.from(txt);
+    // Match Do Hyeon's whole line to HY's numeric ink bounds, not to a
+    // generic em-size estimate. Only numbers are bundled, never HY outlines.
+    if(d.font==='hyheadline' && !hasHyFont(font) && !L.bold){
+      const target=NametagHyMetrics.measure(txt,size*25.4/72,spacing);
       _mc.font=`400 ${size}pt ${font}`; const m=_mc.measureText(txt);
       const iw=(m.actualBoundingBoxLeft+m.actualBoundingBoxRight)/MM;
       const ih=(m.actualBoundingBoxAscent+m.actualBoundingBoxDescent)/MM;
-      const advance=chars.reduce((a,c)=>a+(/[가-힣]/.test(c)?1:/[0-9]/.test(c)?.583:c===' '?.333:c==='('?.291:.294),0)*em;
-      const targetW=Math.min(avail,advance-(i?.15:.19)*em+(chars.length-1)*spacing);
-      if(iw>0 && ih>0 && targetW>0){
-        const sx=targetW/iw, sy=(i?.96:.965)*em/ih;
-        const inkX=L.align==='center'?(102-targetW)/2:L.align==='right'?102-d.pad-targetW:x+(i?.075:.11)*em;
-        const inkY=y-(i?.84:.846)*em;
+      if(target && iw>0 && ih>0){
+        const sx=target.width/iw, sy=target.height/ih;
+        const origin=L.align==='center'?51-target.advance/2:L.align==='right'?102-d.pad-target.advance:x;
+        const inkX=origin+target.left, inkY=y-target.top;
         e.setAttribute('x','0'); e.setAttribute('y','0'); e.setAttribute('text-anchor','start'); e.setAttribute('letter-spacing','0');
         e.setAttribute('transform',`translate(${inkX+m.actualBoundingBoxLeft/MM*sx} ${inkY+m.actualBoundingBoxAscent/MM*sy}) scale(${sx} ${sy})`);
       }
@@ -1066,6 +1091,7 @@ function render(){
   $('sheetInfo').textContent = per? `장당 ${per}개 (${g.cols}×${g.rows}) · 실제 출력 ${bw}×${frontH}mm${bh!==frontH?` (띠·뒷면 포함 ${bw}×${Math.round(bh*10)/10}mm)`:''}` : '';
   $('szNote').textContent = s.shrink>0 ? `너비·높이를 각각 ${s.shrink}mm 줄여 ${bw}×${frontH}mm로 인쇄됩니다.` : `선택한 ${s.w}×${s.h}mm 그대로 인쇄됩니다. 케이스에 빡빡하면 세부 설정의 「명찰 크기 줄이기」를 1mm로 두세요.`;
   $('printSummary').textContent = rows.length? `${rows.length}명 → 명찰 A4 ${badgePages}장${stripPages?` + 상단 띠 ${stripCount}개 A4 ${stripPages}장`:(stackOn?' (윗칸 띠는 명찰 위에 이어서)':'')}이 인쇄됩니다` : '명단이 비어 있습니다';
+  $('printFontStatus').textContent=printFontMessage(t);
   const pv=$('pages'); pv.innerHTML='';
   if(!rows.length){ pv.innerHTML='<div class="emptyMsg"><div class="ic">📋</div>왼쪽에서 명단을 넣으면 인쇄될 용지가 여기에 보입니다.</div>'; $('pager').style.visibility='hidden'; return; }
   if(!per){ pv.innerHTML='<div class="emptyMsg">명찰이 종이보다 큽니다. 크기나 여백을 줄여 주세요.</div>'; $('pager').style.visibility='hidden'; return; }
@@ -1597,5 +1623,6 @@ window.PhotoTpl={open,close,go,pick,flatten,apply,setRole,setText,loadDataURL};
 })();
 
 </script>
+<script src="lib/pptx-ui.js"></script>
 </body>
 </html>
